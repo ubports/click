@@ -31,6 +31,8 @@ static int (*libc_chown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 
+uid_t euid;
+
 void __attribute__ ((constructor)) clickpreload_init (void)
 {
     libc_chown = dlsym (RTLD_NEXT, "chown");
@@ -42,6 +44,8 @@ void __attribute__ ((constructor)) clickpreload_init (void)
     libc_fchown = dlsym (RTLD_NEXT, "fchown");
     if (!libc_fchown || dlerror ())
         _exit (1);
+
+    euid = geteuid ();
 }
 
 /* dpkg calls chown/fchown to set permissions of extracted files.  If we
@@ -49,7 +53,7 @@ void __attribute__ ((constructor)) clickpreload_init (void)
  */
 int chown (const char *path, uid_t owner, gid_t group)
 {
-    if (getuid () != 0)
+    if (euid != 0)
         return 0;
 
     if (!libc_chown)
@@ -59,7 +63,7 @@ int chown (const char *path, uid_t owner, gid_t group)
 
 int fchown (int fd, uid_t owner, gid_t group)
 {
-    if (getuid () != 0)
+    if (euid != 0)
         return 0;
 
     if (!libc_fchown)

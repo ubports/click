@@ -33,17 +33,18 @@ static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 
 uid_t euid;
 
+#define GET_NEXT_SYMBOL(name) \
+    do { \
+        libc_##name = dlsym (RTLD_NEXT, #name); \
+        if (!libc_##name || dlerror ()) \
+            _exit (1); \
+    } while (0)
+
 void __attribute__ ((constructor)) clickpreload_init (void)
 {
-    libc_chown = dlsym (RTLD_NEXT, "chown");
-    if (!libc_chown || dlerror ())
-        _exit (1);
-    libc_execvp = dlsym (RTLD_NEXT, "execvp");
-    if (!libc_execvp || dlerror ())
-        _exit (1);
-    libc_fchown = dlsym (RTLD_NEXT, "fchown");
-    if (!libc_fchown || dlerror ())
-        _exit (1);
+    GET_NEXT_SYMBOL (chown);
+    GET_NEXT_SYMBOL (execvp);
+    GET_NEXT_SYMBOL (fchown);
 
     euid = geteuid ();
 }

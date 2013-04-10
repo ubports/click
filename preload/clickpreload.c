@@ -22,6 +22,7 @@
 #define _GNU_SOURCE
 
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -86,12 +87,17 @@ int execvp (const char *file, char * const argv[])
     return (*libc_execvp) (file, argv);
 }
 
-/* dpkg calls fsync quite a lot.  However, Click packages never correspond
- * to essential system facilities, so it's OK to compromise perfect write
- * reliability in the face of hostile filesystem implementations for
- * performance.
+/* dpkg calls fsync/sync_file_range quite a lot.  However, Click packages
+ * never correspond to essential system facilities, so it's OK to compromise
+ * perfect write reliability in the face of hostile filesystem
+ * implementations for performance.
  */
 int fsync (int fd)
+{
+    return 0;
+}
+
+int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
 {
     return 0;
 }

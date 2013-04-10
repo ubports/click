@@ -23,6 +23,8 @@
 
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -30,8 +32,12 @@
 static int (*libc_chown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
+static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
+static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
 
 uid_t euid;
+struct passwd root_pwd;
+struct group root_grp;
 
 #define GET_NEXT_SYMBOL(name) \
     do { \
@@ -45,8 +51,13 @@ void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (chown);
     GET_NEXT_SYMBOL (execvp);
     GET_NEXT_SYMBOL (fchown);
+    GET_NEXT_SYMBOL (getgrnam);
+    GET_NEXT_SYMBOL (getpwnam);
 
     euid = geteuid ();
+    /* dpkg only cares about these fields. */
+    root_pwd.pw_uid = 0;
+    root_grp.gr_gid = 0;
 }
 
 /* dpkg calls chown/fchown to set permissions of extracted files.  If we
@@ -70,6 +81,30 @@ int fchown (int fd, uid_t owner, gid_t group)
     if (!libc_fchown)
         clickpreload_init ();
     return (*libc_fchown) (fd, owner, group);
+}
+
+/* Similarly, we don't much care about passwd/group lookups when we aren't
+ * root.  (This could be more sanely replaced by having dpkg cache those
+ * lookups itself.)
+ */
+struct passwd *getpwnam (const char *name)
+{
+    if (!libc_getpwnam)
+        clickpreload_init ();  /* also needed for root_pwd */
+
+    if (euid != 0)
+        return &root_pwd;
+    return (*libc_getpwnam) (name);
+}
+
+struct group *getgrnam (const char *name)
+{
+    if (!libc_getgrnam)
+        clickpreload_init ();  /* also needed for root_grp */
+
+    if (euid != 0)
+        return &root_grp;
+    return (*libc_getgrnam) (name);
 }
 
 /* dpkg calls chroot to run maintainer scripts when --instdir is used (which

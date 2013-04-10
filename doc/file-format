@@ -49,15 +49,17 @@ decisions made by the maintainers of that base system.
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click base system, managed elsewhere.
 
-Maintainer scripts are forbidden.  (If they are permitted in future, they
-will at most be required to consist only of verified debhelper-generated
-fragments that can be statically analysed.)  Packages in the Click base
-system are encouraged to provide file triggers where appropriate (e.g.
-"interest /usr/share/facility"); these will be processed as normal for dpkg
-file triggers.
+Maintainer scripts are forbidden, with one exception: see below.  (If they
+are permitted in future, they will at most be required to consist only of
+verified debhelper-generated fragments that can be statically analysed.)
+Packages in the Click base system are encouraged to provide file triggers
+where appropriate (e.g.  "interest /usr/share/facility"); these will be
+processed as normal for dpkg file triggers.
 
-TODO: We should permit a preinst consisting only of code that bails out if
-somebody attempts to install a Click package directly using dpkg.
+The exception to maintainer scripts being forbidden is that a Click package
+may contain a preinst script with the effect of causing direct calls to dpkg
+to refuse to install it.  The package manager must enforce the permitted
+text of this script.
 
 Data area
 =========

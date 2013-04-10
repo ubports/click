@@ -1,0 +1,37 @@
+Hooks
+-----
+
+Of course, any sensible packaging format needs a hook mechanism of some
+kind; just unpacking a filesystem tarball isn't going to cut it.  But part
+of the point of Click packages is to make packages easier to audit by
+removing their ability to run code at installation time.  How do we resolve
+this?  For most application packages, the code that needs to be run is to
+integrate with some system package; for instance, a package that provides an
+icon may need to update icon caches.  Thus, the best way to achieve both
+these goals at once is to make sure the code for this is always in the
+integrated-with package.
+
+dpkg triggers are useful prior art for this approach.  In general they get a
+lot of things right.  The code to process a trigger runs in the postinst,
+which encourages an approach where trigger processing is a subset of full
+package configuration and shares code with it.  Furthermore, the express
+inability to pass any user data through the trigger activation mechanism
+itself ensures that triggers must operate in a "catch up" style, ensuring
+that whatever data store they manage is up to date with the state of the
+parts of the file system they use as input.  This naturally results in a
+system where the user can install integrating and integrated-with packages
+in either order and get the same result. a valuable property which
+developers are nevertheless unlikely to test explicitly in every case and
+which must therefore be encouraged by design.
+
+There are two principal problems with dpkg triggers (aside from the point
+that not all integrated-with packages use them, which is irrelevant because
+they don't support any hypothetical future hook mechanisms either).  The
+first is that the inability to pass user data through trigger activation
+means that there is no way to indicate where an integrating package is
+installed, which matters when the hook files it provides cannot be in a
+single location under /usr/ but might be under /opt/ or even in per-user
+directories.  The second is that processing dpkg triggers requires operating
+on the system dpkg database, which is large and therefore slow.
+
+TODO (tomorrow): design notes on fixing these problems

@@ -1,0 +1,74 @@
+"Click" package file format, version 0.1
+----------------------------------------
+
+This specification covers a variant of .deb packages intended for use by
+third-party applications.  It is intentionally simplified to make it easier
+to create such packages with relatively little experience with Debian-style
+packaging, and to ensure that the packages do not execute any unverified
+code as root during installation.
+
+This is one implementation proposal, currently intended only to demonstrate
+that the general goals of Click packages are achievable using a set of
+fairly minor modifications to dpkg.  The author believes that using
+something based on dpkg will allow us to reuse substantial amounts of
+package-management-related code elsewhere, not least the many years of
+careful design and bug-fixing of dpkg itself, and that if we can avoid
+problems with maintainer scripts and performance then using dpkg will be the
+best answer.
+
+General format
+==============
+
+The top-level binary format for Click packages is the same as that for
+ordinary .deb packages: see deb(5).
+
+Despite the similar format, the file extension for these packages is .click,
+to discourage attempts to install using dpkg directly (although it is still
+possible to use dpkg to inspect these files).  Do not rely on this; the file
+extension may change in future.
+
+Control area
+============
+
+Every Click package must include the following two control fields:
+
+ * Click-Version: the current version number of this specification
+ * Click-Base-System: the current version number of the base system
+
+The package manager must refuse to process packages where either field is
+missing or unparseable.  It must refuse to process packages where either
+version compares newer than the corresponding version it implements
+(according to rules equivalent to "dpkg --compare-versions").  It may refuse
+to process packages whose Click-Version field has an older major number than
+the version it implements (although future developers are encouraged to
+maintain the maximum possible degree of compatibility with packages in the
+wild).  It may refuse to process packages whose Click-Base-System field is
+older than the version it implements, depending on library compatibility
+decisions made by the maintainers of that base system.
+
+All dependency relations are forbidden.  Packages implicitly depend on the
+entire contents of the Click base system, managed elsewhere.
+
+Maintainer scripts are forbidden.  (If they are permitted in future, they
+will at most be required to consist only of verified debhelper-generated
+fragments that can be statically analysed.)  Packages in the Click base
+system are encouraged to provide file triggers where appropriate (e.g.
+"interest /usr/share/facility"); these will be processed as normal for dpkg
+file triggers.
+
+TODO: We should permit a preinst consisting only of code that bails out if
+somebody attempts to install a Click package directly using dpkg.
+
+Data area
+=========
+
+Unlike normal .debs, each package installs in a self-contained directory,
+and the filesystem tarball must be based at the root of that directory.  The
+package must not assume any particular installation directory: if it needs
+to know where it is installed, it should look at argv[0] or similar.
+
+Within each package installation directory, the ".click" subdirectory will
+be used for metadata.  This directory must not be present at the top level
+of package filesystem tarballs; the package manager should silently filter
+it out if present.  (Rationale: scanning the filesystem tarball in advance
+is likely to impose a performance cost, especially for large packages.)

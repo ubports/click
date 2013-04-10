@@ -1,0 +1,5 @@
+click-package (0.1) UNRELEASED; urgency=low
+
+  * Initial release.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Apr 2013 14:34:27 +0100

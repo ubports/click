@@ -1,0 +1,49 @@
+#! /usr/bin/python
+
+# Copyright (C) 2013 Canonical Ltd.
+# Author: Colin Watson <cjwatson@ubuntu.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Build a Click package."""
+
+from __future__ import print_function
+
+from optparse import OptionParser
+import os
+import sys
+
+# Support running from the build tree.
+sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
+
+from clickpackage.build import ClickBuilder
+
+
+def main():
+    parser = OptionParser("%prog NAME DIRECTORY")
+    _, args = parser.parse_args()
+    if len(args) < 1:
+        parser.error("need package name")
+    if len(args) < 2:
+        parser.error("need directory")
+    name = args[0]
+    directory = args[1]
+    # TODO: hardcoding
+    builder = ClickBuilder(name, "1.0", "Foo Bar <foo@example.org>", "test")
+    builder.add_file(directory, "./")
+    path = builder.build(".")
+    print("Successfully built package in '%s'." % path)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,47 @@
+Source: click-package
+Section: admin
+Priority: optional
+Maintainer: Colin Watson <cjwatson@ubuntu.com>
+Standards-Version: 3.9.4
+Build-Depends: debhelper (>= 7.0.50~), python3 (>= 3.2), python3-all, python3-setuptools, python3-debian, python3 (>= 3.3) | python3-mock, pep8, pyflakes
+Vcs-Bzr: http://bazaar.launchpad.net/+branch/click-package
+X-Python-Version: >= 2.6
+X-Python3-Version: >= 3.0
+
+Package: click-install
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version})
+Description: install Click packages
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ click-install provides support for installing these packages.
+
+Package: click-dev
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version})
+Description: build Click packages
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ click-dev provides support for building these packages.
+
+Package: click-package-common
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Click packages (common files)
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ This package provides common files used by other parts of click-package.
+
+Package: python3-click-package
+Section: python
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-debian, click-package-common (>= ${binary:Version}), click-package-common (<< ${binary:Version}.1)
+Description: Click packages (Python 3 interface)
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ This package provides Python 3 modules used by click-package, which may
+ also be used directly.

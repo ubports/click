@@ -114,3 +114,12 @@ Thus, a worked example would have:
     }
 
 TODO: fill in details of upgrade and removal
+
+TODO: copy rather than symlink, for additional robustness?
+
+TODO: D-Bus services are an awkward case because they contain a full path in
+the Exec line; this will probably require some kind of declarative
+substitution capability too
+
+TODO: use UUIDs instead of Click package names so that we never have to
+worry about conflicts, renaming, etc.?

@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import contextlib
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -54,14 +55,7 @@ class FakerootTarFile(tarfile.TarFile):
 
 
 class ClickBuilder:
-    # TODO: pick up details from metadata.json instead
-    def __init__(self, name, version, maintainer, description,
-                 architecture="all"):
-        self.name = name
-        self.version = version
-        self.maintainer = maintainer
-        self.description = description
-        self.architecture = architecture
+    def __init__(self):
         self.file_map = {}
 
     def add_file(self, source_path, dest_path):
@@ -75,7 +69,16 @@ class ClickBuilder:
             for filename in filenames:
                 yield os.path.join(rel_dirpath, filename)
 
-    def build(self, dest_dir):
+    def read_metadata(self, metadata_path):
+        with open(metadata_path) as metadata:
+            self.metadata = json.load(metadata)
+        self.name = self.metadata["name"]
+        self.version = self.metadata["version"]
+        self.maintainer = self.metadata["maintainer"]
+        self.description = self.metadata["description"]
+        self.architecture = self.metadata.get("architecture", "all")
+
+    def build(self, dest_dir, metadata_path=None):
         with make_temp_dir() as temp_dir:
             # Data area
             root_path = os.path.join(temp_dir, "data")
@@ -90,6 +93,11 @@ class ClickBuilder:
             # TODO: filter out /.click
             data_tar.add(root_path, arcname="./")
             data_tar.close()
+
+            real_metadata_path = os.path.join(root_path, "metadata.json")
+            if metadata_path is not None:
+                shutil.copy2(metadata_path, real_metadata_path)
+            self.read_metadata(real_metadata_path)
 
             # Control area
             du_output = subprocess.check_output(

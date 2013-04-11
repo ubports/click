@@ -19,8 +19,10 @@ from __future__ import print_function
 
 __metaclass__ = type
 
+import json
 import os
 import subprocess
+from textwrap import dedent
 
 from clickpackage.build import ClickBuilder
 from clickpackage.preinst import static_preinst
@@ -28,22 +30,27 @@ from clickpackage.tests.helpers import TestCase, mkfile
 
 
 class TestClickBuilder(TestCase):
-    def make_builder(self, **kwargs):
-        return ClickBuilder(
-            "test", "1.0", "Foo Bar <foo@example.org>", "test description",
-            **kwargs)
-
-    def test_init(self):
-        builder = self.make_builder()
+    def test_read_metadata(self):
+        self.use_temp_dir()
+        metadata_path = os.path.join(self.temp_dir, "metadata.json")
+        with mkfile(metadata_path) as metadata:
+            print(dedent("""\
+                {
+                    "name": "test",
+                    "version": "1.0",
+                    "maintainer": "Foo Bar <foo@example.org>",
+                    "description": "test description"
+                }"""), file=metadata)
+        builder = ClickBuilder()
+        builder.read_metadata(metadata_path)
         self.assertEqual("test", builder.name)
         self.assertEqual("1.0", builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", builder.maintainer)
         self.assertEqual("test description", builder.description)
         self.assertEqual("all", builder.architecture)
-        self.assertEqual({}, builder.file_map)
 
     def test_add_file(self):
-        builder = self.make_builder()
+        builder = ClickBuilder()
         builder.add_file("/nonexistent", "target")
         self.assertEqual({"/nonexistent": "target"}, builder.file_map)
 
@@ -63,7 +70,15 @@ class TestClickBuilder(TestCase):
             f.write("test /bin/foo\n")
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
-        builder = self.make_builder()
+        with mkfile(os.path.join(scratch, "metadata.json")) as f:
+            f.write(json.dumps({
+                "name": "test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "description": "test description",
+                "architecture": "all",
+            }))
+        builder = ClickBuilder()
         builder.add_file(scratch, "/")
         path = os.path.join(self.temp_dir, "test_1.0_all.click")
         self.assertEqual(path, builder.build(self.temp_dir))
@@ -80,10 +95,13 @@ class TestClickBuilder(TestCase):
             self.assertEqual(value, self.extract_field(path, key))
         self.assertNotEqual(
             "", self.extract_field(path, "Installed-Size"))
-        self.assertEqual(
-            "eb774c3ead632b397d6450d1df25e001  bin/foo\n"
-            "49327ce6306df8a87522456b14a179e0  toplevel\n",
-            self.extract_control_file(path, "md5sums"))
+        self.assertRegex(
+            self.extract_control_file(path, "md5sums"),
+            r"^"
+            r"eb774c3ead632b397d6450d1df25e001  bin/foo\n"
+            r".*  metadata.json\n"
+            r"49327ce6306df8a87522456b14a179e0  toplevel\n"
+            r"$")
         self.assertEqual(
             static_preinst, self.extract_control_file(path, "preinst"))
         contents = subprocess.check_output(
@@ -95,7 +113,11 @@ class TestClickBuilder(TestCase):
             contents, "\n-rw-r--r-- root/root        15 .* \./toplevel\n")
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
-        with open(os.path.join(extract_path, "bin", "foo")) as f:
-            self.assertEqual("test /bin/foo\n", f.read())
-        with open(os.path.join(extract_path, "toplevel")) as f:
-            self.assertEqual("test /toplevel\n", f.read())
+        for rel_path in (
+            os.path.join("bin", "foo"),
+            "toplevel",
+            "metadata.json",
+        ):
+            with open(os.path.join(scratch, rel_path)) as source, \
+                    open(os.path.join(extract_path, rel_path)) as target:
+                self.assertEqual(source.read(), target.read())

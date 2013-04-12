@@ -20,8 +20,9 @@ although there are clearly several things we need to adjust.
 General format
 ==============
 
-The top-level binary format for Click packages is the same as that for
-ordinary .deb packages: see deb(5).
+The top-level binary format for Click packages is an ar archive containing
+control and data tar archives, as for ordinary .deb packages: see deb(5) for
+full details.
 
 Despite the similar format, the file extension for these packages is .click,
 to discourage attempts to install using dpkg directly (although it is still
@@ -66,10 +67,10 @@ text of this script.
 Data area
 =========
 
-Unlike normal .debs, each package installs in a self-contained directory,
-and the filesystem tarball must be based at the root of that directory.  The
-package must not assume any particular installation directory: if it needs
-to know where it is installed, it should look at argv[0] or similar.
+Unlike .debs, each package installs in a self-contained directory, and the
+filesystem tarball must be based at the root of that directory.  The package
+must not assume any particular installation directory: if it needs to know
+where it is installed, it should look at argv[0] or similar.
 
 Within each package installation directory, the ".click" subdirectory will
 be used for metadata.  This directory must not be present at the top level

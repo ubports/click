@@ -139,5 +139,8 @@ class ClickInstaller:
             "--install", path,
         ]
         env = dict(os.environ)
-        env["LD_PRELOAD"] = self._preload_path()
+        preloads = [self._preload_path()]
+        if "LD_PRELOAD" in env:
+            preloads.append(env["LD_PRELOAD"])
+        env["LD_PRELOAD"] = " ".join(preloads)
         subprocess.check_call(command, env=env)

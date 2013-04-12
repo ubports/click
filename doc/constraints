@@ -16,8 +16,8 @@ Installing packages
 ===================
 
  * For the purpose of rapid prototyping, package installation is also
-   implemented in Python.  This may of course use Debian-specific tools such
-   as dpkg, since it will always be running on an Ubuntu system.  In future,
+   implemented in Python.  This may of course use Debian/Ubuntu-specific
+   tools, since it will always be running on an Ubuntu system.  In future,
    it will probably be reimplemented in C for performance.
 
  * Reading the system dpkg database is forbidden.  This is partly to ensure

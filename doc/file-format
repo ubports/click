@@ -1,20 +1,20 @@
 "Click" package file format, version 0.1
 ----------------------------------------
 
-This specification covers a variant of .deb packages intended for use by
-third-party applications.  It is intentionally simplified to make it easier
-to create such packages with relatively little experience with Debian-style
-packaging, and to ensure that the packages do not execute any unverified
-code as root during installation.
+This specification covers a packaging format intended for use by
+self-contained third-party applications.  It is intentionally designed to be
+easy to create such packages and for the archive of packages to be able to
+scale to very large numbers, as well as to ensure that packages do not
+execute any unverified code as root during installation and that installed
+packages are sandboxable.
 
-This is one implementation proposal, currently intended only to demonstrate
-that the general goals of Click packages are achievable using a set of
-fairly minor modifications to dpkg.  The author believes that using
-something based on dpkg will allow us to reuse substantial amounts of
-package-management-related code elsewhere, not least the many years of
-careful design and bug-fixing of dpkg itself, and that if we can avoid
-problems with maintainer scripts and performance then using dpkg will be the
-best answer.
+This implementation proposal uses the existing dpkg as its core, although
+that is entirely concealed from both users and application developers.  It
+is currently intended only to demonstrate that the general goals of Click
+packages are achievable using a set of fairly minor modifications to dpkg.
+The author believes that using something based on dpkg will allow us to
+reuse substantial amounts of package-management-related code elsewhere, not
+least the many years of careful design and bug-fixing of dpkg itself.
 
 General format
 ==============
@@ -24,8 +24,9 @@ ordinary .deb packages: see deb(5).
 
 Despite the similar format, the file extension for these packages is .click,
 to discourage attempts to install using dpkg directly (although it is still
-possible to use dpkg to inspect these files).  Do not rely on this; the file
-extension may change in future.
+possible to use dpkg to inspect these files).  Click packages should not be
+thought of as .deb packages, although they share tooling.  Do not rely on
+the file extension remaining .click; it may change in the future.
 
 Control area
 ============

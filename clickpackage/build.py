@@ -87,17 +87,19 @@ class ClickBuilder:
                     dest_path = dest_path[1:]
                 real_dest_path = os.path.join(root_path, dest_path)
                 shutil.copytree(source_path, real_dest_path)
+
+            real_metadata_path = os.path.join(root_path, "metadata.json")
+            if metadata_path is not None:
+                shutil.copy2(metadata_path, real_metadata_path)
+            os.chmod(real_metadata_path, 0o644)
+            self.read_metadata(real_metadata_path)
+
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
             data_tar = FakerootTarFile.open(
                 name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT)
             # TODO: filter out /.click
             data_tar.add(root_path, arcname="./")
             data_tar.close()
-
-            real_metadata_path = os.path.join(root_path, "metadata.json")
-            if metadata_path is not None:
-                shutil.copy2(metadata_path, real_metadata_path)
-            self.read_metadata(real_metadata_path)
 
             # Control area
             du_output = subprocess.check_output(

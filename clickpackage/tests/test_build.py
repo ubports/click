@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import json
 import os
+import stat
 import subprocess
 from textwrap import dedent
 
@@ -78,6 +79,8 @@ class TestClickBuilder(TestCase):
                 "description": "test description",
                 "architecture": "all",
             }))
+            # build() overrides this back to 0o644
+            os.fchmod(f.fileno(), 0o600)
         builder = ClickBuilder()
         builder.add_file(scratch, "/")
         path = os.path.join(self.temp_dir, "test_1.0_all.click")
@@ -121,3 +124,5 @@ class TestClickBuilder(TestCase):
             with open(os.path.join(scratch, rel_path)) as source, \
                     open(os.path.join(extract_path, rel_path)) as target:
                 self.assertEqual(source.read(), target.read())
+        metadata_path = os.path.join(extract_path, "metadata.json")
+        self.assertEqual(0o644, stat.S_IMODE(os.stat(metadata_path).st_mode))

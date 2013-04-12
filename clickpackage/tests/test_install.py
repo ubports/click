@@ -32,7 +32,7 @@ from debian.debfile import DebFile
 
 from clickpackage.install import ClickInstaller
 from clickpackage.preinst import static_preinst
-from clickpackage.tests.helpers import TestCase, mkfile, touch
+from clickpackage.tests.helpers import TestCase, mkfile, skipUnless, touch
 
 
 def mock_quiet_subprocess_call():
@@ -225,6 +225,8 @@ class TestClickInstaller(TestCase):
         finally:
             deb_file.close()
 
+    @skipUnless(os.path.exists(ClickInstaller(None)._preload_path()),
+                "preload bits not built; installing packages will fail")
     def test_install(self, *args):
         path = self.make_fake_package(
             control_fields={

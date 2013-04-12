@@ -30,6 +30,8 @@ except ImportError:
 
 from clickpackage import osextras
 
+skipUnless = unittest.skipUnless
+
 
 class TestCase(unittest.TestCase):
     def setUp(self):

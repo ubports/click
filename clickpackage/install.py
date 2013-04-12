@@ -37,6 +37,18 @@ class ClickInstaller:
     def __init__(self, root):
         self.root = root
 
+    def _preload_path(self):
+        if "CLICK_PACKAGE_PRELOAD" in os.environ:
+            return os.environ["CLICK_PACKAGE_PRELOAD"]
+        my_path = inspect.getsourcefile(ClickInstaller)
+        preload = os.path.join(
+            os.path.dirname(my_path), os.pardir, "preload",
+            "libclickpreload.so")
+        if os.path.exists(preload):
+            return os.path.abspath(preload)
+        # TODO: unhardcode path
+        return "/usr/lib/click-package/libclickpreload.so"
+
     def audit_control(self, control_part):
         control_fields = control_part.debcontrol()
 
@@ -123,17 +135,5 @@ class ClickInstaller:
             "--install", path,
         ]
         env = dict(os.environ)
-        if "CLICK_PACKAGE_PRELOAD" in os.environ:
-            preload = os.environ["CLICK_PACKAGE_PRELOAD"]
-        else:
-            my_path = inspect.getsourcefile(ClickInstaller)
-            preload = os.path.join(
-                os.path.dirname(my_path), os.pardir, "preload",
-                "libclickpreload.so")
-            if os.path.exists(preload):
-                preload = os.path.abspath(preload)
-            else:
-                # TODO: unhardcode path
-                preload = "/usr/lib/click-package/libclickpreload.so"
-        env["LD_PRELOAD"] = preload
+        env["LD_PRELOAD"] = self._preload_path()
         subprocess.check_call(command, env=env)

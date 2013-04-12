@@ -50,15 +50,20 @@ class ClickInstaller:
         return "/usr/lib/click-package/libclickpreload.so"
 
     def audit_control(self, control_part):
+        """Check that all requirements on the control part are met.
+
+        Returns the package name.
+        """
         control_fields = control_part.debcontrol()
 
         try:
-            package = control_fields["Package"]
+            package_name = control_fields["Package"]
         except KeyError:
             raise ValueError("No Package field")
         # TODO: perhaps just do full name validation?
-        if "/" in package:
-            raise ValueError("Invalid character '/' in Package: %s" % package)
+        if "/" in package_name:
+            raise ValueError(
+                "Invalid character '/' in Package: %s" % package_name)
 
         try:
             click_version = Version(control_fields["Click-Version"])
@@ -97,17 +102,16 @@ class ClickInstaller:
                 "(found: %s)" %
                 " ".join(sorted(scripts)))
 
+        return package_name
+
     def audit(self, package):
-        self.audit_control(package.control)
+        return self.audit_control(package.control)
 
     def install(self, path):
         package = DebFile(filename=path)
         try:
-            self.audit(package)
-
-            # TODO: avoid instantiating debcontrol twice
-            inst_dir = os.path.join(
-                self.root, package.debcontrol()["Package"])
+            package_name = self.audit(package)
+            inst_dir = os.path.join(self.root, package_name)
             assert os.path.dirname(inst_dir) == self.root
         finally:
             package.close()

@@ -221,7 +221,8 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst})
         package = DebFile(filename=path)
         try:
-            ClickInstaller(self.temp_dir).audit(package)
+            self.assertEqual(
+                "test-package", ClickInstaller(self.temp_dir).audit(package))
         finally:
             package.close()
 

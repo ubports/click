@@ -131,6 +131,11 @@ int execvp (const char *file, char * const argv[])
  * never correspond to essential system facilities, so it's OK to compromise
  * perfect write reliability in the face of hostile filesystem
  * implementations for performance.
+ *
+ * (Note that dpkg only started using fsync/sync_file_range relatively
+ * recently, and on many reasonable filesystem configurations using those
+ * functions buys us nothing; most of dpkg's reliability comes from other
+ * strategies, such as careful unpack and renaming into place.)
  */
 int fsync (int fd)
 {

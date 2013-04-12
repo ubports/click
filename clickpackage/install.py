@@ -97,20 +97,20 @@ class ClickInstaller:
                 "(found: %s)" %
                 " ".join(sorted(scripts)))
 
-    def audit(self, deb_file):
-        self.audit_control(deb_file.control)
+    def audit(self, package):
+        self.audit_control(package.control)
 
     def install(self, path):
-        deb_file = DebFile(filename=path)
+        package = DebFile(filename=path)
         try:
-            self.audit(deb_file)
+            self.audit(package)
 
             # TODO: avoid instantiating debcontrol twice
             inst_dir = os.path.join(
-                self.root, deb_file.debcontrol()["Package"])
+                self.root, package.debcontrol()["Package"])
             assert os.path.dirname(inst_dir) == self.root
         finally:
-            deb_file.close()
+            package.close()
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):

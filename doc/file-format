@@ -55,7 +55,7 @@ Maintainer scripts are forbidden, with one exception: see below.  (If they
 are permitted in future, they will at most be required to consist only of
 verified debhelper-generated fragments that can be statically analysed.)
 Packages in the Click base system are encouraged to provide file triggers
-where appropriate (e.g.  "interest /usr/share/facility"); these will be
+where appropriate (e.g. "interest /usr/share/facility"); these will be
 processed as normal for dpkg file triggers.
 
 The exception to maintainer scripts being forbidden is that a Click package

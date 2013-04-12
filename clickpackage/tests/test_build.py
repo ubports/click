@@ -27,7 +27,7 @@ from textwrap import dedent
 
 from clickpackage.build import ClickBuilder
 from clickpackage.preinst import static_preinst
-from clickpackage.tests.helpers import TestCase, mkfile
+from clickpackage.tests.helpers import TestCase, mkfile, touch
 
 
 class TestClickBuilder(TestCase):
@@ -126,3 +126,22 @@ class TestClickBuilder(TestCase):
                 self.assertEqual(source.read(), target.read())
         metadata_path = os.path.join(extract_path, "metadata.json")
         self.assertEqual(0o644, stat.S_IMODE(os.stat(metadata_path).st_mode))
+
+    def test_build_excludes_dot_click(self):
+        self.use_temp_dir()
+        scratch = os.path.join(self.temp_dir, "scratch")
+        touch(os.path.join(scratch, ".click", "evil-file"))
+        with mkfile(os.path.join(scratch, "metadata.json")) as f:
+            f.write(json.dumps({
+                "name": "test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "description": "test description",
+                "architecture": "all",
+            }))
+        builder = ClickBuilder()
+        builder.add_file(scratch, "/")
+        path = builder.build(self.temp_dir)
+        extract_path = os.path.join(self.temp_dir, "extract")
+        subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
+        self.assertEqual(["metadata.json"], os.listdir(extract_path))

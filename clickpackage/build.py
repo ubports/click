@@ -78,6 +78,12 @@ class ClickBuilder:
         self.description = self.metadata["description"]
         self.architecture = self.metadata.get("architecture", "all")
 
+    def _filter_dot_click(self, tarinfo):
+        """Filter out attempts to include .click at the top level."""
+        if tarinfo.name == "./.click" or tarinfo.name.startswith("./.click/"):
+            return None
+        return tarinfo
+
     def build(self, dest_dir, metadata_path=None):
         with make_temp_dir() as temp_dir:
             # Data area
@@ -97,8 +103,8 @@ class ClickBuilder:
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
             data_tar = FakerootTarFile.open(
                 name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT)
-            # TODO: filter out /.click
-            data_tar.add(root_path, arcname="./")
+            data_tar.add(
+                root_path, arcname="./", filter=self._filter_dot_click)
             data_tar.close()
 
             # Control area

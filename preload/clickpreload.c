@@ -48,6 +48,9 @@ struct group root_grp;
 
 void __attribute__ ((constructor)) clickpreload_init (void)
 {
+    /* Clear any old error conditions, albeit unlikely, as per dlsym(2) */
+    dlerror ();
+
     GET_NEXT_SYMBOL (chown);
     GET_NEXT_SYMBOL (execvp);
     GET_NEXT_SYMBOL (fchown);

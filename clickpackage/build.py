@@ -39,9 +39,11 @@ from clickpackage.versions import base_version, spec_version
 @contextlib.contextmanager
 def make_temp_dir():
     temp_dir = tempfile.mkdtemp(prefix="clickpackage")
-    os.chmod(temp_dir, 0o755)
-    yield temp_dir
-    shutil.rmtree(temp_dir)
+    try:
+        os.chmod(temp_dir, 0o755)
+        yield temp_dir
+    finally:
+        shutil.rmtree(temp_dir)
 
 
 class FakerootTarFile(tarfile.TarFile):

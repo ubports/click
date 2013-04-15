@@ -65,6 +65,7 @@ class TestStatic(TestCase):
     @skipIf('SKIP_SLOW_TESTS' in os.environ, 'Skipping slow tests')
     @skipIf(pep8 is None, 'No pep8 package available')
     def test_pep8_clean(self):
+        # https://github.com/jcrocholl/pep8/issues/103
         pep8_style = pep8.StyleGuide(ignore='E123')
         result = pep8_style.check_files(self.all_paths())
         self.assertEqual(result.total_errors, 0)

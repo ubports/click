@@ -96,7 +96,7 @@ strawman proposal, consider the following:
    triggers matching those paths, and process all the packages that enter
    the triggers-pending state as a result.
 
-Thus, a worked example would have::
+Thus, a working example would have::
 
   /usr/share/click-package/hooks/unity-lens-help.hook
     Hook: unity-lens-help

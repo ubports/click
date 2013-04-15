@@ -31,7 +31,7 @@ from clickpackage.tests.helpers import TestCase, mkfile, touch
 
 
 # BAW 2013-04-15: Some tests require umask 022.  Use this decorator to
-# temporarily tweak the processes umask.  The test -- or system -- should
+# temporarily tweak the process's umask.  The test -- or system -- should
 # probably be made more robust instead.
 def umask(force_umask):
     def decorator(func):

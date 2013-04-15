@@ -1,5 +1,6 @@
+========================================
 "Click" package file format, version 0.1
-----------------------------------------
+========================================
 
 This specification covers a packaging format intended for use by
 self-contained third-party applications.  It is intentionally designed to be
@@ -63,6 +64,8 @@ The exception to maintainer scripts being forbidden is that a Click package
 may contain a preinst script with the effect of causing direct calls to dpkg
 to refuse to install it.  The package manager must enforce the permitted
 text of this script.
+
+**BAW: what's the purpose of this preinst?**
 
 Data area
 =========

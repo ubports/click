@@ -1,5 +1,6 @@
+=====
 Hooks
------
+=====
 
 Of course, any sensible packaging format needs a hook mechanism of some
 kind; just unpacking a filesystem tarball isn't going to cut it.  But part
@@ -69,7 +70,7 @@ strawman proposal, consider the following:
    one %s substitution: the package manager substitutes an identifier
    provided by the Click package into it and creates the resulting path as a
    symlink to a path provided by the Click package.
-   
+
    If the Exec key is present, its value is executed as if passed to the
    shell after the above symlink is created.
 
@@ -95,7 +96,7 @@ strawman proposal, consider the following:
    triggers matching those paths, and process all the packages that enter
    the triggers-pending state as a result.
 
-Thus, a worked example would have:
+Thus, a worked example would have::
 
   /usr/share/click-package/hooks/unity-lens-help.hook
     Hook: unity-lens-help

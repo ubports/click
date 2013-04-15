@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 

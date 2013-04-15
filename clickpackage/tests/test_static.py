@@ -32,7 +32,7 @@ class TestStatic(TestCase):
     def all_paths(self):
         paths = []
         for dirpath, dirnames, filenames in os.walk("."):
-            for ignore in ".bzr", "__pycache__":
+            for ignore in ('doc', ".bzr", "__pycache__"):
                 if ignore in dirnames:
                     dirnames.remove(ignore)
             filenames = [

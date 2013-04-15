@@ -30,6 +30,21 @@ from clickpackage.preinst import static_preinst
 from clickpackage.tests.helpers import TestCase, mkfile, touch
 
 
+# BAW 2013-04-15: Some tests require umask 022.  Use this decorator to
+# temporarily tweak the processes umask.  The test -- or system -- should
+# probably be made more robust instead.
+def umask(force_umask):
+    def decorator(func):
+        def wrapper(*args, **kws):
+            old_umask = os.umask(force_umask)
+            try:
+                return func(*args, **kws)
+            finally:
+                os.umask(old_umask)
+        return wrapper
+    return decorator
+
+
 class TestClickBuilder(TestCase):
     def test_read_metadata(self):
         self.use_temp_dir()
@@ -64,6 +79,7 @@ class TestClickBuilder(TestCase):
         return subprocess.check_output(
             ["dpkg-deb", "-I", path, name], universal_newlines=True)
 
+    @umask(0o22)
     def test_build(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")

@@ -42,7 +42,7 @@ struct group root_grp;
 #define GET_NEXT_SYMBOL(name) \
     do { \
         libc_##name = dlsym (RTLD_NEXT, #name); \
-        if (!libc_##name || dlerror ()) \
+        if (dlerror ()) \
             _exit (1); \
     } while (0)
 

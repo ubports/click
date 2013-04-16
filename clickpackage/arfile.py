@@ -27,10 +27,6 @@ from __future__ import print_function
 
 __metaclass__ = type
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
 import os
 import shutil
 import time
@@ -52,7 +48,7 @@ class ArFile:
                 self._mode = fileobj.mode
             self.opened_fileobj = False
         else:
-            fileobj = builtins.open(name, self.real_mode)
+            fileobj = open(name, self.real_mode)
             self.opened_fileobj = True
         self.name = name
         self.fileobj = fileobj

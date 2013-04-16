@@ -65,7 +65,6 @@ may contain a preinst script with the effect of causing direct calls to dpkg
 to refuse to install it.  The package manager must enforce the permitted
 text of this script.
 
-**BAW: what's the purpose of this preinst?**
 
 Data area
 =========

@@ -40,10 +40,14 @@ have this, do the following::
     $ (cd preload && make)
 
 You'll need *tox* (Ubuntu package *python-tox*) installed in order to run the
-full test suite.  Run this the first time to create the virtual environments
-for all testable Pythons::
+full test suite.  You should be able to just say::
 
-    $ tox --notest
+    $ tox
+
+to run the full suite.  Use tox's ``-e`` option to run the tests against a
+subset of Python versions.  You shouldn't have to install anything manually
+into the virtual environments that tox creates, but you might have to if you
+don't have all the dependencies installed in your system Pythons.
 
 You'll need the *mock* and *python-debian* libraries.  For Ubuntu 13.04,
 apt-get install the following packages::
@@ -52,26 +56,18 @@ apt-get install the following packages::
  * python-debian
  * python3-debian
 
-You'll need to manually install additional packages for Python 2.6 and 3.2,
-using these instructions::
-
-    $ source .tox/py26/bin/activate
-    $ pip install mock
-    $ pip install unittest2
-    $ pip install python-debian
-    $ pip install chardet
-    $ deactivate
-
-    $ source .tox/py32/bin/activate
-    $ pip install mock
-    $ pip install python-debian
+For Python 2.6, you'll also need the ``unittest2`` and ``chardet`` libraries,
+though I think these should get downloaded from PyPI automatically if you
+don't have them.
 
 
 Testing
 =======
 
 After all of the above is installed, you can run ``tox`` to run the test suite
-against all supported Python versions.
+against all supported Python versions.  The ``./run-tests`` scripts just does
+an additional check to make sure you've got the preload shared library
+built.
 
 
 Documentation

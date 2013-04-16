@@ -1,5 +1,6 @@
+=====
 Hooks
------
+=====
 
 Of course, any sensible packaging format needs a hook mechanism of some
 kind; just unpacking a filesystem tarball isn't going to cut it.  But part
@@ -53,7 +54,7 @@ using dpkg itself.
 What we can do with reasonable safety is populate symlink farms.  As a
 strawman proposal, consider the following:
 
- * An integrated-with system package may add *.hook files to
+ * An integrated-with system package may add ``*.hook`` files to
    /usr/share/click-package/hooks/.  These are standard Debian-style control
    files with the following keys:
 
@@ -69,7 +70,7 @@ strawman proposal, consider the following:
    one %s substitution: the package manager substitutes an identifier
    provided by the Click package into it and creates the resulting path as a
    symlink to a path provided by the Click package.
-   
+
    If the Exec key is present, its value is executed as if passed to the
    shell after the above symlink is created.
 
@@ -77,11 +78,11 @@ strawman proposal, consider the following:
 
  * A Click package may include a "hooks" entry in its metadata (exact format
    TBD).  If present, it must contain a mapping of keys to values.  The keys
-   are used to look up *.hook files with an equal Hook field (see above).
+   are used to look up ``*.hook`` files with an equal Hook field (see above).
    The values are symlink target paths used by the package manager when
-   creating symlinks according to the Pattern field in *.hook files.
+   creating symlinks according to the Pattern field in ``*.hook`` files.
 
- * There should be a dh_clickpackage which installs the *.hook files in
+ * There should be a dh_clickpackage which installs the ``*.hook`` files in
    system packages and adds maintainer script fragments to cause
    click-package to catch up with any newly-provided hooks.
 
@@ -89,13 +90,13 @@ strawman proposal, consider the following:
    Click package to avoid code duplication between system and Click package
    handling, although we must do so asynchronously and any errors must not
    block the installation of Click packages.  If "Trigger: yes" is set in a
-   *.hook file, then click-install will activate an asynchronous D-Bus
+   ``*.hook`` file, then click-install will activate an asynchronous D-Bus
    service at the end of installation, passing the names of all the changed
    paths resulting from Pattern key expansions; this will activate any file
    triggers matching those paths, and process all the packages that enter
    the triggers-pending state as a result.
 
-Thus, a worked example would have:
+Thus, a worked example would have::
 
   /usr/share/click-package/hooks/unity-lens-help.hook
     Hook: unity-lens-help

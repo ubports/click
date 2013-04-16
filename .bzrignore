@@ -1,2 +1,6 @@
 __pycache__
 ./click_installer.egg-info
+_build/doctrees
+_build/html
+doc/_build/doctrees
+doc/_build/html

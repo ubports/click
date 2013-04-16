@@ -42,12 +42,15 @@ struct group root_grp;
 #define GET_NEXT_SYMBOL(name) \
     do { \
         libc_##name = dlsym (RTLD_NEXT, #name); \
-        if (!libc_##name || dlerror ()) \
+        if (dlerror ()) \
             _exit (1); \
     } while (0)
 
 void __attribute__ ((constructor)) clickpreload_init (void)
 {
+    /* Clear any old error conditions, albeit unlikely, as per dlsym(2) */
+    dlerror ();
+
     GET_NEXT_SYMBOL (chown);
     GET_NEXT_SYMBOL (execvp);
     GET_NEXT_SYMBOL (fchown);

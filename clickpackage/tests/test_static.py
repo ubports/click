@@ -22,9 +22,15 @@ __all__ = [
     'TestStatic',
     ]
 
+
 import os
 import sys
-from unittest import skipIf
+
+from pkg_resources import resource_filename
+try:
+    from unittest import skipIf
+except ImportError:
+    from unittest2 import skipIf
 
 try:
     import pep8
@@ -44,7 +50,9 @@ from clickpackage.tests.helpers import TestCase
 class TestStatic(TestCase):
     def all_paths(self):
         paths = []
-        for dirpath, dirnames, filenames in os.walk("."):
+        start_dir = os.path.dirname(
+            resource_filename('clickpackage', '__init__.py'))
+        for dirpath, dirnames, filenames in os.walk(start_dir):
             for ignore in ('doc', ".bzr", "__pycache__"):
                 if ignore in dirnames:
                     dirnames.remove(ignore)

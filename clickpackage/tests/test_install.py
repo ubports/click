@@ -25,7 +25,6 @@ __all__ = [
 
 import os
 import subprocess
-import unittest
 
 from contextlib import closing
 
@@ -33,9 +32,16 @@ try:
     from unittest import mock
 except ImportError:
     import mock
+try:
+    from unittest import skipUnless
+except ImportError:
+    from unittest2 import skipUnless
+
 
 from debian.deb822 import Deb822
-from debian.debfile import DebFile
+# BAW 2013-04-16: Get the DebFile class from here because of compatibility
+# issues.  See the comments in that module for details.
+from clickpackage.install import DebFile
 
 from clickpackage.install import ClickInstaller
 from clickpackage.preinst import static_preinst
@@ -75,14 +81,14 @@ class TestClickInstaller(TestCase):
         control_dir = os.path.join(package_dir, "DEBIAN")
         with mkfile(os.path.join(control_dir, "control")) as control:
             for key, value in control_fields.items():
-                print('{}: {}'.format(key.title(), value), file=control)
+                print('%s: %s' % (key.title(), value), file=control)
             print(file=control)
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
         for name in data_files:
             touch(os.path.join(package_dir, name))
-        package_path = '{}.click'.format(package_dir)
+        package_path = '%s.click' % package_dir
         with open("/dev/null", "w") as devnull:
             subprocess.check_call(
                 ["dpkg-deb", "--nocheck", "-b", package_dir, package_path],
@@ -204,7 +210,7 @@ class TestClickInstaller(TestCase):
             self.assertEqual(
                 "test-package", ClickInstaller(self.temp_dir).audit(package))
 
-    @unittest.skipUnless(
+    @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
     def test_install(self, *args):

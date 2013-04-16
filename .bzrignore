@@ -4,3 +4,7 @@ _build/doctrees
 _build/html
 doc/_build/doctrees
 doc/_build/html
+build
+*.egg-info
+dist
+.tox

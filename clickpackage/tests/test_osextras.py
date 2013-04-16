@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -18,6 +16,10 @@
 """Unit tests for clickpackage.osextras."""
 
 from __future__ import print_function
+__all__ = [
+    'TestOSExtras',
+    ]
+
 
 import os
 

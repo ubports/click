@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Click Packages'
-copyright = u'2013, Colin Watson'
+copyright = u'2013, Canonical Ltd.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -27,6 +27,8 @@ import inspect
 import os
 import subprocess
 
+from contextlib import closing
+
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
@@ -128,13 +130,10 @@ class ClickInstaller:
         return self.audit_control(package.control)
 
     def install(self, path):
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             package_name = self.audit(package)
             inst_dir = os.path.join(self.root, package_name)
             assert os.path.dirname(inst_dir) == self.root
-        finally:
-            package.close()
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):

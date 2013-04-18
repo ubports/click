@@ -15,23 +15,37 @@
 
 """Extra OS-level utility functions."""
 
+__all__ = [
+    'ensuredir',
+    'find_on_path',
+    ]
+
+
 import os
+
+try:
+    # Python 3.3
+    from shutil import which
+    def find_on_path(command):
+        # http://bugs.python.org/issue17012
+        path = os.environ.get('PATH', os.pathsep)
+        return which(command, path=os.environ.get('PATH', path)) is not None
+except ImportError:
+    # Python 2
+    def find_on_path(command):
+        """Is command on the executable search path?"""
+        if 'PATH' not in os.environ:
+            return False
+        path = os.environ['PATH']
+        for element in path.split(os.pathsep):
+            if not element:
+                continue
+            filename = os.path.join(element, command)
+            if os.path.isfile(filename) and os.access(filename, os.X_OK):
+                return True
+        return False
 
 
 def ensuredir(directory):
     if not os.path.isdir(directory):
         os.makedirs(directory)
-
-
-def find_on_path(command):
-    """Is command on the executable search path?"""
-    if 'PATH' not in os.environ:
-        return False
-    path = os.environ['PATH']
-    for element in path.split(os.pathsep):
-        if not element:
-            continue
-        filename = os.path.join(element, command)
-        if os.path.isfile(filename) and os.access(filename, os.X_OK):
-            return True
-    return False

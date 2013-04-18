@@ -18,12 +18,18 @@
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'ClickInstaller',
+    ]
+
 
 import inspect
 import os
 import subprocess
 
-from debian.debfile import DebFile
+from contextlib import closing
+
+from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
 from clickpackage.preinst import static_preinst
@@ -31,6 +37,22 @@ from clickpackage.versions import base_version, spec_version
 
 
 CLICK_VERSION = "0.1"
+
+
+try:
+    _DebFile.close
+    DebFile = _DebFile
+except AttributeError:
+    # Yay!  The Ubuntu 13.04 version of python-debian 0.1.21
+    # debian.debfile.DebFile has a .close() method but the PyPI version of
+    # 0.1.21 does not.  It's worse than that because DebFile.close() really
+    # delegates to DebPart.close() and *that's* missing in the PyPI version.
+    # To get that working, we have to reach inside the object and name mangle
+    # the attribute.
+    class DebFile(_DebFile):
+        def close(self):
+            self.control._DebPart__member.close()
+            self.data._DebPart__member.close()
 
 
 class ClickInstaller:
@@ -108,13 +130,10 @@ class ClickInstaller:
         return self.audit_control(package.control)
 
     def install(self, path):
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             package_name = self.audit(package)
             inst_dir = os.path.join(self.root, package_name)
             assert os.path.dirname(inst_dir) == self.root
-        finally:
-            package.close()
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):

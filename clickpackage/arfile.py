@@ -26,6 +26,9 @@ Python's standard library; details of the format come from dpkg.
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'ArFile',
+    ]
 
 import os
 import shutil

@@ -18,21 +18,34 @@
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'TestClickInstaller',
+    ]
+
 
 import os
 import subprocess
+
+from contextlib import closing
 
 try:
     from unittest import mock
 except ImportError:
     import mock
+try:
+    from unittest import skipUnless
+except ImportError:
+    from unittest2 import skipUnless
+
 
 from debian.deb822 import Deb822
-from debian.debfile import DebFile
+# BAW 2013-04-16: Get the DebFile class from here because of compatibility
+# issues.  See the comments in that module for details.
+from clickpackage.install import DebFile
 
 from clickpackage.install import ClickInstaller
 from clickpackage.preinst import static_preinst
-from clickpackage.tests.helpers import TestCase, mkfile, skipUnless, touch
+from clickpackage.tests.helpers import TestCase, mkfile, touch
 
 
 def mock_quiet_subprocess_call():
@@ -54,24 +67,28 @@ class TestClickInstaller(TestCase):
         super(TestClickInstaller, self).setUp()
         self.use_temp_dir()
 
-    def make_fake_package(self, control_fields={}, control_scripts={},
-                          data_files=[]):
+    def make_fake_package(self, control_fields=None, control_scripts=None,
+                          data_files=None):
         """Build a fake package with given contents.
 
         We can afford to use dpkg-deb here since it's easy, just for testing.
         """
+        control_fields = {} if control_fields is None else control_fields
+        control_scripts = {} if control_scripts is None else control_scripts
+        data_files = [] if data_files is None else data_files
+
         package_dir = os.path.join(self.temp_dir, "fake-package")
         control_dir = os.path.join(package_dir, "DEBIAN")
         with mkfile(os.path.join(control_dir, "control")) as control:
             for key, value in control_fields.items():
-                print("%s: %s" % (key.title(), value), file=control)
+                print('%s: %s' % (key.title(), value), file=control)
             print(file=control)
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
         for name in data_files:
             touch(os.path.join(package_dir, name))
-        package_path = "%s.click" % package_dir
+        package_path = '%s.click' % package_dir
         with open("/dev/null", "w") as devnull:
             subprocess.check_call(
                 ["dpkg-deb", "--nocheck", "-b", package_dir, package_path],
@@ -80,68 +97,50 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_no_package(self):
         path = self.make_fake_package()
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Package field",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_package_bad_character(self):
         path = self.make_fake_package(control_fields={"Package": "../evil"})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "Invalid character '/' in Package: ../evil",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_no_click_version(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package"})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Click-Version field",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_bad_click_version(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package", "Click-Version": "|"})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaises(
                 ValueError,
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_new_click_version(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package", "Click-Version": "999"})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError,
                 "Click-Version: 999 newer than maximum supported version .*",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_no_click_base_system(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package", "Click-Version": "0.1"})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Click-Base-System field",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_bad_click_base_system(self):
         path = self.make_fake_package(
@@ -150,13 +149,10 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Base-System": "`",
             })
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaises(
                 ValueError,
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_new_click_base_system(self):
         path = self.make_fake_package(
@@ -165,14 +161,11 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Base-System": "999",
             })
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError,
                 "Click-Base-System: 999 newer than current version .*",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_forbids_depends(self):
         path = self.make_fake_package(
@@ -182,13 +175,10 @@ class TestClickInstaller(TestCase):
                 "Click-Base-System": "13.04",
                 "Depends": "libc6",
             })
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "Depends field is forbidden in Click packages",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_control_forbids_maintscript(self):
         path = self.make_fake_package(
@@ -201,15 +191,12 @@ class TestClickInstaller(TestCase):
                 "preinst": "#! /bin/sh\n",
                 "postinst": "#! /bin/sh\n",
             })
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError,
                 r"Maintainer scripts are forbidden in Click packages "
                 r"\(found: postinst preinst\)",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
-        finally:
-            package.close()
 
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
@@ -219,15 +206,13 @@ class TestClickInstaller(TestCase):
                 "Click-Base-System": "13.04",
             },
             control_scripts={"preinst": static_preinst})
-        package = DebFile(filename=path)
-        try:
+        with closing(DebFile(filename=path)) as package:
             self.assertEqual(
                 "test-package", ClickInstaller(self.temp_dir).audit(package))
-        finally:
-            package.close()
 
-    @skipUnless(os.path.exists(ClickInstaller(None)._preload_path()),
-                "preload bits not built; installing packages will fail")
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
     def test_install(self, *args):
         path = self.make_fake_package(
             control_fields={

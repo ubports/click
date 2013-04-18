@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -20,18 +18,41 @@
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'TestStatic',
+    ]
+
 
 import os
-import subprocess
+import sys
 
-from clickpackage import osextras
+from pkg_resources import resource_filename
+try:
+    from unittest import skipIf
+except ImportError:
+    from unittest2 import skipIf
+
+try:
+    import pep8
+except ImportError:
+    pep8 = None
+try:
+    import pyflakes
+    import pyflakes.api
+    import pyflakes.reporter
+except ImportError:
+    pyflakes = None
+
+
 from clickpackage.tests.helpers import TestCase
 
 
 class TestStatic(TestCase):
     def all_paths(self):
         paths = []
-        for dirpath, dirnames, filenames in os.walk("."):
+        start_dir = os.path.dirname(
+            resource_filename('clickpackage', '__init__.py'))
+        for dirpath, dirnames, filenames in os.walk(start_dir):
             for ignore in ('doc', ".bzr", "__pycache__"):
                 if ignore in dirnames:
                     dirnames.remove(ignore)
@@ -47,28 +68,17 @@ class TestStatic(TestCase):
                         paths.append(os.path.join(dirpath, filename))
         return paths
 
+    @skipIf('SKIP_SLOW_TESTS' in os.environ, 'Skipping slow tests')
+    @skipIf(pep8 is None, 'No pep8 package available')
     def test_pep8_clean(self):
-        if not osextras.find_on_path("pep8"):
-            return
-        if "SKIP_SLOW_TESTS" in os.environ:
-            return
-        subp = subprocess.Popen(
-            ["pep8"] + self.all_paths(),
-            stdout=subprocess.PIPE, universal_newlines=True)
-        output = subp.communicate()[0].splitlines()
-        for line in output:
-            print(line)
-        self.assertEqual(0, len(output))
+        # https://github.com/jcrocholl/pep8/issues/103
+        pep8_style = pep8.StyleGuide(ignore='E123')
+        result = pep8_style.check_files(self.all_paths())
+        self.assertEqual(result.total_errors, 0)
 
+    @skipIf('SKIP_SLOW_TESTS' in os.environ, 'Skipping slow tests')
+    @skipIf(pyflakes is None, 'No pyflakes package available')
     def test_pyflakes_clean(self):
-        if not osextras.find_on_path("pyflakes"):
-            return
-        if "SKIP_SLOW_TESTS" in os.environ:
-            return
-        subp = subprocess.Popen(
-            ["pyflakes"] + self.all_paths(),
-            stdout=subprocess.PIPE, universal_newlines=True)
-        output = subp.communicate()[0].splitlines()
-        for line in output:
-            print(line)
-        self.assertEqual(0, len(output))
+        reporter = pyflakes.reporter.Reporter(sys.stdout, sys.stderr)
+        warnings = pyflakes.api.checkRecursive(self.all_paths(), reporter)
+        self.assertEqual(0, warnings)

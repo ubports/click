@@ -18,19 +18,25 @@
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'TestCase',
+    'mkfile',
+    'touch',
+    ]
+
 
 import contextlib
 import os
 import shutil
+import sys
 import tempfile
-try:
+
+if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
-except ImportError:
+else:
     import unittest
 
 from clickpackage import osextras
-
-skipUnless = unittest.skipUnless
 
 
 class TestCase(unittest.TestCase):
@@ -41,12 +47,12 @@ class TestCase(unittest.TestCase):
         self.maxDiff = None
 
     def tearDown(self):
-        for key in set(os.environ.keys()) - set(self.save_env.keys()):
+        for key in set(os.environ) - set(self.save_env):
             del os.environ[key]
         for key, value in os.environ.items():
             if value != self.save_env[key]:
                 os.environ[key] = self.save_env[key]
-        for key in set(self.save_env.keys()) - set(os.environ.keys()):
+        for key in set(self.save_env) - set(os.environ):
             os.environ[key] = self.save_env[key]
 
     def use_temp_dir(self):
@@ -61,6 +67,7 @@ class TestCase(unittest.TestCase):
         assertCountEqual = unittest.TestCase.assertItemsEqual
     if not hasattr(unittest.TestCase, 'assertRegex'):
         assertRegex = unittest.TestCase.assertRegexpMatches
+    # Renamed in Python 3.2 to omit the trailing 'p'.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 

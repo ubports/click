@@ -25,6 +25,9 @@ use a different root of their filesystem tarball.
 from __future__ import print_function
 
 __metaclass__ = type
+__all__ = [
+    'static_preinst',
+    ]
 
 
 static_preinst = """\

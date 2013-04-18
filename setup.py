@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import re
+import sys
 
 from setuptools import find_packages, setup
 
@@ -18,6 +19,21 @@ with open("debian/changelog") as changelog:
     version = match.group(1)
 
 
+requirements = []
+def require(package, pypi_name=None):
+    try:
+        __import__(package)
+    except ImportError:
+        requirements.append(package if pypi_name is None else pypi_name)
+
+
+require('debian', 'python-debian')
+require('mock')
+require('chardet')
+if sys.version_info[:2] == (2, 6):
+    requirements.append('unittest2')
+
+
 setup(
     name="click-package",
     version=version,
@@ -30,5 +46,6 @@ setup(
         'bin/click-build',
         'bin/click-install',
     ],
+    install_requires=requirements,
     test_suite="clickpackage.tests",
 )

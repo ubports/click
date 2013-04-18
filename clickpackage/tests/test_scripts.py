@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -18,17 +16,25 @@
 """Test that all top-level scripts work."""
 
 __metaclass__ = type
+__all__ = [
+    'TestScripts',
+    ]
 
 import os
 import subprocess
+
+try:
+    from unittest import skipIf
+except ImportError:
+    # Python 2.6
+    from unittest2 import skipIf
 
 from clickpackage.tests.helpers import TestCase
 
 
 class TestScripts(TestCase):
+    @skipIf('SKIP_SLOW_TESTS' in os.environ, 'Skipping slow tests')
     def test_scripts(self):
-        if "SKIP_SLOW_TESTS" in os.environ:
-            return
         self.longMessage = True
         paths = []
         for dirpath, _, filenames in os.walk("bin"):

@@ -206,9 +206,8 @@ class TestClickInstaller(TestCase):
                 "Click-Base-System": "13.04",
             },
             control_scripts={"preinst": static_preinst})
-        with closing(DebFile(filename=path)) as package:
-            self.assertEqual(
-                "test-package", ClickInstaller(self.temp_dir).audit(package))
+        self.assertEqual(
+            "test-package", ClickInstaller(self.temp_dir).audit(path))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),

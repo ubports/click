@@ -126,14 +126,14 @@ class ClickInstaller:
 
         return package_name
 
-    def audit(self, package):
-        return self.audit_control(package.control)
+    def audit(self, path):
+        with closing(DebFile(filename=path)) as package:
+            return self.audit_control(package.control)
 
     def install(self, path):
-        with closing(DebFile(filename=path)) as package:
-            package_name = self.audit(package)
-            inst_dir = os.path.join(self.root, package_name)
-            assert os.path.dirname(inst_dir) == self.root
+        package_name = self.audit(path)
+        inst_dir = os.path.join(self.root, package_name)
+        assert os.path.dirname(inst_dir) == self.root
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):

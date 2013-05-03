@@ -153,7 +153,6 @@ class ClickInstaller:
             "--admindir", os.path.join(inst_dir, ".click"),
             "--path-exclude", "/.click/*",
             "--log", os.path.join(self.root, ".click.log"),
-            # TODO: --status-fd etc. integration?
             "--no-triggers",
             "--install", path,
         ]

@@ -75,14 +75,14 @@ class ClickBuilder:
             for filename in filenames:
                 yield os.path.join(rel_dirpath, filename)
 
-    def read_metadata(self, metadata_path):
-        with open(metadata_path) as metadata:
-            self.metadata = json.load(metadata)
-        self.name = self.metadata["name"]
-        self.version = self.metadata["version"]
-        self.maintainer = self.metadata["maintainer"]
-        self.description = self.metadata["description"]
-        self.architecture = self.metadata.get("architecture", "all")
+    def read_manifest(self, manifest_path):
+        with open(manifest_path) as manifest:
+            self.manifest = json.load(manifest)
+        self.name = self.manifest["name"]
+        self.version = self.manifest["version"]
+        self.maintainer = self.manifest["maintainer"]
+        self.description = self.manifest["description"]
+        self.architecture = self.manifest.get("architecture", "all")
 
     def _filter_dot_click(self, tarinfo):
         """Filter out attempts to include .click at the top level."""
@@ -90,7 +90,7 @@ class ClickBuilder:
             return None
         return tarinfo
 
-    def build(self, dest_dir, metadata_path=None):
+    def build(self, dest_dir, manifest_path=None):
         with make_temp_dir() as temp_dir:
             # Data area
             root_path = os.path.join(temp_dir, "data")
@@ -100,11 +100,11 @@ class ClickBuilder:
                 real_dest_path = os.path.join(root_path, dest_path)
                 shutil.copytree(source_path, real_dest_path)
 
-            real_metadata_path = os.path.join(root_path, "metadata.json")
-            if metadata_path is not None:
-                shutil.copy2(metadata_path, real_metadata_path)
-            os.chmod(real_metadata_path, 0o644)
-            self.read_metadata(real_metadata_path)
+            real_manifest_path = os.path.join(root_path, "manifest.json")
+            if manifest_path is not None:
+                shutil.copy2(manifest_path, real_manifest_path)
+            os.chmod(real_manifest_path, 0o644)
+            self.read_manifest(real_manifest_path)
 
             data_tar_path = os.path.join(temp_dir, "data.tar.gz")
             with contextlib.closing(FakerootTarFile.open(

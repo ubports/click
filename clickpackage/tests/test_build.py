@@ -50,19 +50,19 @@ def umask(force_umask):
 
 
 class TestClickBuilder(TestCase):
-    def test_read_metadata(self):
+    def test_read_manifest(self):
         self.use_temp_dir()
-        metadata_path = os.path.join(self.temp_dir, "metadata.json")
-        with mkfile(metadata_path) as metadata:
+        manifest_path = os.path.join(self.temp_dir, "manifest.json")
+        with mkfile(manifest_path) as manifest:
             print(dedent("""\
                 {
                     "name": "test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
                     "description": "test description"
-                }"""), file=metadata)
+                }"""), file=manifest)
         builder = ClickBuilder()
-        builder.read_metadata(metadata_path)
+        builder.read_manifest(manifest_path)
         self.assertEqual("test", builder.name)
         self.assertEqual("1.0", builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", builder.maintainer)
@@ -91,7 +91,7 @@ class TestClickBuilder(TestCase):
             f.write("test /bin/foo\n")
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
-        with mkfile(os.path.join(scratch, "metadata.json")) as f:
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
             f.write(json.dumps({
                 "name": "test",
                 "version": "1.0",
@@ -122,7 +122,7 @@ class TestClickBuilder(TestCase):
             self.extract_control_file(path, "md5sums"),
             r"^"
             r"eb774c3ead632b397d6450d1df25e001  bin/foo\n"
-            r".*  metadata.json\n"
+            r".*  manifest.json\n"
             r"49327ce6306df8a87522456b14a179e0  toplevel\n"
             r"$")
         self.assertEqual(
@@ -139,19 +139,19 @@ class TestClickBuilder(TestCase):
         for rel_path in (
             os.path.join("bin", "foo"),
             "toplevel",
-            "metadata.json",
+            "manifest.json",
         ):
             with open(os.path.join(scratch, rel_path)) as source, \
                     open(os.path.join(extract_path, rel_path)) as target:
                 self.assertEqual(source.read(), target.read())
-        metadata_path = os.path.join(extract_path, "metadata.json")
-        self.assertEqual(0o644, stat.S_IMODE(os.stat(metadata_path).st_mode))
+        manifest_path = os.path.join(extract_path, "manifest.json")
+        self.assertEqual(0o644, stat.S_IMODE(os.stat(manifest_path).st_mode))
 
     def test_build_excludes_dot_click(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
         touch(os.path.join(scratch, ".click", "evil-file"))
-        with mkfile(os.path.join(scratch, "metadata.json")) as f:
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
             f.write(json.dumps({
                 "name": "test",
                 "version": "1.0",
@@ -164,4 +164,4 @@ class TestClickBuilder(TestCase):
         path = builder.build(self.temp_dir)
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
-        self.assertEqual(["metadata.json"], os.listdir(extract_path))
+        self.assertEqual(["manifest.json"], os.listdir(extract_path))

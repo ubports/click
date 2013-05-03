@@ -32,15 +32,15 @@ from clickpackage.build import ClickBuilder
 def main():
     parser = OptionParser("%prog [options] DIRECTORY")
     parser.add_option(
-        "-m", "--metadata", metavar="PATH",
-        help="read package metadata from PATH")
+        "-m", "--manifest", metavar="PATH",
+        help="read package manifest from PATH")
     options, args = parser.parse_args()
     if len(args) < 1:
         parser.error("need directory")
     directory = args[0]
     builder = ClickBuilder()
     builder.add_file(directory, "./")
-    path = builder.build(".", metadata_path=options.metadata)
+    path = builder.build(".", manifest_path=options.manifest)
     print("Successfully built package in '%s'." % path)
 
 

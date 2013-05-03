@@ -32,10 +32,7 @@ try:
     from unittest import mock
 except ImportError:
     import mock
-try:
-    from unittest import skipUnless
-except ImportError:
-    from unittest2 import skipUnless
+from unittest import skipUnless
 
 
 from debian.deb822 import Deb822

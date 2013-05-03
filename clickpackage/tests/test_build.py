@@ -33,9 +33,6 @@ from clickpackage.build import ClickBuilder
 from clickpackage.preinst import static_preinst
 from clickpackage.tests.helpers import TestCase, mkfile, touch
 
-# Python 2.6's subprocess module has no check_output().
-from clickpackage.build import check_output
-
 
 # BAW 2013-04-15: Some tests require umask 022.  Use this decorator to
 # temporarily tweak the process's umask.  The test -- or system -- should
@@ -78,12 +75,12 @@ class TestClickBuilder(TestCase):
         self.assertEqual({"/nonexistent": "target"}, builder.file_map)
 
     def extract_field(self, path, name):
-        return check_output(
+        return subprocess.check_output(
             ["dpkg-deb", "-f", path, name],
             universal_newlines=True).rstrip("\n")
 
     def extract_control_file(self, path, name):
-        return check_output(
+        return subprocess.check_output(
             ["dpkg-deb", "-I", path, name], universal_newlines=True)
 
     @umask(0o22)
@@ -130,14 +127,13 @@ class TestClickBuilder(TestCase):
             r"$")
         self.assertEqual(
             static_preinst, self.extract_control_file(path, "preinst"))
-        contents = check_output(
+        contents = subprocess.check_output(
             ["dpkg-deb", "-c", path], universal_newlines=True)
         self.assertRegex(contents, r"^drwxr-xr-x root/root         0 .* \./\n")
-        # In Python 2.6 the path names do not start with ./
         self.assertRegex(
-            contents, "\n-rw-r--r-- root/root        14 .* (\./)?bin/foo\n")
+            contents, "\n-rw-r--r-- root/root        14 .* \./bin/foo\n")
         self.assertRegex(
-            contents, "\n-rw-r--r-- root/root        15 .* (\./)?toplevel\n")
+            contents, "\n-rw-r--r-- root/root        15 .* \./toplevel\n")
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         for rel_path in (
@@ -145,10 +141,9 @@ class TestClickBuilder(TestCase):
             "toplevel",
             "metadata.json",
         ):
-            # Yay for Python 2.6 compatibility. :/
-            with open(os.path.join(scratch, rel_path)) as source:
-                with open(os.path.join(extract_path, rel_path)) as target:
-                    self.assertEqual(source.read(), target.read())
+            with open(os.path.join(scratch, rel_path)) as source, \
+                    open(os.path.join(extract_path, rel_path)) as target:
+                self.assertEqual(source.read(), target.read())
         metadata_path = os.path.join(extract_path, "metadata.json")
         self.assertEqual(0o644, stat.S_IMODE(os.stat(metadata_path).st_mode))
 

@@ -21,18 +21,14 @@ full-system installations or upgrades.
 Compatibility
 =============
 
-Currently, this package should remain compatible with Python 2.6, 2.7, 3.2,
-and 3.3.
+Currently, this package should remain compatible with Python 2.7 and 3.3.
 
 
 Dependencies
 ------------
 
 For Ubuntu 13.04, make sure you have the *python2.7* and *python3.3* packages
-installed.  Unless you upgraded from a previous version of Ubuntu and haven't
-removed them yet, you won't have Python 2.6 or 3.2 available.  Build these
-from source if necessary, install them say into ``/usr/local`` and make sure
-they are on your ``$PATH``.
+installed.
 
 You'll need *gcc* in order to build the preload shared library.  Assuming you
 have this, do the following::
@@ -55,10 +51,6 @@ apt-get install the following packages::
  * python-mock
  * python-debian
  * python3-debian
-
-For Python 2.6, you'll also need the ``unittest2`` and ``chardet`` libraries,
-though I think these should get downloaded from PyPI automatically if you
-don't have them.
 
 
 Testing

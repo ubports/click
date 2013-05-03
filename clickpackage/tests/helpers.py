@@ -28,12 +28,10 @@ __all__ = [
 import contextlib
 import os
 import shutil
-import sys
 import tempfile
-
-if sys.version_info[:2] == (2, 6):
+try:
     import unittest2 as unittest
-else:
+except ImportError:
     import unittest
 
 from clickpackage import osextras

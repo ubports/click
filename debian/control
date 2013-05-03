@@ -3,10 +3,10 @@ Section: admin
 Priority: optional
 Maintainer: Colin Watson <cjwatson@ubuntu.com>
 Standards-Version: 3.9.4
-Build-Depends: debhelper (>= 7.0.50~), python3 (>= 3.2), python3-all, python3-setuptools, python3-debian, python3 (>= 3.3) | python3-mock, pep8, pyflakes
+Build-Depends: debhelper (>= 7.0.50~), python3 (>= 3.3), python3-all, python3-setuptools, python3-debian, pep8, pyflakes
 Vcs-Bzr: http://bazaar.launchpad.net/+branch/click-package
-X-Python-Version: >= 2.6
-X-Python3-Version: >= 3.0
+X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.3
 
 Package: click-install
 Architecture: all

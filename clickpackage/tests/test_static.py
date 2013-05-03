@@ -25,12 +25,9 @@ __all__ = [
 
 import os
 import sys
+from unittest import skipIf
 
 from pkg_resources import resource_filename
-try:
-    from unittest import skipIf
-except ImportError:
-    from unittest2 import skipIf
 
 try:
     import pep8

@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import re
-import sys
 
 from setuptools import find_packages, setup
 
@@ -30,8 +29,6 @@ def require(package, pypi_name=None):
 require('debian', 'python-debian')
 require('mock')
 require('chardet')
-if sys.version_info[:2] == (2, 6):
-    requirements.append('unittest2')
 
 
 setup(

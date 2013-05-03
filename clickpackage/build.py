@@ -30,7 +30,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tarfile
 import tempfile
 from textwrap import dedent
@@ -39,26 +38,6 @@ from clickpackage import osextras
 from clickpackage.arfile import ArFile
 from clickpackage.preinst import static_preinst
 from clickpackage.versions import base_version, spec_version
-
-
-try:
-    from subprocess import check_output
-except ImportError:
-    # Python 2.6.  Steal the guts of this from Python 2.7.
-    def check_output(*popenargs, **kwargs):
-        if 'stdout' in kwargs:
-            raise ValueError(
-                'stdout argument not allowed, it will be overridden.')
-        process = subprocess.Popen(stdout=subprocess.PIPE,
-                                   *popenargs, **kwargs)
-        output, unused_err = process.communicate()
-        retcode = process.poll()
-        if retcode:
-            cmd = kwargs.get("args")
-            if cmd is None:
-                cmd = popenargs[0]
-            raise subprocess.CalledProcessError(retcode, cmd, output=output)
-        return output
 
 
 @contextlib.contextmanager
@@ -74,32 +53,11 @@ def make_temp_dir():
 class FakerootTarFile(tarfile.TarFile):
     """A version of TarFile which pretends all files are owned by root:root."""
 
-    # Python 2.6's TarFile.add() method does not take a `filter` argument
-    # (this was added in Python 2.7).  It's too difficult to override add()
-    # for compatibility, so we fake it by setting the self._filter attribute
-    # and checking that in gettarinfo().  Blech, but seems like the best we
-    # can do until we drop 2.6 compatibility.
-    #
-    # It sucks worse too because .add() calls itself recursively.  In the >=
-    # Python 2.7 version, it of course passes the filter argument to itself,
-    # but the Python 2.6 version doesn't do this.  There's really no good way
-    # to emulate this in 2.6 without copying the entire implementation of
-    # .add() from 2.7.  It should be a good enough fake to just keep the old
-    # value of _tarinfo_filter if it's already been set.  Maybe.
-    _tarinfo_filter = None
-
     def gettarinfo(self, *args, **kwargs):
         tarinfo = super(FakerootTarFile, self).gettarinfo(*args, **kwargs)
         tarinfo.uid = tarinfo.gid = 0
         tarinfo.uname = tarinfo.gname = "root"
-        if self._tarinfo_filter is not None:
-            tarinfo = self._tarinfo_filter(tarinfo)
         return tarinfo
-
-    if sys.version_info[:2] == (2, 6):
-        def add(self, *args, **kwargs):
-            self._tarinfo_filter = kwargs.pop('filter', self._tarinfo_filter)
-            return super(FakerootTarFile, self).add(*args, **kwargs)
 
 
 class ClickBuilder:
@@ -128,11 +86,7 @@ class ClickBuilder:
 
     def _filter_dot_click(self, tarinfo):
         """Filter out attempts to include .click at the top level."""
-        # In Python 2.6, tarinfo.names don't start with ./
-        name = tarinfo.name
-        if name.startswith('./'):
-            name = name[2:]
-        if name == '.click' or name.startswith('.click/'):
+        if tarinfo.name == './.click' or tarinfo.name.startswith('./.click/'):
             return None
         return tarinfo
 
@@ -160,7 +114,7 @@ class ClickBuilder:
                     root_path, arcname="./", filter=self._filter_dot_click)
 
             # Control area.
-            du_output = check_output(
+            du_output = subprocess.check_output(
                 ["du", "-k", "-s", "--apparent-size", "."],
                 cwd=temp_dir, universal_newlines=True).rstrip("\n")
             match = re.match(r"^(\d+)\s+\.$", du_output)

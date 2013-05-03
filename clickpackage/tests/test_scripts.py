@@ -22,12 +22,7 @@ __all__ = [
 
 import os
 import subprocess
-
-try:
-    from unittest import skipIf
-except ImportError:
-    # Python 2.6
-    from unittest2 import skipIf
+from unittest import skipIf
 
 from clickpackage.tests.helpers import TestCase
 

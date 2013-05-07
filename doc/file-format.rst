@@ -34,21 +34,32 @@ the file extension remaining .click; it may change in the future.
 Control area
 ============
 
-Every Click package must include the following two control fields:
+Every Click package must include the following control fields:
 
+ * Package: unique name for the application
  * Click-Version: the current version number of this specification
  * Click-Base-System: the current version number of the base system
 
-The package manager must refuse to process packages where either field is
-missing or unparseable.  It must refuse to process packages where either
-version compares newer than the corresponding version it implements
-(according to rules equivalent to "dpkg --compare-versions").  It may refuse
-to process packages whose Click-Version field has an older major number than
-the version it implements (although future developers are encouraged to
-maintain the maximum possible degree of compatibility with packages in the
-wild).  It may refuse to process packages whose Click-Base-System field is
-older than the version it implements, depending on library compatibility
-decisions made by the maintainers of that base system.
+The package manager must refuse to process packages where any of these
+fields are missing or unparseable.  It must refuse to process packages where
+either Click-Version or Click-Base-System compares newer than the
+corresponding version it implements (according to rules equivalent to "dpkg
+--compare-versions").  It may refuse to process packages whose Click-Version
+field has an older major number than the version it implements (although
+future developers are encouraged to maintain the maximum possible degree of
+compatibility with packages in the wild).  It may refuse to process packages
+whose Click-Base-System field is older than the version it implements,
+depending on library compatibility decisions made by the maintainers of that
+base system.
+
+The Package field identifies the application; every package in the app store
+has a unique Package identifier, and the app store will reject clashes.  It
+is the developer's responsibility to choose a unique identifier.  The
+recommended approach is to follow the Java package name convention, i.e.
+"com.mydomain.myapp", starting with the reverse of an Internet domain name
+owned by the person or organisation developing the application; note that it
+is not necessary for the application to contain any Java code in order to
+use this convention.
 
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click base system, managed elsewhere.

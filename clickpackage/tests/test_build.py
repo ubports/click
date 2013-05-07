@@ -56,14 +56,14 @@ class TestClickBuilder(TestCase):
         with mkfile(manifest_path) as manifest:
             print(dedent("""\
                 {
-                    "name": "test",
+                    "name": "com.ubuntu.test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
                     "description": "test description"
                 }"""), file=manifest)
         builder = ClickBuilder()
         builder.read_manifest(manifest_path)
-        self.assertEqual("test", builder.name)
+        self.assertEqual("com.ubuntu.test", builder.name)
         self.assertEqual("1.0", builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", builder.maintainer)
         self.assertEqual("test description", builder.description)
@@ -93,7 +93,7 @@ class TestClickBuilder(TestCase):
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             f.write(json.dumps({
-                "name": "test",
+                "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "description": "test description",
@@ -103,11 +103,11 @@ class TestClickBuilder(TestCase):
             os.fchmod(f.fileno(), 0o600)
         builder = ClickBuilder()
         builder.add_file(scratch, "/")
-        path = os.path.join(self.temp_dir, "test_1.0_all.click")
+        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_all.click")
         self.assertEqual(path, builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         for key, value in (
-            ("Package", "test"),
+            ("Package", "com.ubuntu.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.1"),
             ("Click-Base-System", "13.04"),
@@ -153,7 +153,7 @@ class TestClickBuilder(TestCase):
         touch(os.path.join(scratch, ".click", "evil-file"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             f.write(json.dumps({
-                "name": "test",
+                "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "description": "test description",

@@ -25,7 +25,7 @@ endif
 override_dh_auto_clean:
 	dh_auto_clean
 	$(MAKE) -C preload clean
-	rm -rf build *.egg-info
+	rm -rf build *.egg-info .tox
 	find -name __pycache__ -print0 | xargs -0r rm -rf
 
 override_dh_auto_install:

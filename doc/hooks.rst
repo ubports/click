@@ -67,9 +67,9 @@ strawman proposal, consider the following:
    (see below).
 
    The value of Pattern is a printf format string which must contain exactly
-   one %s substitution: the package manager substitutes an identifier
-   provided by the Click package into it and creates the resulting path as a
-   symlink to a path provided by the Click package.
+   one %s substitution: the package manager substitutes the unique Click
+   package name (e.g. com.example.app) into it and creates the resulting
+   path as a symlink to a path provided by the Click package.
 
    If the Exec key is present, its value is executed as if passed to the
    shell after the above symlink is created.
@@ -108,7 +108,7 @@ Thus, a worked example would have::
     Hook: dbus-service
     Pattern: /usr/share/dbus-1/services/click-%s.service
 
-  unity-scope-manpages/manifest.json:
+  com.ubuntu.unity-scope-manpages/manifest.json:
     "hooks": {
         "unity-lens-help": "help/unity-scope-manpages.scope",
         "dbus-service": "services/unity-scope-manpages.service",
@@ -121,6 +121,3 @@ TODO: copy rather than symlink, for additional robustness?
 TODO: D-Bus services are an awkward case because they contain a full path in
 the Exec line; this will probably require some kind of declarative
 substitution capability too
-
-TODO: use UUIDs instead of Click package names so that we never have to
-worry about conflicts, renaming, etc.?

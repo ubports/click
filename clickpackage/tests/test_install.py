@@ -131,37 +131,37 @@ class TestClickInstaller(TestCase):
                 "Click-Version: 999 newer than maximum supported version .*",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_no_click_base_system(self):
+    def test_audit_control_no_click_profile(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package", "Click-Version": "0.1"})
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
-                ValueError, "No Click-Base-System field",
+                ValueError, "No Click-Profile field",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_bad_click_base_system(self):
+    def test_audit_control_bad_click_profile(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Base-System": "`",
+                "Click-Profile": "`",
             })
         with closing(DebFile(filename=path)) as package:
             self.assertRaises(
                 ValueError,
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_new_click_base_system(self):
+    def test_audit_control_new_click_profile(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Base-System": "999",
+                "Click-Profile": "999",
             })
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError,
-                "Click-Base-System: 999 newer than current version .*",
+                "Click-Profile: 999 newer than current version .*",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
     def test_audit_control_forbids_depends(self):
@@ -169,7 +169,7 @@ class TestClickInstaller(TestCase):
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Base-System": "13.04",
+                "Click-Profile": "13.04",
                 "Depends": "libc6",
             })
         with closing(DebFile(filename=path)) as package:
@@ -182,7 +182,7 @@ class TestClickInstaller(TestCase):
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Base-System": "13.04",
+                "Click-Profile": "13.04",
             },
             control_scripts={
                 "preinst": "#! /bin/sh\n",
@@ -200,7 +200,7 @@ class TestClickInstaller(TestCase):
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Base-System": "13.04",
+                "Click-Profile": "13.04",
             },
             control_scripts={"preinst": static_preinst})
         self.assertEqual(
@@ -218,7 +218,7 @@ class TestClickInstaller(TestCase):
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.1",
-                "Click-Base-System": "13.04",
+                "Click-Profile": "13.04",
             },
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
@@ -240,5 +240,5 @@ class TestClickInstaller(TestCase):
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
             "Click-Version": "0.1",
-            "Click-Base-System": "13.04",
+            "Click-Profile": "13.04",
         }, status[0])

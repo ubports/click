@@ -129,7 +129,7 @@ class ClickBuilder:
                     Package: %s
                     Version: %s
                     Click-Version: %s
-                    Click-Base-System: %s
+                    Click-Profile: %s
                     Architecture: %s
                     Maintainer: %s
                     Installed-Size: %s

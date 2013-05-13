@@ -37,6 +37,7 @@ Control area
 Every Click package must include the following control fields:
 
  * Package: unique name for the application
+ * Version: version number of the application
  * Click-Version: the current version number of this specification
  * Click-Framework: the system framework for which the package was built
 
@@ -64,6 +65,9 @@ recommended approach is to follow the Java package name convention, i.e.
 owned by the person or organisation developing the application; note that it
 is not necessary for the application to contain any Java code in order to
 use this convention.
+
+The Version field provides a unique version for the application, following
+Debian version numbering rules.
 
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click system framework they declare.

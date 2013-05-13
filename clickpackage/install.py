@@ -32,6 +32,7 @@ from contextlib import closing
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
+from clickpackage import osextras
 from clickpackage.preinst import static_preinst
 from clickpackage.versions import spec_version
 
@@ -94,6 +95,11 @@ class ClickInstaller:
                 "Invalid character '/' in Package: %s" % package_name)
 
         try:
+            package_version = control_fields["Version"]
+        except KeyError:
+            raise ValueError("No Version field")
+
+        try:
             click_version = Version(control_fields["Click-Version"])
         except KeyError:
             raise ValueError("No Click-Version field")
@@ -130,16 +136,17 @@ class ClickInstaller:
                 "(found: %s)" %
                 " ".join(sorted(scripts)))
 
-        return package_name
+        return package_name, package_version
 
     def audit(self, path):
         with closing(DebFile(filename=path)) as package:
             return self.audit_control(package.control)
 
     def install(self, path):
-        package_name = self.audit(path)
-        inst_dir = os.path.join(self.root, package_name)
-        assert os.path.dirname(inst_dir) == self.root
+        package_name, package_version = self.audit(path)
+        package_dir = os.path.join(self.root, package_name)
+        inst_dir = os.path.join(package_dir, package_version)
+        assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):
@@ -168,3 +175,11 @@ class ClickInstaller:
             preloads.append(env["LD_PRELOAD"])
         env["LD_PRELOAD"] = " ".join(preloads)
         subprocess.check_call(command, env=env)
+
+        current_path = os.path.join(package_dir, "current")
+        new_path = os.path.join(package_dir, "current.new")
+        osextras.unlink_force(new_path)
+        os.symlink(package_version, new_path)
+        os.rename(new_path, current_path)
+
+        # TODO: garbage-collect old directories

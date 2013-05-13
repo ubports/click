@@ -60,3 +60,19 @@ class TestOSExtras(TestCase):
         touch(os.path.join(bin_dir, "program"))
         os.environ["PATH"] = bin_dir
         self.assertFalse(osextras.find_on_path("program"))
+
+    def test_unlink_file_present(self):
+        path = os.path.join(self.temp_dir, "file")
+        touch(path)
+        osextras.unlink_force(path)
+        self.assertFalse(os.path.exists(path))
+
+    def test_unlink_file_missing(self):
+        path = os.path.join(self.temp_dir, "file")
+        osextras.unlink_force(path)
+        self.assertFalse(os.path.exists(path))
+
+    def test_unlink_oserror(self):
+        path = os.path.join(self.temp_dir, "dir")
+        os.mkdir(path)
+        self.assertRaises(OSError, osextras.unlink_force, path)

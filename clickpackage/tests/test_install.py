@@ -112,9 +112,17 @@ class TestClickInstaller(TestCase):
                 ValueError, "Invalid character '/' in Package: ../evil",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_no_click_version(self):
+    def test_audit_control_no_version(self):
         path = self.make_fake_package(
             control_fields={"Package": "test-package"})
+        with closing(DebFile(filename=path)) as package:
+            self.assertRaisesRegex(
+                ValueError, "No Version field",
+                ClickInstaller(self.temp_dir).audit_control, package.control)
+
+    def test_audit_control_no_click_version(self):
+        path = self.make_fake_package(
+            control_fields={"Package": "test-package", "Version": "1.0"})
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Click-Version field",
@@ -122,7 +130,11 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_bad_click_version(self):
         path = self.make_fake_package(
-            control_fields={"Package": "test-package", "Click-Version": "|"})
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "|",
+            })
         with closing(DebFile(filename=path)) as package:
             self.assertRaises(
                 ValueError,
@@ -130,7 +142,11 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_new_click_version(self):
         path = self.make_fake_package(
-            control_fields={"Package": "test-package", "Click-Version": "999"})
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "999",
+            })
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError,
@@ -139,7 +155,11 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_no_click_framework(self):
         path = self.make_fake_package(
-            control_fields={"Package": "test-package", "Click-Version": "0.1"})
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+            })
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Click-Framework field",
@@ -149,6 +169,7 @@ class TestClickInstaller(TestCase):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
+                "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "missing",
             })
@@ -163,6 +184,7 @@ class TestClickInstaller(TestCase):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
+                "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "missing",
             })
@@ -175,6 +197,7 @@ class TestClickInstaller(TestCase):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
+                "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
                 "Depends": "libc6",
@@ -190,6 +213,7 @@ class TestClickInstaller(TestCase):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
+                "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
@@ -210,13 +234,14 @@ class TestClickInstaller(TestCase):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
+                "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst})
         installer = ClickInstaller(self.temp_dir)
         self.make_framework(installer, "ubuntu-sdk-13.10")
-        self.assertEqual("test-package", installer.audit(path))
+        self.assertEqual(("test-package", "1.0"), installer.audit(path))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -240,7 +265,11 @@ class TestClickInstaller(TestCase):
         with mock_quiet_subprocess_call():
             installer.install(path)
         self.assertCountEqual([".click.log", "test-package"], os.listdir(root))
-        inst_dir = os.path.join(root, "test-package")
+        package_dir = os.path.join(root, "test-package")
+        self.assertCountEqual(["1.0", "current"], os.listdir(package_dir))
+        inst_dir = os.path.join(package_dir, "current")
+        self.assertTrue(os.path.islink(inst_dir))
+        self.assertEqual("1.0", os.readlink(inst_dir))
         self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
         status_path = os.path.join(inst_dir, ".click", "status")
         with open(status_path) as status_file:

@@ -18,9 +18,11 @@
 __all__ = [
     'ensuredir',
     'find_on_path',
+    'unlink_force',
     ]
 
 
+import errno
 import os
 
 try:
@@ -49,3 +51,12 @@ except ImportError:
 def ensuredir(directory):
     if not os.path.isdir(directory):
         os.makedirs(directory)
+
+
+def unlink_force(path):
+    """Unlink path, without worrying about whether it exists."""
+    try:
+        os.unlink(path)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise

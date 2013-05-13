@@ -66,12 +66,12 @@ is not necessary for the application to contain any Java code in order to
 use this convention.
 
 All dependency relations are forbidden.  Packages implicitly depend on the
-entire contents of the Click base system, managed elsewhere.
+entire contents of the Click system framework they declare.
 
 Maintainer scripts are forbidden, with one exception: see below.  (If they
 are permitted in future, they will at most be required to consist only of
 verified debhelper-generated fragments that can be statically analysed.)
-Packages in the Click base system are encouraged to provide file triggers
+Packages in Click system frameworks are encouraged to provide file triggers
 where appropriate (e.g. "interest /usr/share/facility"); these will be
 processed as normal for dpkg file triggers.
 

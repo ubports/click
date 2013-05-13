@@ -79,6 +79,7 @@ Contents:
    file-format.rst
    constraints.rst
    hooks.rst
+   todo.rst
 
 
 Indices and tables

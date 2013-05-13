@@ -16,6 +16,3 @@
 """Click package versioning."""
 
 spec_version = "0.1"
-# TODO: This should probably be derived (quickly!) from the system rather
-# than hardcoded here.
-base_version = "13.04"

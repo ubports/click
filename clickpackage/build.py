@@ -37,7 +37,7 @@ from textwrap import dedent
 from clickpackage import osextras
 from clickpackage.arfile import ArFile
 from clickpackage.preinst import static_preinst
-from clickpackage.versions import base_version, spec_version
+from clickpackage.versions import spec_version
 
 
 @contextlib.contextmanager
@@ -83,6 +83,7 @@ class ClickBuilder:
         self.maintainer = self.manifest["maintainer"]
         self.description = self.manifest["description"]
         self.architecture = self.manifest.get("architecture", "all")
+        self.framework = self.manifest["framework"]
 
     def _filter_dot_click(self, tarinfo):
         """Filter out attempts to include .click at the top level."""
@@ -134,7 +135,7 @@ class ClickBuilder:
                     Maintainer: %s
                     Installed-Size: %s
                     Description: %s""" % (
-                    self.name, self.version, spec_version, base_version,
+                    self.name, self.version, spec_version, self.framework,
                     self.architecture, self.maintainer, installed_size,
                     self.description)),
                     file=control)

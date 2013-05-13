@@ -38,19 +38,23 @@ Every Click package must include the following control fields:
 
  * Package: unique name for the application
  * Click-Version: the current version number of this specification
- * Click-Framework: the current version number of the base system
+ * Click-Framework: the system framework for which the package was built
 
 The package manager must refuse to process packages where any of these
 fields are missing or unparseable.  It must refuse to process packages where
-either Click-Version or Click-Framework compares newer than the
-corresponding version it implements (according to rules equivalent to "dpkg
---compare-versions").  It may refuse to process packages whose Click-Version
-field has an older major number than the version it implements (although
-future developers are encouraged to maintain the maximum possible degree of
-compatibility with packages in the wild).  It may refuse to process packages
-whose Click-Framework field is older than the version it implements,
-depending on library compatibility decisions made by the maintainers of that
-base system.
+Click-Version compares newer than the corresponding version it implements
+(according to rules equivalent to "dpkg --compare-versions").  It may refuse
+to process packages whose Click-Version field has an older major number than
+the version it implements (although future developers are encouraged to
+maintain the maximum possible degree of compatibility with packages in the
+wild).  It must refuse to process packages where the Click-Framework field
+does not declare a framework implemented by the system on which the package
+is being installed.
+
+For future expansion (e.g. applications that require multiple frameworks),
+the syntax of the Click-Framework field is formally that of a Debian
+dependency relationship field.  Currently, only a simple name is permitted,
+e.g. "Click-Framework: ubuntu-sdk-13.10".
 
 The Package field identifies the application; every package in the app store
 has a unique Package identifier, and the app store will reject clashes.  It

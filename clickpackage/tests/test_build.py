@@ -59,7 +59,8 @@ class TestClickBuilder(TestCase):
                     "name": "com.ubuntu.test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
-                    "description": "test description"
+                    "description": "test description",
+                    "framework": "ubuntu-sdk-13.10"
                 }"""), file=manifest)
         builder = ClickBuilder()
         builder.read_manifest(manifest_path)
@@ -98,6 +99,7 @@ class TestClickBuilder(TestCase):
                 "maintainer": "Foo Bar <foo@example.org>",
                 "description": "test description",
                 "architecture": "all",
+                "framework": "ubuntu-sdk-13.10",
             }))
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
@@ -110,7 +112,7 @@ class TestClickBuilder(TestCase):
             ("Package", "com.ubuntu.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.1"),
-            ("Click-Framework", "13.04"),
+            ("Click-Framework", "ubuntu-sdk-13.10"),
             ("Architecture", "all"),
             ("Maintainer", "Foo Bar <foo@example.org>"),
             ("Description", "test description"),
@@ -158,6 +160,7 @@ class TestClickBuilder(TestCase):
                 "maintainer": "Foo Bar <foo@example.org>",
                 "description": "test description",
                 "architecture": "all",
+                "framework": "ubuntu-sdk-13.10",
             }))
         builder = ClickBuilder()
         builder.add_file(scratch, "/")

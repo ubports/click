@@ -40,6 +40,7 @@ from debian.deb822 import Deb822
 # issues.  See the comments in that module for details.
 from clickpackage.install import DebFile
 
+from clickpackage import osextras
 from clickpackage.install import ClickInstaller
 from clickpackage.preinst import static_preinst
 from clickpackage.tests.helpers import TestCase, mkfile, touch
@@ -92,6 +93,11 @@ class TestClickInstaller(TestCase):
                 stdout=devnull, stderr=devnull)
         return package_path
 
+    def make_framework(self, installer, name):
+        installer.frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+        osextras.ensuredir(installer.frameworks_dir)
+        touch(os.path.join(installer.frameworks_dir, "%s.framework" % name))
+
     def test_audit_control_no_package(self):
         path = self.make_fake_package()
         with closing(DebFile(filename=path)) as package:
@@ -139,72 +145,78 @@ class TestClickInstaller(TestCase):
                 ValueError, "No Click-Framework field",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_bad_click_framework(self):
+    def test_audit_control_missing_click_framework(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Framework": "`",
+                "Click-Framework": "missing",
             })
         with closing(DebFile(filename=path)) as package:
-            self.assertRaises(
-                ValueError,
-                ClickInstaller(self.temp_dir).audit_control, package.control)
-
-    def test_audit_control_new_click_framework(self):
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Click-Version": "0.1",
-                "Click-Framework": "999",
-            })
-        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "present")
             self.assertRaisesRegex(
-                ValueError,
-                "Click-Framework: 999 newer than current version .*",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ValueError, "Framework 'missing' not present on system",
+                installer.audit_control, package.control)
+
+    def test_audit_control_missing_click_framework_force(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Click-Version": "0.1",
+                "Click-Framework": "missing",
+            })
+        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir, True)
+            self.make_framework(installer, "present")
+            installer.audit_control(package.control)
 
     def test_audit_control_forbids_depends(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Framework": "13.04",
+                "Click-Framework": "ubuntu-sdk-13.10",
                 "Depends": "libc6",
             })
         with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "ubuntu-sdk-13.10")
             self.assertRaisesRegex(
                 ValueError, "Depends field is forbidden in Click packages",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                installer.audit_control, package.control)
 
     def test_audit_control_forbids_maintscript(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Framework": "13.04",
+                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={
                 "preinst": "#! /bin/sh\n",
                 "postinst": "#! /bin/sh\n",
             })
         with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "ubuntu-sdk-13.10")
             self.assertRaisesRegex(
                 ValueError,
                 r"Maintainer scripts are forbidden in Click packages "
                 r"\(found: postinst preinst\)",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                installer.audit_control, package.control)
 
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Click-Version": "0.1",
-                "Click-Framework": "13.04",
+                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst})
-        self.assertEqual(
-            "test-package", ClickInstaller(self.temp_dir).audit(path))
+        installer = ClickInstaller(self.temp_dir)
+        self.make_framework(installer, "ubuntu-sdk-13.10")
+        self.assertEqual("test-package", installer.audit(path))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -218,13 +230,15 @@ class TestClickInstaller(TestCase):
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.1",
-                "Click-Framework": "13.04",
+                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
+        installer = ClickInstaller(root)
+        self.make_framework(installer, "ubuntu-sdk-13.10")
         with mock_quiet_subprocess_call():
-            ClickInstaller(root).install(path)
+            installer.install(path)
         self.assertCountEqual([".click.log", "test-package"], os.listdir(root))
         inst_dir = os.path.join(root, "test-package")
         self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
@@ -240,5 +254,5 @@ class TestClickInstaller(TestCase):
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
             "Click-Version": "0.1",
-            "Click-Framework": "13.04",
+            "Click-Framework": "ubuntu-sdk-13.10",
         }, status[0])

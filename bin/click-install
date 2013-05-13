@@ -38,11 +38,14 @@ def main():
     parser.add_option(
         "--root", metavar="PATH", default=default_root,
         help="set top-level directory to PATH (default: %s)" % default_root)
+    parser.add_option(
+        "--force-missing-framework", action="store_true", default=False,
+        help="install despite missing system framework")
     options, args = parser.parse_args()
     if len(args) < 1:
         parser.error("need package file name")
     package_path = args[0]
-    installer = ClickInstaller(options.root)
+    installer = ClickInstaller(options.root, options.force_missing_framework)
     installer.install(package_path)
 
 

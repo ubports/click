@@ -33,7 +33,7 @@ from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
 from clickpackage.preinst import static_preinst
-from clickpackage.versions import base_version, spec_version
+from clickpackage.versions import spec_version
 
 
 CLICK_VERSION = "0.1"
@@ -56,8 +56,10 @@ except AttributeError:
 
 
 class ClickInstaller:
-    def __init__(self, root):
+    def __init__(self, root, force_missing_framework=False):
         self.root = root
+        self.force_missing_framework = force_missing_framework
+        self.frameworks_dir = "/usr/share/click-package/frameworks"
 
     def _preload_path(self):
         if "CLICK_PACKAGE_PRELOAD" in os.environ:
@@ -70,6 +72,10 @@ class ClickInstaller:
             return os.path.abspath(preload)
         # TODO: unhardcode path
         return "/usr/lib/click-package/libclickpreload.so"
+
+    def _has_framework(self, name):
+        return os.path.exists(os.path.join(
+            self.frameworks_dir, "%s.framework" % name))
 
     def audit_control(self, control_part):
         """Check that all requirements on the control part are met.
@@ -97,13 +103,13 @@ class ClickInstaller:
                 (click_version, spec_version))
 
         try:
-            click_framework = Version(control_fields["click-framework"])
+            click_framework = control_fields["click-framework"]
         except KeyError:
             raise ValueError("No Click-Framework field")
-        if click_framework > base_version:
+        if (not self.force_missing_framework and
+                not self._has_framework(click_framework)):
             raise ValueError(
-                "Click-Framework: %s newer than current version %s" %
-                (click_framework, base_version))
+                "Framework '%s' not present on system" % click_framework)
 
         for field in (
             "Pre-Depends", "Depends", "Recommends", "Suggests", "Enhances",

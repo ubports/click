@@ -38,19 +38,19 @@ Every Click package must include the following control fields:
 
  * Package: unique name for the application
  * Click-Version: the current version number of this specification
- * Click-Profile: the current version number of the base system
+ * Click-Framework: the current version number of the base system
 
 The package manager must refuse to process packages where any of these
 fields are missing or unparseable.  It must refuse to process packages where
-either Click-Version or Click-Profile compares newer than the corresponding
-version it implements (according to rules equivalent to "dpkg
+either Click-Version or Click-Framework compares newer than the
+corresponding version it implements (according to rules equivalent to "dpkg
 --compare-versions").  It may refuse to process packages whose Click-Version
 field has an older major number than the version it implements (although
 future developers are encouraged to maintain the maximum possible degree of
 compatibility with packages in the wild).  It may refuse to process packages
-whose Click-Profile field is older than the version it implements, depending
-on library compatibility decisions made by the maintainers of that base
-system.
+whose Click-Framework field is older than the version it implements,
+depending on library compatibility decisions made by the maintainers of that
+base system.
 
 The Package field identifies the application; every package in the app store
 has a unique Package identifier, and the app store will reject clashes.  It

@@ -110,7 +110,7 @@ class TestClickBuilder(TestCase):
             ("Package", "com.ubuntu.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.1"),
-            ("Click-Profile", "13.04"),
+            ("Click-Framework", "13.04"),
             ("Architecture", "all"),
             ("Maintainer", "Foo Bar <foo@example.org>"),
             ("Description", "test description"),

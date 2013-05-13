@@ -97,13 +97,13 @@ class ClickInstaller:
                 (click_version, spec_version))
 
         try:
-            click_profile = Version(control_fields["click-profile"])
+            click_framework = Version(control_fields["click-framework"])
         except KeyError:
-            raise ValueError("No Click-Profile field")
-        if click_profile > base_version:
+            raise ValueError("No Click-Framework field")
+        if click_framework > base_version:
             raise ValueError(
-                "Click-Profile: %s newer than current version %s" %
-                (click_profile, base_version))
+                "Click-Framework: %s newer than current version %s" %
+                (click_framework, base_version))
 
         for field in (
             "Pre-Depends", "Depends", "Recommends", "Suggests", "Enhances",

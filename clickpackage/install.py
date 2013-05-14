@@ -159,6 +159,7 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
+        # TODO: sandbox so that this can only write to the unpack directory
         command = [
             "dpkg",
             "--force-not-root",

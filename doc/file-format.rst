@@ -1,6 +1,6 @@
-========================================
-"Click" package file format, version 0.1
-========================================
+================================================
+"Click" package file format, version 0.1 (draft)
+================================================
 
 This specification covers a packaging format intended for use by
 self-contained third-party applications.  It is intentionally designed to be

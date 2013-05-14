@@ -246,7 +246,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    def test_install(self, *args):
+    def test_install(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",

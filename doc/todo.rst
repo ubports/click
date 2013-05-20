@@ -2,7 +2,6 @@
 To do
 =====
 
- * check that dpkg will refuse to ascend beyond installation directory
  * hook that gets notified about all installations
  * binary deltas?
  * dbus interface etc. as backend for UI

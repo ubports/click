@@ -175,6 +175,7 @@ class ClickInstaller:
         if "LD_PRELOAD" in env:
             preloads.append(env["LD_PRELOAD"])
         env["LD_PRELOAD"] = " ".join(preloads)
+        env["CLICK_BASE_DIR"] = self.root
         subprocess.check_call(command, env=env)
 
         current_path = os.path.join(package_dir, "current")

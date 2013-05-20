@@ -21,11 +21,16 @@
 
 #define _GNU_SOURCE
 
+#include <assert.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -34,10 +39,19 @@ static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
 static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
+static int (*libc_link) (const char *, const char *) = (void *) 0;
+static int (*libc_mkdir) (const char *, mode_t) = (void *) 0;
+static int (*libc_mkfifo) (const char *, mode_t) = (void *) 0;
+static int (*libc_mknod) (const char *, mode_t, dev_t) = (void *) 0;
+static int (*libc_open) (const char *, int, mode_t) = (void *) 0;
+static int (*libc_open64) (const char *, int, mode_t) = (void *) 0;
+static int (*libc_symlink) (const char *, const char *) = (void *) 0;
 
 uid_t euid;
 struct passwd root_pwd;
 struct group root_grp;
+const char *base_path;
+size_t base_path_len;
 
 #define GET_NEXT_SYMBOL(name) \
     do { \
@@ -46,7 +60,7 @@ struct group root_grp;
             _exit (1); \
     } while (0)
 
-void __attribute__ ((constructor)) clickpreload_init (void)
+static void __attribute__ ((constructor)) clickpreload_init (void)
 {
     /* Clear any old error conditions, albeit unlikely, as per dlsym(2) */
     dlerror ();
@@ -56,11 +70,21 @@ void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (fchown);
     GET_NEXT_SYMBOL (getgrnam);
     GET_NEXT_SYMBOL (getpwnam);
+    GET_NEXT_SYMBOL (link);
+    GET_NEXT_SYMBOL (mkdir);
+    GET_NEXT_SYMBOL (mkfifo);
+    GET_NEXT_SYMBOL (mknod);
+    GET_NEXT_SYMBOL (open);
+    GET_NEXT_SYMBOL (open64);
+    GET_NEXT_SYMBOL (symlink);
 
     euid = geteuid ();
     /* dpkg only cares about these fields. */
     root_pwd.pw_uid = 0;
     root_grp.gr_gid = 0;
+
+    base_path = getenv ("CLICK_BASE_DIR");
+    base_path_len = base_path ? strlen (base_path) : 0;
 }
 
 /* dpkg calls chown/fchown to set permissions of extracted files.  If we
@@ -148,4 +172,94 @@ int fsync (int fd)
 int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
 {
     return 0;
+}
+
+/* Sandboxing:
+ *
+ * We try to insulate against dpkg getting confused enough by malformed
+ * archives to write outside the instdir.  This is not full confinement, and
+ * generally for system security it should be sufficient to run
+ * click-install as a specialised user; as such we don't necessarily wrap
+ * all possible relevant functions here.  The main purpose of this is just
+ * to provide a useful error message if dpkg gets confused.
+ */
+
+static void clickpreload_assert_path_in_instdir (const char *pathname)
+{
+    if (strncmp (pathname, base_path, base_path_len) == 0 &&
+        (pathname[base_path_len] == '\0' || pathname[base_path_len] == '/'))
+        return;
+
+    fprintf (stderr,
+             "Sandbox failure: click-install not permitted to write to '%s'\n",
+             pathname);
+    exit (1);
+}
+
+int link (const char *oldpath, const char *newpath)
+{
+    clickpreload_assert_path_in_instdir (newpath);
+    return (*libc_link) (oldpath, newpath);
+}
+
+int mkdir (const char *pathname, mode_t mode)
+{
+    clickpreload_assert_path_in_instdir (pathname);
+    return (*libc_mkdir) (pathname, mode);
+}
+
+int mkfifo (const char *pathname, mode_t mode)
+{
+    clickpreload_assert_path_in_instdir (pathname);
+    return (*libc_mkfifo) (pathname, mode);
+}
+
+int mknod (const char *pathname, mode_t mode, dev_t dev)
+{
+    clickpreload_assert_path_in_instdir (pathname);
+    return (*libc_mknod) (pathname, mode, dev);
+}
+
+int open (const char *pathname, int flags, ...)
+{
+    mode_t mode = 0;
+    int ret;
+
+    if ((flags & O_WRONLY) || (flags & O_RDWR))
+        clickpreload_assert_path_in_instdir (pathname);
+
+    if (flags & O_CREAT) {
+        va_list argv;
+        va_start (argv, flags);
+        mode = va_arg (argv, mode_t);
+        va_end (argv);
+    }
+
+    ret = (*libc_open) (pathname, flags, mode);
+    return ret;
+}
+
+int open64 (const char *pathname, int flags, ...)
+{
+    mode_t mode = 0;
+    int ret;
+
+    if ((flags & O_WRONLY) || (flags & O_RDWR))
+        clickpreload_assert_path_in_instdir (pathname);
+
+    if (flags & O_CREAT) {
+        va_list argv;
+        va_start (argv, flags);
+        mode = va_arg (argv, mode_t);
+        va_end (argv);
+    }
+
+    ret = (*libc_open64) (pathname, flags, mode);
+    return ret;
+}
+
+int symlink (const char *oldpath, const char *newpath)
+{
+    clickpreload_assert_path_in_instdir (newpath);
+    return (*libc_symlink) (oldpath, newpath);
 }

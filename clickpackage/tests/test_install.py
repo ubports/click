@@ -285,3 +285,42 @@ class TestClickInstaller(TestCase):
             "Click-Version": "0.1",
             "Click-Framework": "ubuntu-sdk-13.10",
         }, status[0])
+
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
+    def test_sandbox(self):
+        original_call = subprocess.call
+
+        def call_side_effect(*args, **kwargs):
+            if "TEST_VERBOSE" in os.environ:
+                return original_call(
+                    ["touch", os.path.join(self.temp_dir, "sentinel")],
+                    **kwargs)
+            else:
+                with open("/dev/null", "w") as devnull:
+                    return original_call(
+                        ["touch", os.path.join(self.temp_dir, "sentinel")],
+                        stdout=devnull, stderr=devnull, **kwargs)
+
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Architecture": "all",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.1",
+                "Click-Framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst},
+            data_files=["foo"])
+        root = os.path.join(self.temp_dir, "root")
+        installer = ClickInstaller(root)
+        self.make_framework(installer, "ubuntu-sdk-13.10")
+        with mock.patch("subprocess.call") as mock_call:
+            mock_call.side_effect = call_side_effect
+            self.assertRaises(
+                subprocess.CalledProcessError, installer.install, path)
+        self.assertFalse(
+            os.path.exists(os.path.join(self.temp_dir, "sentinel")))

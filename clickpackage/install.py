@@ -57,10 +57,11 @@ except AttributeError:
 
 
 class ClickInstaller:
+    frameworks_dir = "/usr/share/click-package/frameworks"
+
     def __init__(self, root, force_missing_framework=False):
         self.root = root
         self.force_missing_framework = force_missing_framework
-        self.frameworks_dir = "/usr/share/click-package/frameworks"
 
     def _preload_path(self):
         if "CLICK_PACKAGE_PRELOAD" in os.environ:

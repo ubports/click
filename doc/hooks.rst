@@ -68,7 +68,9 @@ strawman proposal, consider the following:
    path as a symlink to a path provided by the Click package.
 
    If the Exec key is present, its value is executed as if passed to the
-   shell after the above symlink is created.
+   shell after the above symlink is created.  A non-zero exit status is an
+   error; hook implementors must be careful to make commands in Exec fields
+   robust.
 
    For the optional Trigger key, see below.
 

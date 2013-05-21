@@ -58,13 +58,9 @@ strawman proposal, consider the following:
    /usr/share/click-package/hooks/.  These are standard Debian-style control
    files with the following keys:
 
-     Hook: <name>               (required)
      Pattern: <file-pattern>    (required)
      Exec: <program>            (optional)
      Trigger: yes               (optional)
-
-   The value of Hook provides a name for use in the Click package manifest
-   (see below).
 
    The value of Pattern is a printf format string which must contain exactly
    one %s substitution: the package manager substitutes the unique Click
@@ -78,9 +74,9 @@ strawman proposal, consider the following:
 
  * A Click package may include a "hooks" entry in its manifest (exact format
    TBD).  If present, it must contain a mapping of keys to values.  The keys
-   are used to look up ``*.hook`` files with an equal Hook field (see above).
-   The values are symlink target paths used by the package manager when
-   creating symlinks according to the Pattern field in ``*.hook`` files.
+   are used to look up ``*.hook`` files with matching base names.  The
+   values are symlink target paths used by the package manager when creating
+   symlinks according to the Pattern field in ``*.hook`` files.
 
  * There should be a dh_clickpackage which installs the ``*.hook`` files in
    system packages and adds maintainer script fragments to cause
@@ -99,13 +95,11 @@ strawman proposal, consider the following:
 Thus, a worked example would have::
 
   /usr/share/click-package/hooks/unity-lens-help.hook
-    Hook: unity-lens-help
     Pattern: /usr/share/unity/lenses/help/click-%s.scope
     # unity-lens-help-update is fictional, shown for the sake of exposition
     Exec: unity-lens-help-update
 
   /usr/share/click-package/hooks/dbus-service.hook
-    Hook: dbus-service
     Pattern: /usr/share/dbus-1/services/click-%s.service
 
   com.ubuntu.unity-scope-manpages/manifest.json:

@@ -64,13 +64,19 @@ strawman proposal, consider the following:
 
    The value of Pattern is a printf format string which must contain exactly
    one %s substitution: the package manager substitutes the unique Click
-   package name (e.g. com.example.app) into it and creates the resulting
-   path as a symlink to a path provided by the Click package.
+   package name (e.g. com.example.app) into it to get the target path.  On
+   install, it creates the target path as a symlink to a path provided by
+   the Click package; on upgrade, it changes the target path to be a symlink
+   to the path in the new version of the Click package; on removal, it
+   unlinks the target path.
 
    If the Exec key is present, its value is executed as if passed to the
    shell after the above symlink is created.  A non-zero exit status is an
    error; hook implementors must be careful to make commands in Exec fields
-   robust.
+   robust.  Note that this command intentionally takes no arguments, and
+   will be run on install, upgrade, and removal; it must be written such
+   that it causes the system to catch up with the current state of all
+   installed hooks.
 
    For the optional Trigger key, see below.
 
@@ -94,6 +100,13 @@ strawman proposal, consider the following:
    triggers matching those paths, and process all the packages that enter
    the triggers-pending state as a result.
 
+ * The terms "install", "upgrade", and "removal" are taken to refer to the
+   status of the hook rather than of the package.  That is, when upgrading
+   between two versions of a package, if the old version uses a given hook
+   but the new version does not, then that is a removal; if the old version
+   does not use a given hook but the new version does, then that is an
+   install; if both versions use a given hook, then that is an upgrade.
+
 Thus, a worked example would have::
 
   /usr/share/click-package/hooks/unity-lens-help.hook
@@ -109,8 +122,6 @@ Thus, a worked example would have::
         "unity-lens-help": "help/unity-scope-manpages.scope",
         "dbus-service": "services/unity-scope-manpages.service",
     }
-
-TODO: fill in details of upgrade and removal
 
 TODO: copy rather than symlink, for additional robustness?
 

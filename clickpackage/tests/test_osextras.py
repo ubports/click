@@ -76,3 +76,23 @@ class TestOSExtras(TestCase):
         path = os.path.join(self.temp_dir, "dir")
         os.mkdir(path)
         self.assertRaises(OSError, osextras.unlink_force, path)
+
+    def test_symlink_file_present(self):
+        path = os.path.join(self.temp_dir, "link")
+        touch(path)
+        osextras.symlink_force("source", path)
+        self.assertTrue(os.path.islink(path))
+        self.assertEqual("source", os.readlink(path))
+
+    def test_symlink_link_present(self):
+        path = os.path.join(self.temp_dir, "link")
+        os.symlink("old", path)
+        osextras.symlink_force("source", path)
+        self.assertTrue(os.path.islink(path))
+        self.assertEqual("source", os.readlink(path))
+
+    def test_symlink_missing(self):
+        path = os.path.join(self.temp_dir, "link")
+        osextras.symlink_force("source", path)
+        self.assertTrue(os.path.islink(path))
+        self.assertEqual("source", os.readlink(path))

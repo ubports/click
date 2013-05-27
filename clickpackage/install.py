@@ -33,6 +33,7 @@ from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
 from clickpackage import osextras
+from clickpackage.hooks import run_hooks
 from clickpackage.preinst import static_preinst
 from clickpackage.versions import spec_version
 
@@ -180,6 +181,15 @@ class ClickInstaller:
         subprocess.check_call(command, env=env)
 
         current_path = os.path.join(package_dir, "current")
+
+        if os.path.islink(current_path):
+            old_version = os.readlink(current_path)
+            if "/" in old_version:
+                old_version = None
+        else:
+            old_version = None
+        run_hooks(self.root, package_name, old_version, package_version)
+
         new_path = os.path.join(package_dir, "current.new")
         osextras.unlink_force(new_path)
         os.symlink(package_version, new_path)

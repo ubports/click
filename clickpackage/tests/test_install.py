@@ -246,7 +246,8 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    def test_install(self):
+    @mock.patch("clickpackage.install.run_hooks")
+    def test_install(self, mock_run_hooks):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
@@ -285,6 +286,8 @@ class TestClickInstaller(TestCase):
             "Click-Version": "0.1",
             "Click-Framework": "ubuntu-sdk-13.10",
         }, status[0])
+        mock_run_hooks.assert_called_once_with(
+            root, "test-package", None, "1.0")
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -324,3 +327,52 @@ class TestClickInstaller(TestCase):
                 subprocess.CalledProcessError, installer.install, path)
         self.assertFalse(
             os.path.exists(os.path.join(self.temp_dir, "sentinel")))
+
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
+    @mock.patch("clickpackage.install.run_hooks")
+    def test_upgrade(self, mock_run_hooks):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.1",
+                "Architecture": "all",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.1",
+                "Click-Framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst},
+            data_files=["foo"])
+        root = os.path.join(self.temp_dir, "root")
+        package_dir = os.path.join(root, "test-package")
+        inst_dir = os.path.join(package_dir, "current")
+        os.makedirs(os.path.join(package_dir, "1.0"))
+        os.symlink("1.0", inst_dir)
+        installer = ClickInstaller(root)
+        self.make_framework(installer, "ubuntu-sdk-13.10")
+        with mock_quiet_subprocess_call():
+            installer.install(path)
+        self.assertCountEqual([".click.log", "test-package"], os.listdir(root))
+        self.assertCountEqual(
+            ["1.0", "1.1", "current"], os.listdir(package_dir))
+        self.assertTrue(os.path.islink(inst_dir))
+        self.assertEqual("1.1", os.readlink(inst_dir))
+        self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
+        status_path = os.path.join(inst_dir, ".click", "status")
+        with open(status_path) as status_file:
+            status = list(Deb822.iter_paragraphs(status_file))
+        self.assertEqual(1, len(status))
+        self.assertEqual({
+            "Package": "test-package",
+            "Status": "install ok installed",
+            "Version": "1.1",
+            "Architecture": "all",
+            "Maintainer": "Foo Bar <foo@example.org>",
+            "Description": "test",
+            "Click-Version": "0.1",
+            "Click-Framework": "ubuntu-sdk-13.10",
+        }, status[0])
+        mock_run_hooks.assert_called_once_with(
+            root, "test-package", "1.0", "1.1")

@@ -60,3 +60,9 @@ def unlink_force(path):
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
+
+
+def symlink_force(source, link_name):
+    """Create symlink link_name -> source, even if link_name exists."""
+    unlink_force(link_name)
+    os.symlink(source, link_name)

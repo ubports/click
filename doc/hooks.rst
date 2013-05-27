@@ -76,7 +76,7 @@ strawman proposal, consider the following:
    robust.  Note that this command intentionally takes no arguments, and
    will be run on install, upgrade, and removal; it must be written such
    that it causes the system to catch up with the current state of all
-   installed hooks.
+   installed hooks.  Exec commands must be idempotent.
 
    For the optional Trigger key, see below.
 

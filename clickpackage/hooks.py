@@ -34,15 +34,14 @@ from debian.deb822 import Deb822
 from clickpackage import osextras
 
 
-class ClickHook(Deb822):
-    hooks_dir = "/usr/share/click-package/hooks"
+HOOKS_DIR = "/usr/share/click-package/hooks"
 
+
+class ClickHook(Deb822):
     @classmethod
-    def open(cls, name, hooks_dir=None):
-        if hooks_dir is None:
-            hooks_dir = cls.hooks_dir
+    def open(cls, name):
         try:
-            with open(os.path.join(hooks_dir, "%s.hook" % name)) as f:
+            with open(os.path.join(HOOKS_DIR, "%s.hook" % name)) as f:
                 return cls(f)
         except IOError:
             raise KeyError("No click-package hook '%s' installed" % name)
@@ -75,20 +74,20 @@ def _read_manifest_hooks(root, package, version):
         return {}
 
 
-def run_hooks(root, package, old_version, new_version, hooks_dir=None):
+def run_hooks(root, package, old_version, new_version):
     old_manifest = _read_manifest_hooks(root, package, old_version)
     new_manifest = _read_manifest_hooks(root, package, new_version)
 
     for name in sorted(set(old_manifest) - set(new_manifest)):
         try:
-            hook = ClickHook.open(name, hooks_dir=hooks_dir)
+            hook = ClickHook.open(name)
         except KeyError:
             pass
         hook.remove(package)
 
     for name, relative_path in sorted(new_manifest.items()):
         try:
-            hook = ClickHook.open(name, hooks_dir=hooks_dir)
+            hook = ClickHook.open(name)
         except KeyError:
             pass
         hook.install(root, package, new_version, relative_path)

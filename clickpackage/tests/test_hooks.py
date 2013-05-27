@@ -23,6 +23,7 @@ __all__ = [
     ]
 
 
+import contextlib
 import json
 import os
 from textwrap import dedent
@@ -32,8 +33,19 @@ try:
 except ImportError:
     import mock
 
+from clickpackage import hooks
 from clickpackage.hooks import ClickHook, run_hooks
 from clickpackage.tests.helpers import TestCase, mkfile
+
+
+@contextlib.contextmanager
+def temp_hooks_dir(new_dir):
+    old_dir = hooks.HOOKS_DIR
+    try:
+        hooks.HOOKS_DIR = new_dir
+        yield
+    finally:
+        hooks.HOOKS_DIR = old_dir
 
 
 class TestClickHook(TestCase):
@@ -48,7 +60,8 @@ class TestClickHook(TestCase):
                 # Comment
                 Exec: test-update
                 """), file=f)
-        hook = ClickHook.open("test", hooks_dir=self.temp_dir)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
         self.assertCountEqual(["Pattern", "Exec"], hook.keys())
         self.assertEqual("/usr/share/test/%s.test", hook["pattern"])
         self.assertEqual("test-update", hook["exec"])
@@ -57,14 +70,16 @@ class TestClickHook(TestCase):
     def test_run_commands(self, mock_check_call):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("Exec: test-update", file=f)
-        hook = ClickHook.open("test", hooks_dir=self.temp_dir)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
         hook._run_commands()
         mock_check_call.assert_called_once_with("test-update", shell=True)
 
     def test_install(self):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("Pattern: %s/%%s.test" % self.temp_dir, file=f)
-        hook = ClickHook.open("test", hooks_dir=self.temp_dir)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
         hook.install(self.temp_dir, "org.example.package", "1.0", "foo/bar")
         symlink_path = os.path.join(self.temp_dir, "org.example.package.test")
         target_path = os.path.join(
@@ -77,7 +92,8 @@ class TestClickHook(TestCase):
             print("Pattern: %s/%%s.test" % self.temp_dir, file=f)
         symlink_path = os.path.join(self.temp_dir, "org.example.package.test")
         os.symlink("old-target", symlink_path)
-        hook = ClickHook.open("test", hooks_dir=self.temp_dir)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
         hook.install(self.temp_dir, "org.example.package", "1.0", "foo/bar")
         target_path = os.path.join(
             self.temp_dir, "org.example.package", "1.0", "foo", "bar")
@@ -89,7 +105,8 @@ class TestClickHook(TestCase):
             print("Pattern: %s/%%s.test" % self.temp_dir, file=f)
         symlink_path = os.path.join(self.temp_dir, "org.example.package.test")
         os.symlink("old-target", symlink_path)
-        hook = ClickHook.open("test", hooks_dir=self.temp_dir)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
         hook.remove("org.example.package")
         self.assertFalse(os.path.exists(symlink_path))
 
@@ -110,9 +127,9 @@ class TestRunHooks(TestCase):
         run_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(2, mock_open.call_count)
         mock_open.assert_has_calls([
-            mock.call("unity", hooks_dir=None),
+            mock.call("unity"),
             mock.call().remove("test"),
-            mock.call("yelp", hooks_dir=None),
+            mock.call("yelp"),
             mock.call().remove("test"),
         ])
 
@@ -126,9 +143,9 @@ class TestRunHooks(TestCase):
         run_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(2, mock_open.call_count)
         mock_open.assert_has_calls([
-            mock.call("a", hooks_dir=None),
+            mock.call("a"),
             mock.call().install(self.temp_dir, "test", "1.1", "foo.a"),
-            mock.call("b", hooks_dir=None),
+            mock.call("b"),
             mock.call().install(self.temp_dir, "test", "1.1", "foo.b"),
         ])
 
@@ -143,8 +160,8 @@ class TestRunHooks(TestCase):
         run_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(3, mock_open.call_count)
         mock_open.assert_has_calls([
-            mock.call("a", hooks_dir=None),
+            mock.call("a"),
             mock.call().install(self.temp_dir, "test", "1.1", "foo.a"),
-            mock.call("b", hooks_dir=None),
+            mock.call("b"),
             mock.call().install(self.temp_dir, "test", "1.1", "foo.b"),
         ])

@@ -23,6 +23,7 @@ from __future__ import print_function
 __metaclass__ = type
 __all__ = [
     "ClickHook",
+    "run_hooks",
     ]
 
 import json

@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Colin Watson <cjwatson@ubuntu.com>
 Standards-Version: 3.9.4
-Build-Depends: debhelper (>= 7.0.50~), python3 (>= 3.3), python3-all, python3-setuptools, python3-debian, pep8, pyflakes
+Build-Depends: debhelper (>= 7.0.50~), python3 (>= 3.3), python3-all, python3-setuptools, python3-debian, pep8, pyflakes, python3-sphinx
 Vcs-Bzr: http://bazaar.launchpad.net/+branch/click-package
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.3
@@ -45,3 +45,13 @@ Description: Click packages (Python 3 interface)
  .
  This package provides Python 3 modules used by click-package, which may
  also be used directly.
+
+Package: click-package-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Description: Click packages (documentation)
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ This package provides documentation for click-package.

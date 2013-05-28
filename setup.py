@@ -93,6 +93,21 @@ if not perl_vendorlib:
 perllibdir = '%s/Debian/Debhelper/Sequence' % perl_vendorlib
 
 
+# Hack to avoid install_data breaking in ./run-tests.
+if os.getuid() == 0:
+    data_files = [
+        (perllibdir, ['debhelper/clickpackage.pm']),
+        ('/usr/share/debhelper/autoscripts', [
+            'debhelper/postinst-clickpackage',
+            'debhelper/prerm-clickpackage',
+            ]),
+        ('/usr/share/man/man1', [
+            'debhelper/dh_clickpackage.1',
+            ])]
+else:
+    data_files = []
+
+
 setup(
     name="click-package",
     version=version,
@@ -108,15 +123,7 @@ setup(
         'bin/click-verify',
         'debhelper/dh_clickpackage',
         ],
-    data_files=[
-        (perllibdir, ['debhelper/clickpackage.pm']),
-        ('/usr/share/debhelper/autoscripts', [
-            'debhelper/postinst-clickpackage',
-            'debhelper/prerm-clickpackage',
-            ]),
-        ('/usr/share/man/man1', [
-            'debhelper/dh_clickpackage.1',
-            ])],
+    data_files=data_files,
     cmdclass={
         'build': build_extra,
         'build_pod2man': build_pod2man,

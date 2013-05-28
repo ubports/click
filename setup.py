@@ -42,6 +42,7 @@ setup(
     scripts=[
         'bin/click-build',
         'bin/click-install',
+        'bin/click-verify',
     ],
     install_requires=requirements,
     test_suite="clickpackage.tests",

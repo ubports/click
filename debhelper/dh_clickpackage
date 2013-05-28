@@ -1,0 +1,97 @@
+#! /usr/bin/perl -w
+
+=head1 NAME
+
+dh_clickpackage - install system hooks for click-package
+
+=cut
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+
+=head1 SYNOPSIS
+
+B<dh_clickpackage> [S<B<debhelper options>>]
+
+=head1 DESCRIPTION
+
+dh_clickpackage is a debhelper program that is responsible for installing
+system hooks for B<click-package>.
+
+It also automatically generates the F<postinst> and F<postrm> commands
+needed to interface with the Ubuntu B<click-package> package.  These
+commands are inserted into the maintainer scripts by L<dh_installdeb(1)>.
+
+=head1 FILES
+
+=over 4
+
+=item debian/I<package>.click-hook
+
+Click package hook files, installed into
+usr/share/click-package/hooks/I<package>.hook in the package build
+directory.  See F</usr/share/doc/click-package-doc/html/hooks.html> for
+their format.
+
+=back
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-n>, B<--noscripts>
+
+Do not modify F<postinst>/F<postrm> scripts.
+
+=back
+
+=head1 EXAMPLES
+
+dh_clickpackage is usually called indirectly in a rules file via the dh
+command.
+
+	%:
+		dh $@ --with clickpackage
+
+You must build-depend on at least debhelper (>= 7.0.8) to use this form, and
+in any case you must build-depend on click-dev to use this program at all.
+
+It can also be called directly at any time before C<dh_installdeb>, usually
+in a binary-arch or binary-indep rule.
+
+=cut
+
+init();
+
+# PROMISE: DH NOOP WITHOUT click-hook
+
+foreach my $package (@{$dh{DOPACKAGES}}) {
+	my $tmp=tmpdir($package);
+	my $click_hook=pkgfile($package,"click-hook");
+
+	if ($click_hook ne '') {
+		if (! -d "$tmp/usr/share/click-package/hooks") {
+			doit("install","-d","$tmp/usr/share/click-package/hooks");
+		}
+		doit("install","-p","-m644",$click_hook,"$tmp/usr/share/click-package/hooks/$package.hook");
+
+		if (! $dh{NOSCRIPTS}) {
+			autoscript($package,"postinst","postinst-clickpackage","s/#PACKAGE#/$package/");
+			autoscript($package,"prerm","prerm-clickpackage","s/#PACKAGE#/$package/");
+		}
+	}
+}
+
+=head1 SEE ALSO
+
+L<debhelper(7)>
+
+This program is a part of click-package.
+
+=head1 AUTHOR
+
+Colin Watson <cjwatson@ubuntu.com>
+
+Copyright (C) 2013 Canonical Ltd., licensed under the GNU GPL v3.
+
+=cut

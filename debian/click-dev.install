@@ -1,1 +1,5 @@
 usr/bin/click-build
+usr/bin/dh_clickpackage
+usr/share/debhelper
+usr/share/man/man1/dh_clickpackage.1
+usr/share/perl5

@@ -19,7 +19,7 @@ Description: install Click packages
 
 Package: click-dev
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version})
+Depends: ${misc:Depends}, ${python3:Depends}, ${perl:Depends}, python3-click-package (= ${binary:Version})
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

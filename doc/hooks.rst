@@ -86,9 +86,10 @@ strawman proposal, consider the following:
    values are symlink target paths used by the package manager when creating
    symlinks according to the Pattern field in ``*.hook`` files.
 
- * There should be a dh_clickpackage which installs the ``*.hook`` files in
+ * There is a dh_clickpackage program which installs the ``*.hook`` files in
    system packages and adds maintainer script fragments to cause
-   click-package to catch up with any newly-provided hooks.
+   click-package to catch up with any newly-provided hooks.  It may be
+   invoked using ``dh $@ --with clickpackage``.
 
  * It will often be valuable to execute a dpkg trigger after installing a
    Click package to avoid code duplication between system and Click package

@@ -53,6 +53,15 @@ def ensuredir(directory):
         os.makedirs(directory)
 
 
+def listdir_force(directory):
+    try:
+        return os.listdir(directory)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return []
+        raise
+
+
 def unlink_force(path):
     """Unlink path, without worrying about whether it exists."""
     try:

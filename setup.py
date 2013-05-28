@@ -41,6 +41,7 @@ setup(
     packages=find_packages(),
     scripts=[
         'bin/click-build',
+        'bin/click-hook',
         'bin/click-install',
         'bin/click-verify',
     ],

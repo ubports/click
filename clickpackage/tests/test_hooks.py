@@ -110,6 +110,54 @@ class TestClickHook(TestCase):
         hook.remove("org.example.package")
         self.assertFalse(os.path.exists(symlink_path))
 
+    def test_install_all(self):
+        with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
+            print("Pattern: %s/%%s.new" % self.temp_dir, file=f)
+        with mkfile(os.path.join(
+                self.temp_dir, "test-1", "1.0", "manifest.json")) as f:
+            f.write(json.dumps({"hooks": {"new": "target-1"}}))
+        os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+        with mkfile(os.path.join(
+                self.temp_dir, "test-2", "2.0", "manifest.json")) as f:
+            f.write(json.dumps({"hooks": {"new": "target-2"}}))
+        os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
+        with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
+            hook = ClickHook.open("new")
+        hook.install_all(self.temp_dir)
+        path_1 = os.path.join(self.temp_dir, "test-1.new")
+        self.assertTrue(os.path.lexists(path_1))
+        self.assertEqual(
+            os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
+            os.readlink(path_1))
+        path_2 = os.path.join(self.temp_dir, "test-2.new")
+        self.assertTrue(os.path.lexists(path_2))
+        self.assertEqual(
+            os.path.join(self.temp_dir, "test-2", "2.0", "target-2"),
+            os.readlink(path_2))
+
+    def test_remove_all(self):
+        with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
+            print("Pattern: %s/%%s.old" % self.temp_dir, file=f)
+        with mkfile(os.path.join(
+                self.temp_dir, "test-1", "1.0", "manifest.json")) as f:
+            f.write(json.dumps({"hooks": {"old": "target-1"}}))
+        os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+        path_1 = os.path.join(self.temp_dir, "test-1.old")
+        os.symlink(
+            os.path.join(self.temp_dir, "test-1", "1.0", "target-1"), path_1)
+        with mkfile(os.path.join(
+                self.temp_dir, "test-2", "2.0", "manifest.json")) as f:
+            f.write(json.dumps({"hooks": {"old": "target-2"}}))
+        os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
+        path_2 = os.path.join(self.temp_dir, "test-2.old")
+        os.symlink(
+            os.path.join(self.temp_dir, "test-2", "2.0", "target-2"), path_2)
+        with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
+            hook = ClickHook.open("old")
+        hook.remove_all(self.temp_dir)
+        self.assertFalse(os.path.exists(path_1))
+        self.assertFalse(os.path.exists(path_2))
+
 
 class TestRunHooks(TestCase):
     def setUp(self):

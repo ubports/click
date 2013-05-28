@@ -38,12 +38,28 @@ from clickpackage import osextras
 HOOKS_DIR = "/usr/share/click-package/hooks"
 
 
+def _read_manifest_hooks(root, package, version):
+    if version is None:
+        return {}
+    manifest_path = os.path.join(root, package, version, "manifest.json")
+    try:
+        with open(manifest_path) as manifest:
+            return json.load(manifest).get("hooks", {})
+    except IOError:
+        return {}
+
+
 class ClickHook(Deb822):
+    def __init__(self, name, sequence=None, fields=None, encoding="utf-8"):
+        super(ClickHook, self).__init__(
+            sequence=sequence, fields=fields, encoding=encoding)
+        self.name = name
+
     @classmethod
     def open(cls, name):
         try:
             with open(os.path.join(HOOKS_DIR, "%s.hook" % name)) as f:
-                return cls(f)
+                return cls(name, f)
         except IOError:
             raise KeyError("No click-package hook '%s' installed" % name)
 
@@ -63,16 +79,27 @@ class ClickHook(Deb822):
         osextras.unlink_force(self["pattern"] % package)
         self._run_commands()
 
+    def _all_packages(self, root):
+        for package in osextras.listdir_force(root):
+            current_path = os.path.join(root, package, "current")
+            if os.path.islink(current_path):
+                version = os.readlink(current_path)
+                if "/" not in version:
+                    yield package, version
 
-def _read_manifest_hooks(root, package, version):
-    if version is None:
-        return {}
-    manifest_path = os.path.join(root, package, version, "manifest.json")
-    try:
-        with open(manifest_path) as manifest:
-            return json.load(manifest).get("hooks", {})
-    except IOError:
-        return {}
+    def _relevant_packages(self, root):
+        for package, version in self._all_packages(root):
+            manifest = _read_manifest_hooks(root, package, version)
+            if self.name in manifest:
+                yield package, version, manifest[self.name]
+
+    def install_all(self, root):
+        for package, version, relative_path in self._relevant_packages(root):
+            self.install(root, package, version, relative_path)
+
+    def remove_all(self, root):
+        for package, version, relative_path in self._relevant_packages(root):
+            self.remove(package)
 
 
 def run_hooks(root, package, old_version, new_version):

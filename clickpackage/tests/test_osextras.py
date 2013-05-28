@@ -61,6 +61,20 @@ class TestOSExtras(TestCase):
         os.environ["PATH"] = bin_dir
         self.assertFalse(osextras.find_on_path("program"))
 
+    def test_listdir_directory_present(self):
+        new_dir = os.path.join(self.temp_dir, "dir")
+        touch(os.path.join(new_dir, "file"))
+        self.assertEqual(["file"], osextras.listdir_force(new_dir))
+
+    def test_listdir_directory_missing(self):
+        new_dir = os.path.join(self.temp_dir, "dir")
+        self.assertEqual([], osextras.listdir_force(new_dir))
+
+    def test_listdir_oserror(self):
+        not_dir = os.path.join(self.temp_dir, "file")
+        touch(not_dir)
+        self.assertRaises(OSError, osextras.listdir_force, not_dir)
+
     def test_unlink_file_present(self):
         path = os.path.join(self.temp_dir, "file")
         touch(path)

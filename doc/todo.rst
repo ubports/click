@@ -26,7 +26,7 @@ to keep 4.2GB files around just for the sake of it.
 
 We could do something ad-hoc with ``xdelta`` or ``bsdiff`` or whatever.
 
-`debdelta <http://debdelta.debian.net/`_ seems like a good possibility.
+`debdelta <http://debdelta.debian.net/>`_ seems like a good possibility.
 We're already using the .deb format, and debdelta is capable of doing patch
 upgrades without having the old .deb around (though it will need minor
 adjustments to cope with the different installation location of Click

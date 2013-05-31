@@ -10,7 +10,7 @@ X-Python3-Version: >= 3.3
 
 Package: click-install
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version})
+Depends: ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version}), adduser
 Description: install Click packages
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

@@ -23,8 +23,11 @@ __all__ = [
     ]
 
 
+from functools import partial
+import grp
 import inspect
 import os
+import pwd
 import subprocess
 
 from contextlib import closing
@@ -144,11 +147,23 @@ class ClickInstaller:
         with closing(DebFile(filename=path)) as package:
             return self.audit_control(package.control)
 
-    def install(self, path):
-        package_name, package_version = self.audit(path)
-        package_dir = os.path.join(self.root, package_name)
-        inst_dir = os.path.join(package_dir, package_version)
-        assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
+    def _drop_privileges(self, username):
+        if os.getuid() != 0:
+            return
+        pw = pwd.getpwnam(username)
+        os.setgroups(
+            [g.gr_gid for g in grp.getgrall() if username in g.gr_mem])
+        # Portability note: this assumes that we have [gs]etres[gu]id, which
+        # is true on Linux but not necessarily elsewhere.  If you need to
+        # support something else, there are reasonably standard alternatives
+        # involving other similar calls; see e.g. gnulib/lib/idpriv-drop.c.
+        os.setresgid(pw.pw_gid, pw.pw_gid, pw.pw_gid)
+        os.setresuid(pw.pw_uid, pw.pw_uid, pw.pw_uid)
+        assert os.getresuid() == (pw.pw_uid, pw.pw_uid, pw.pw_uid)
+        assert os.getresgid() == (pw.pw_gid, pw.pw_gid, pw.pw_gid)
+
+    def _install_preexec(self, inst_dir):
+        self._drop_privileges("clickpkg")
 
         admin_dir = os.path.join(inst_dir, ".click")
         if not os.path.exists(admin_dir):
@@ -160,6 +175,12 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "info"))
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
+
+    def install(self, path):
+        package_name, package_version = self.audit(path)
+        package_dir = os.path.join(self.root, package_name)
+        inst_dir = os.path.join(package_dir, package_version)
+        assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
 
         # TODO: sandbox so that this can only write to the unpack directory
         command = [
@@ -178,7 +199,9 @@ class ClickInstaller:
             preloads.append(env["LD_PRELOAD"])
         env["LD_PRELOAD"] = " ".join(preloads)
         env["CLICK_BASE_DIR"] = self.root
-        subprocess.check_call(command, env=env)
+        subprocess.check_call(
+            command, preexec_fn=partial(self._install_preexec, inst_dir),
+            env=env)
 
         current_path = os.path.join(package_dir, "current")
 
@@ -193,6 +216,12 @@ class ClickInstaller:
         new_path = os.path.join(package_dir, "current.new")
         osextras.unlink_force(new_path)
         os.symlink(package_version, new_path)
+        if os.getuid() == 0:
+            # shutil.chown would be more convenient, but it doesn't support
+            # follow_symlinks=False in Python 3.3.
+            # http://bugs.python.org/issue18108
+            pw = pwd.getpwnam("clickpkg")
+            os.chown(new_path, pw.pw_uid, pw.pw_gid, follow_symlinks=False)
         os.rename(new_path, current_path)
 
         # TODO: garbage-collect old directories

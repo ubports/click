@@ -1,0 +1,17 @@
+#! /bin/sh
+set -e
+
+if [ "$1" = configure ]; then
+	if ! getent passwd clickpkg >/dev/null; then
+		adduser --quiet --system --home /nonexistent --no-create-home \
+			--disabled-password --shell /bin/false --group \
+			clickpkg
+	fi
+
+	mkdir -p -m 755 /opt/click.ubuntu.com
+	chown clickpkg:clickpkg /opt/click.ubuntu.com
+fi
+
+#DEBHELPER#
+
+exit 0

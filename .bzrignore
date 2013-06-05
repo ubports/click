@@ -12,8 +12,7 @@ debhelper/*.1
 debian/*.debhelper*
 debian/*.substvars
 debian/click-dev
-debian/click-install
-debian/click-package-common
+debian/click-package
 debian/click-package-doc
 debian/files
 debian/python3-click-package

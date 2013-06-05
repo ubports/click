@@ -1,5 +1,3 @@
-#! /usr/bin/python3
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -20,21 +18,16 @@
 from __future__ import print_function
 
 from optparse import OptionParser
-import os
-import sys
-
-# Support running from the build tree.
-sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
 
 from clickpackage.build import ClickBuilder
 
 
-def main():
-    parser = OptionParser("%prog [options] DIRECTORY")
+def run(argv):
+    parser = OptionParser("%prog build [options] DIRECTORY")
     parser.add_option(
         "-m", "--manifest", metavar="PATH",
         help="read package manifest from PATH")
-    options, args = parser.parse_args()
+    options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need directory")
     directory = args[0]
@@ -42,7 +35,4 @@ def main():
     builder.add_file(directory, "./")
     path = builder.build(".", manifest_path=options.manifest)
     print("Successfully built package in '%s'." % path)
-
-
-if __name__ == "__main__":
-    main()
+    return 0

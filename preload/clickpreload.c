@@ -179,9 +179,9 @@ int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
  * We try to insulate against dpkg getting confused enough by malformed
  * archives to write outside the instdir.  This is not full confinement, and
  * generally for system security it should be sufficient to run
- * click-install as a specialised user; as such we don't necessarily wrap
- * all possible relevant functions here.  The main purpose of this is just
- * to provide a useful error message if dpkg gets confused.
+ * "click-package install" as a specialised user; as such we don't
+ * necessarily wrap all possible relevant functions here.  The main purpose
+ * of this is just to provide a useful error message if dpkg gets confused.
  */
 
 static void clickpreload_assert_path_in_instdir (const char *pathname)
@@ -191,7 +191,8 @@ static void clickpreload_assert_path_in_instdir (const char *pathname)
         return;
 
     fprintf (stderr,
-             "Sandbox failure: click-install not permitted to write to '%s'\n",
+             "Sandbox failure: 'click-package install' not permitted to write "
+	     "to '%s'\n",
              pathname);
     exit (1);
 }

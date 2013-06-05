@@ -20,27 +20,19 @@
 from __future__ import print_function
 
 from optparse import OptionParser
-import os
-import sys
-
-# Support running from the build tree.
-sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
 
 from clickpackage.install import ClickInstaller
 
 
-def main():
-    parser = OptionParser("%prog PACKAGE-FILE")
+def run(argv):
+    parser = OptionParser("%prog verify PACKAGE-FILE")
     parser.add_option(
         "--force-missing-framework", action="store_true", default=False,
         help="ignore missing system framework")
-    options, args = parser.parse_args()
+    options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")
     package_path = args[0]
     installer = ClickInstaller(None, options.force_missing_framework)
     installer.audit(package_path)
-
-
-if __name__ == "__main__":
-    main()
+    return 0

@@ -95,11 +95,11 @@ strawman proposal, consider the following:
    Click package to avoid code duplication between system and Click package
    handling, although we must do so asynchronously and any errors must not
    block the installation of Click packages.  If "Trigger: yes" is set in a
-   ``*.hook`` file, then click-install will activate an asynchronous D-Bus
-   service at the end of installation, passing the names of all the changed
-   paths resulting from Pattern key expansions; this will activate any file
-   triggers matching those paths, and process all the packages that enter
-   the triggers-pending state as a result.
+   ``*.hook`` file, then "click-package install" will activate an
+   asynchronous D-Bus service at the end of installation, passing the names
+   of all the changed paths resulting from Pattern key expansions; this will
+   activate any file triggers matching those paths, and process all the
+   packages that enter the triggers-pending state as a result.
 
  * The terms "install", "upgrade", and "removal" are taken to refer to the
    status of the hook rather than of the package.  That is, when upgrading

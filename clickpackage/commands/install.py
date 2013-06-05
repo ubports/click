@@ -1,5 +1,3 @@
-#! /usr/bin/python3
-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -15,48 +13,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Install or remove a Click system hook."""
+"""Install a Click package."""
 
 from __future__ import print_function
 
 from optparse import OptionParser
-import os
-import sys
 
-# Support running from the build tree.
-sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
-
-from clickpackage.hooks import ClickHook
+from clickpackage.install import ClickInstaller
 
 
 # TODO: make configurable in build system or configuration file or similar?
 default_root = "/opt/click.ubuntu.com"
 
 
-subcommands = {
-    "install": "install_all",
-    "remove": "remove_all",
-    }
-
-
-def main():
-    parser = OptionParser("%prog [options] {install|remove} HOOK")
+def run(argv):
+    parser = OptionParser("%prog install [options] PACKAGE-FILE")
     parser.add_option(
         "--root", metavar="PATH", default=default_root,
         help="set top-level directory to PATH (default: %s)" % default_root)
-    options, args = parser.parse_args()
+    parser.add_option(
+        "--force-missing-framework", action="store_true", default=False,
+        help="install despite missing system framework")
+    options, args = parser.parse_args(argv)
     if len(args) < 1:
-        parser.error("need subcommand (install, remove)")
-    subcommand = args[0]
-    if subcommand not in subcommands:
-        parser.error(
-            "unknown subcommand '%s' (known: install, remove)" % subcommand)
-    if len(args) < 2:
-        parser.error("need hook name")
-    name = args[1]
-    hook = ClickHook.open(name)
-    getattr(hook, subcommands[subcommand])(options.root)
-
-
-if __name__ == "__main__":
-    main()
+        parser.error("need package file name")
+    package_path = args[0]
+    installer = ClickInstaller(options.root, options.force_missing_framework)
+    installer.install(package_path)
+    return 0

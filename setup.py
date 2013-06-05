@@ -117,10 +117,7 @@ setup(
     license="GNU GPL",
     packages=find_packages(),
     scripts=[
-        'bin/click-build',
-        'bin/click-hook',
-        'bin/click-install',
-        'bin/click-verify',
+        'bin/click-package',
         'debhelper/dh_clickpackage',
         ],
     data_files=data_files,

@@ -15,39 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Install a Click package."""
+"""Operations on Click packages."""
 
 from __future__ import print_function
 
 from optparse import OptionParser
 import os
 import sys
+from textwrap import dedent
 
 # Support running from the build tree.
 sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
 
-from clickpackage.install import ClickInstaller
-
-
-# TODO: make configurable in build system or configuration file or similar?
-default_root = "/opt/click.ubuntu.com"
+from clickpackage import commands
 
 
 def main():
-    parser = OptionParser("%prog [options] PACKAGE-FILE")
-    parser.add_option(
-        "--root", metavar="PATH", default=default_root,
-        help="set top-level directory to PATH (default: %s)" % default_root)
-    parser.add_option(
-        "--force-missing-framework", action="store_true", default=False,
-        help="install despite missing system framework")
-    options, args = parser.parse_args()
-    if len(args) < 1:
-        parser.error("need package file name")
-    package_path = args[0]
-    installer = ClickInstaller(options.root, options.force_missing_framework)
-    installer.install(package_path)
+    parser = OptionParser(dedent("""\
+        %%prog COMMAND [options]
+
+        Commands are as follows ('%%prog COMMAND --help' for more):
+
+        %s""") % commands.help_text())
+
+    parser.disable_interspersed_args()
+    _, args = parser.parse_args()
+    if not args:
+        parser.print_help()
+        return 0
+    command = args[0]
+    if command not in commands.all_commands:
+        parser.error("unknown command: %s" % command)
+    mod = commands.load_command(command)
+    mod.run(args[1:])
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -37,7 +37,7 @@ from debian.debian_support import Version
 
 from clickpackage import osextras
 from clickpackage.hooks import run_hooks
-from clickpackage.preinst import static_preinst
+from clickpackage.preinst import static_preinst_matches
 from clickpackage.versions import spec_version
 
 
@@ -133,7 +133,7 @@ class ClickInstaller:
 
         scripts = control_part.scripts()
         if ("preinst" in scripts and
-                scripts["preinst"] == static_preinst.encode()):
+                static_preinst_matches(scripts["preinst"])):
             scripts.pop("preinst", None)
         if scripts:
             raise ValueError(

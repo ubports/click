@@ -44,10 +44,20 @@ def main():
         parser.print_help()
         return 0
     command = args[0]
+    args = args[1:]
+
+    if command == "help":
+        if args and args[0] in commands.all_commands:
+            mod = commands.load_command(args[0])
+            mod.run(["--help"])
+        else:
+            parser.print_help()
+        return 0
+
     if command not in commands.all_commands:
         parser.error("unknown command: %s" % command)
     mod = commands.load_command(command)
-    mod.run(args[1:])
+    mod.run(args)
     return 0
 
 

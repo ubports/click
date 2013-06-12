@@ -20,6 +20,7 @@ from __future__ import print_function
 __metaclass__ = type
 __all__ = [
     'ClickBuilder',
+    'ClickSourceBuilder',
     ]
 
 
@@ -60,20 +61,12 @@ class FakerootTarFile(tarfile.TarFile):
         return tarinfo
 
 
-class ClickBuilder:
+class ClickBuilderBase:
     def __init__(self):
         self.file_map = {}
 
     def add_file(self, source_path, dest_path):
         self.file_map[source_path] = dest_path
-
-    def list_files(self, root_path):
-        for dirpath, _, filenames in os.walk(root_path):
-            rel_dirpath = os.path.relpath(dirpath, root_path)
-            if rel_dirpath == ".":
-                rel_dirpath = ""
-            for filename in filenames:
-                yield os.path.join(rel_dirpath, filename)
 
     def read_manifest(self, manifest_path):
         with open(manifest_path) as manifest:
@@ -84,6 +77,16 @@ class ClickBuilder:
         self.description = self.manifest["description"]
         self.architecture = self.manifest.get("architecture", "all")
         self.framework = self.manifest["framework"]
+
+
+class ClickBuilder(ClickBuilderBase):
+    def list_files(self, root_path):
+        for dirpath, _, filenames in os.walk(root_path):
+            rel_dirpath = os.path.relpath(dirpath, root_path)
+            if rel_dirpath == ".":
+                rel_dirpath = ""
+            for filename in filenames:
+                yield os.path.join(rel_dirpath, filename)
 
     def _filter_dot_click(self, tarinfo):
         """Filter out attempts to include .click at the top level."""
@@ -168,4 +171,70 @@ class ClickBuilder:
                 package.add_data("debian-binary", b"2.0\n")
                 package.add_file("control.tar.gz", control_tar_path)
                 package.add_file("data.tar.gz", data_tar_path)
+            return package_path
+
+
+class ClickSourceBuilder(ClickBuilderBase):
+    # From @Dpkg::Source::Package::tar_ignore_default_pattern.
+    # TODO: This should be configurable, or at least extensible.
+    _ignore_patterns = [
+        "*.a",
+        "*.la",
+        "*.o",
+        "*.so",
+        ".*.sw?",
+        "*~",
+        ",,*",
+        ".[#~]*",
+        ".arch-ids",
+        ".arch-inventory",
+        ".be",
+        ".bzr",
+        ".bzr.backup",
+        ".bzr.tags",
+        ".bzrignore",
+        ".cvsignore",
+        ".deps",
+        ".git",
+        ".gitattributes",
+        ".gitignore",
+        ".gitmodules",
+        ".hg",
+        ".hgignore",
+        ".hgsigs",
+        ".hgtags",
+        ".shelf",
+        ".svn",
+        "CVS",
+        "DEADJOE",
+        "RCS",
+        "_MTN",
+        "_darcs",
+        "{arch}",
+        ]
+
+    def build(self, dest_dir, manifest_path=None):
+        with make_temp_dir() as temp_dir:
+            root_path = os.path.join(temp_dir, "source")
+            for source_path, dest_path in self.file_map.items():
+                if dest_path.startswith("/"):
+                    dest_path = dest_path[1:]
+                real_dest_path = os.path.join(root_path, dest_path)
+                shutil.copytree(
+                    source_path, real_dest_path, symlinks=True,
+                    ignore=shutil.ignore_patterns(*self._ignore_patterns))
+
+            real_manifest_path = os.path.join(root_path, "manifest.json")
+            if manifest_path is not None:
+                shutil.copy2(manifest_path, real_manifest_path)
+            os.chmod(real_manifest_path, 0o644)
+            self.read_manifest(real_manifest_path)
+
+            # TODO: strip epoch from version, or disallow epochs?
+            package_name = "%s_%s.tar.gz" % (self.name, self.version)
+            package_path = os.path.join(dest_dir, package_name)
+            with contextlib.closing(FakerootTarFile.open(
+                    name=package_path, mode="w:gz", format=tarfile.GNU_FORMAT
+                    )) as tar:
+                tar.add(root_path, arcname="./")
             return package_path

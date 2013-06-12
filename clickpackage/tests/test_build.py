@@ -20,6 +20,7 @@ from __future__ import print_function
 __metaclass__ = type
 __all__ = [
     'TestClickBuilder',
+    'TestClickSourceBuilder',
     ]
 
 
@@ -27,9 +28,10 @@ import json
 import os
 import stat
 import subprocess
+import tarfile
 from textwrap import dedent
 
-from clickpackage.build import ClickBuilder
+from clickpackage.build import ClickBuilder, ClickSourceBuilder
 from clickpackage.preinst import static_preinst
 from clickpackage.tests.helpers import TestCase, mkfile, touch
 
@@ -49,7 +51,7 @@ def umask(force_umask):
     return decorator
 
 
-class TestClickBuilder(TestCase):
+class TestClickBuilderBaseMixin:
     def test_read_manifest(self):
         self.use_temp_dir()
         manifest_path = os.path.join(self.temp_dir, "manifest.json")
@@ -62,18 +64,22 @@ class TestClickBuilder(TestCase):
                     "description": "test description",
                     "framework": "ubuntu-sdk-13.10"
                 }"""), file=manifest)
-        builder = ClickBuilder()
-        builder.read_manifest(manifest_path)
-        self.assertEqual("com.ubuntu.test", builder.name)
-        self.assertEqual("1.0", builder.version)
-        self.assertEqual("Foo Bar <foo@example.org>", builder.maintainer)
-        self.assertEqual("test description", builder.description)
-        self.assertEqual("all", builder.architecture)
+        self.builder.read_manifest(manifest_path)
+        self.assertEqual("com.ubuntu.test", self.builder.name)
+        self.assertEqual("1.0", self.builder.version)
+        self.assertEqual("Foo Bar <foo@example.org>", self.builder.maintainer)
+        self.assertEqual("test description", self.builder.description)
+        self.assertEqual("all", self.builder.architecture)
 
     def test_add_file(self):
-        builder = ClickBuilder()
-        builder.add_file("/nonexistent", "target")
-        self.assertEqual({"/nonexistent": "target"}, builder.file_map)
+        self.builder.add_file("/nonexistent", "target")
+        self.assertEqual({"/nonexistent": "target"}, self.builder.file_map)
+
+
+class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
+    def setUp(self):
+        super(TestClickBuilder, self).setUp()
+        self.builder = ClickBuilder()
 
     def extract_field(self, path, name):
         return subprocess.check_output(
@@ -104,10 +110,9 @@ class TestClickBuilder(TestCase):
             }))
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
-        builder = ClickBuilder()
-        builder.add_file(scratch, "/")
+        self.builder.add_file(scratch, "/")
         path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_all.click")
-        self.assertEqual(path, builder.build(self.temp_dir))
+        self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         for key, value in (
             ("Package", "com.ubuntu.test"),
@@ -171,9 +176,40 @@ class TestClickBuilder(TestCase):
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
             }))
-        builder = ClickBuilder()
-        builder.add_file(scratch, "/")
-        path = builder.build(self.temp_dir)
+        self.builder.add_file(scratch, "/")
+        path = self.builder.build(self.temp_dir)
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual(["manifest.json"], os.listdir(extract_path))
+
+
+class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
+    def setUp(self):
+        super(TestClickSourceBuilder, self).setUp()
+        self.builder = ClickSourceBuilder()
+
+    @umask(0o22)
+    def test_build(self):
+        self.use_temp_dir()
+        scratch = os.path.join(self.temp_dir, "scratch")
+        touch(os.path.join(scratch, "bin", "foo"))
+        touch(os.path.join(scratch, ".git", "config"))
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
+            f.write(json.dumps({
+                "name": "com.ubuntu.test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "description": "test description",
+                "architecture": "all",
+                "framework": "ubuntu-sdk-13.10",
+            }))
+            # build() overrides this back to 0o644
+            os.fchmod(f.fileno(), 0o600)
+        self.builder.add_file(scratch, "./")
+        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0.tar.gz")
+        self.assertEqual(path, self.builder.build(self.temp_dir))
+        self.assertTrue(os.path.exists(path))
+        with tarfile.open(path, mode="r:gz") as tar:
+            self.assertCountEqual(
+                [".", "./bin", "./bin/foo", "./manifest.json"], tar.getnames())
+            self.assertTrue(tar.getmember("./bin/foo").isfile())

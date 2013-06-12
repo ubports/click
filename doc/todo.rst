@@ -10,7 +10,6 @@ To do
  * support for installing some apps to phone memory and some to an SD card
  * some way to manage shared data files
  * localised metadata
- * source packages, at least for free software
  * association with developer ID, to allow sharing of data
 
 Delta updates

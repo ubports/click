@@ -11,6 +11,7 @@ To do
  * some way to manage shared data files
  * localised metadata
  * source packages, at least for free software
+ * association with developer ID, to allow sharing of data
 
 Delta updates
 =============

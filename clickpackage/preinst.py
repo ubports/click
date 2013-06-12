@@ -24,12 +24,10 @@ packages use a different root of their filesystem tarball.
 
 from __future__ import print_function
 
-import sys
-
 __metaclass__ = type
 __all__ = [
-    'all_static_preinsts',
     'static_preinst',
+    'static_preinst_matches',
     ]
 
 

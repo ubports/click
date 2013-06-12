@@ -90,6 +90,7 @@ class TestClickBuilder(TestCase):
         scratch = os.path.join(self.temp_dir, "scratch")
         with mkfile(os.path.join(scratch, "bin", "foo")) as f:
             f.write("test /bin/foo\n")
+        os.symlink("foo", os.path.join(scratch, "bin", "bar"))
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
@@ -123,6 +124,7 @@ class TestClickBuilder(TestCase):
         self.assertRegex(
             self.extract_control_file(path, "md5sums"),
             r"^"
+            r"eb774c3ead632b397d6450d1df25e001  bin/bar\n"
             r"eb774c3ead632b397d6450d1df25e001  bin/foo\n"
             r".*  manifest.json\n"
             r"49327ce6306df8a87522456b14a179e0  toplevel\n"
@@ -132,6 +134,9 @@ class TestClickBuilder(TestCase):
         contents = subprocess.check_output(
             ["dpkg-deb", "-c", path], universal_newlines=True)
         self.assertRegex(contents, r"^drwxr-xr-x root/root         0 .* \./\n")
+        self.assertRegex(
+            contents,
+            "\nlrwxrwxrwx root/root         0 .* \./bin/bar -> foo\n")
         self.assertRegex(
             contents, "\n-rw-r--r-- root/root        14 .* \./bin/foo\n")
         self.assertRegex(
@@ -146,6 +151,10 @@ class TestClickBuilder(TestCase):
             with open(os.path.join(scratch, rel_path)) as source, \
                     open(os.path.join(extract_path, rel_path)) as target:
                 self.assertEqual(source.read(), target.read())
+        self.assertTrue(
+            os.path.islink(os.path.join(extract_path, "bin", "bar")))
+        self.assertEqual(
+            "foo", os.readlink(os.path.join(extract_path, "bin", "bar")))
         manifest_path = os.path.join(extract_path, "manifest.json")
         self.assertEqual(0o644, stat.S_IMODE(os.stat(manifest_path).st_mode))
 

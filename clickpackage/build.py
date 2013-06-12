@@ -99,7 +99,7 @@ class ClickBuilder:
                 if dest_path.startswith("/"):
                     dest_path = dest_path[1:]
                 real_dest_path = os.path.join(root_path, dest_path)
-                shutil.copytree(source_path, real_dest_path)
+                shutil.copytree(source_path, real_dest_path, symlinks=True)
 
             real_manifest_path = os.path.join(root_path, "manifest.json")
             if manifest_path is not None:

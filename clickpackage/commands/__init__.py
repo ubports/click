@@ -20,9 +20,9 @@ import importlib
 
 all_commands = (
     "build",
+    "buildsource",
     "hook",
     "install",
-    "source",
     "verify",
     )
 

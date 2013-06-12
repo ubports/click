@@ -23,7 +23,7 @@ from clickpackage.build import ClickSourceBuilder
 
 
 def run(argv):
-    parser = OptionParser("%prog source [options] DIRECTORY")
+    parser = OptionParser("%prog buildsource [options] DIRECTORY")
     parser.add_option(
         "-m", "--manifest", metavar="PATH",
         help="read package manifest from PATH")

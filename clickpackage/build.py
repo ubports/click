@@ -190,6 +190,7 @@ class ClickSourceBuilder(ClickBuilderBase):
         ".arch-inventory",
         ".be",
         ".bzr",
+        ".bzr-builddeb",
         ".bzr.backup",
         ".bzr.tags",
         ".bzrignore",

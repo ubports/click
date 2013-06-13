@@ -3,6 +3,7 @@
 import os
 import re
 import subprocess
+import sys
 
 from setuptools import Command, find_packages, setup
 from distutils.command.build import build
@@ -81,7 +82,8 @@ def require(package, pypi_name=None):
 
 
 require('debian', 'python-debian')
-require('mock')
+if sys.version < "3.3":
+    require('mock')
 require('chardet')
 
 

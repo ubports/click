@@ -184,40 +184,41 @@ int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
  * of this is just to provide a useful error message if dpkg gets confused.
  */
 
-static void clickpreload_assert_path_in_instdir (const char *pathname)
+static void clickpreload_assert_path_in_instdir (const char *verb,
+						 const char *pathname)
 {
     if (strncmp (pathname, base_path, base_path_len) == 0 &&
         (pathname[base_path_len] == '\0' || pathname[base_path_len] == '/'))
         return;
 
     fprintf (stderr,
-             "Sandbox failure: 'click-package install' not permitted to write "
-	     "to '%s'\n",
-             pathname);
+             "Sandbox failure: 'click-package install' not permitted to %s "
+	     "'%s'\n",
+             verb, pathname);
     exit (1);
 }
 
 int link (const char *oldpath, const char *newpath)
 {
-    clickpreload_assert_path_in_instdir (newpath);
+    clickpreload_assert_path_in_instdir ("make hard link", newpath);
     return (*libc_link) (oldpath, newpath);
 }
 
 int mkdir (const char *pathname, mode_t mode)
 {
-    clickpreload_assert_path_in_instdir (pathname);
+    clickpreload_assert_path_in_instdir ("mkdir", pathname);
     return (*libc_mkdir) (pathname, mode);
 }
 
 int mkfifo (const char *pathname, mode_t mode)
 {
-    clickpreload_assert_path_in_instdir (pathname);
+    clickpreload_assert_path_in_instdir ("mkfifo", pathname);
     return (*libc_mkfifo) (pathname, mode);
 }
 
 int mknod (const char *pathname, mode_t mode, dev_t dev)
 {
-    clickpreload_assert_path_in_instdir (pathname);
+    clickpreload_assert_path_in_instdir ("mknod", pathname);
     return (*libc_mknod) (pathname, mode, dev);
 }
 
@@ -227,7 +228,7 @@ int open (const char *pathname, int flags, ...)
     int ret;
 
     if ((flags & O_WRONLY) || (flags & O_RDWR))
-        clickpreload_assert_path_in_instdir (pathname);
+        clickpreload_assert_path_in_instdir ("write-open", pathname);
 
     if (flags & O_CREAT) {
         va_list argv;
@@ -246,7 +247,7 @@ int open64 (const char *pathname, int flags, ...)
     int ret;
 
     if ((flags & O_WRONLY) || (flags & O_RDWR))
-        clickpreload_assert_path_in_instdir (pathname);
+        clickpreload_assert_path_in_instdir ("write-open", pathname);
 
     if (flags & O_CREAT) {
         va_list argv;
@@ -261,6 +262,6 @@ int open64 (const char *pathname, int flags, ...)
 
 int symlink (const char *oldpath, const char *newpath)
 {
-    clickpreload_assert_path_in_instdir (newpath);
+    clickpreload_assert_path_in_instdir ("make symbolic link", newpath);
     return (*libc_symlink) (oldpath, newpath);
 }

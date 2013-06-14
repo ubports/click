@@ -24,6 +24,7 @@ __all__ = [
 
 
 import os
+import stat
 import subprocess
 
 from contextlib import closing
@@ -41,7 +42,7 @@ from debian.deb822 import Deb822
 from clickpackage.install import DebFile
 
 from clickpackage import osextras
-from clickpackage.install import ClickInstaller
+from clickpackage.install import ClickInstaller, ClickInstallerPermissionDenied
 from clickpackage.preinst import static_preinst
 from clickpackage.tests.helpers import TestCase, mkfile, touch
 
@@ -242,6 +243,26 @@ class TestClickInstaller(TestCase):
         installer = ClickInstaller(self.temp_dir)
         self.make_framework(installer, "ubuntu-sdk-13.10")
         self.assertEqual(("test-package", "1.0"), installer.audit(path))
+
+    def test_no_write_permission(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+                "Click-Framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst})
+        write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+        installer = ClickInstaller(self.temp_dir)
+        self.make_framework(installer, "ubuntu-sdk-13.10")
+        temp_dir_mode = os.stat(self.temp_dir).st_mode
+        try:
+            os.chmod(self.temp_dir, temp_dir_mode & write_mask)
+            self.assertRaises(
+                ClickInstallerPermissionDenied, installer.install, path)
+        finally:
+            os.chmod(self.temp_dir, temp_dir_mode)
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),

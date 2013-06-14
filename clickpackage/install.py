@@ -60,6 +60,10 @@ except AttributeError:
             self.data._DebPart__member.close()
 
 
+class ClickInstallerPermissionDenied(Exception):
+    pass
+
+
 class ClickInstaller:
     frameworks_dir = "/usr/share/click-package/frameworks"
 
@@ -147,6 +151,17 @@ class ClickInstaller:
         with closing(DebFile(filename=path)) as package:
             return self.audit_control(package.control)
 
+    def _check_write_permissions(self, path):
+        while True:
+            if os.path.exists(path):
+                break
+            path = os.path.dirname(path)
+            if path == "/":
+                break
+        if not os.access(path, os.W_OK):
+            raise ClickInstallerPermissionDenied(
+                "No permission to write to %s; try running as root" % path)
+
     def _drop_privileges(self, username):
         if os.getuid() != 0:
             return
@@ -181,6 +196,8 @@ class ClickInstaller:
         package_dir = os.path.join(self.root, package_name)
         inst_dir = os.path.join(package_dir, package_version)
         assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
+
+        self._check_write_permissions(self.root)
 
         # TODO: sandbox so that this can only write to the unpack directory
         command = [

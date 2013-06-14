@@ -3,16 +3,26 @@ To do
 =====
 
  * hook that gets notified about all installations
+
  * dbus interface etc. as backend for UI
+
    * method may not be feasible because caller may want to go away
+
    * but where do we send a completion/failure signal back to?
+
  * arrangement to reprocess hooks on whole-image-update
+
  * support for installing some apps to phone memory and some to an SD card
+
    * multiple installation root directories so that some apps can be
      "system" and some "user"
+
  * some way to manage shared data files
+
  * localised metadata
+
  * association with developer ID, to allow sharing of data
+
  * debug symbols
 
 Delta updates

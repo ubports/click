@@ -185,15 +185,23 @@ int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
  */
 
 static void clickpreload_assert_path_in_instdir (const char *verb,
-						 const char *pathname)
+                                                 const char *pathname)
 {
     if (strncmp (pathname, base_path, base_path_len) == 0 &&
         (pathname[base_path_len] == '\0' || pathname[base_path_len] == '/'))
         return;
 
+    /* When building click-package in a chroot with pkgbinarymangler,
+     * dpkg-deb is in fact a wrapper shell script, and bash checks at
+     * startup whether it can open /dev/tty for writing.  This is harmless,
+     * so allow it.
+     */
+    if (strcmp (verb, "write-open") == 0 && strcmp (pathname, "/dev/tty") == 0)
+        return;
+
     fprintf (stderr,
              "Sandbox failure: 'click-package install' not permitted to %s "
-	     "'%s'\n",
+             "'%s'\n",
              verb, pathname);
     exit (1);
 }

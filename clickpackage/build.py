@@ -78,6 +78,10 @@ class ClickBuilderBase:
         self.architecture = self.manifest.get("architecture", "all")
         self.framework = self.manifest["framework"]
 
+    @property
+    def epochless_version(self):
+        return re.sub(r"^\d+:", "", self.version)
+
 
 class ClickBuilder(ClickBuilderBase):
     def list_files(self, root_path):
@@ -162,9 +166,8 @@ class ClickBuilder(ClickBuilderBase):
             control_tar.add(control_dir, arcname="./")
             control_tar.close()
 
-            # TODO: strip epoch from version, or disallow epochs?
             package_name = "%s_%s_%s.click" % (
-                self.name, self.version, self.architecture)
+                self.name, self.epochless_version, self.architecture)
             package_path = os.path.join(dest_dir, package_name)
             with ArFile(name=package_path, mode="w") as package:
                 package.add_magic()
@@ -231,8 +234,7 @@ class ClickSourceBuilder(ClickBuilderBase):
             os.chmod(real_manifest_path, 0o644)
             self.read_manifest(real_manifest_path)
 
-            # TODO: strip epoch from version, or disallow epochs?
-            package_name = "%s_%s.tar.gz" % (self.name, self.version)
+            package_name = "%s_%s.tar.gz" % (self.name, self.epochless_version)
             package_path = os.path.join(dest_dir, package_name)
             with contextlib.closing(FakerootTarFile.open(
                     name=package_path, mode="w:gz", format=tarfile.GNU_FORMAT

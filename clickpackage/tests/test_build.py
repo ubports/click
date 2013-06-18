@@ -75,6 +75,25 @@ class TestClickBuilderBaseMixin:
         self.builder.add_file("/nonexistent", "target")
         self.assertEqual({"/nonexistent": "target"}, self.builder.file_map)
 
+    def test_epochless_version(self):
+        self.use_temp_dir()
+        manifest_path = os.path.join(self.temp_dir, "manifest.json")
+        for version, epochless_version in (
+            ("1.0", "1.0"),
+            ("1:1.2.3", "1.2.3"),
+        ):
+            with mkfile(manifest_path) as manifest:
+                print(dedent("""\
+                    {
+                        "name": "com.ubuntu.test",
+                        "version": "%s",
+                        "maintainer": "Foo Bar <foo@example.org>",
+                        "description": "test description",
+                        "framework": "ubuntu-sdk-13.10"
+                    }""") % version, file=manifest)
+            self.builder.read_manifest(manifest_path)
+            self.assertEqual(epochless_version, self.builder.epochless_version)
+
 
 class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
     def setUp(self):

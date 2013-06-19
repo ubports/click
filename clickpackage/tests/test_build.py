@@ -133,7 +133,6 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             ("Package", "com.ubuntu.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.1"),
-            ("Click-Framework", "ubuntu-sdk-13.10"),
             ("Architecture", "all"),
             ("Maintainer", "Foo Bar <foo@example.org>"),
             ("Description", "test description"),

@@ -158,54 +158,12 @@ class TestClickInstaller(TestCase):
                 "Click-Version: 999 newer than maximum supported version .*",
                 ClickInstaller(self.temp_dir).audit_control, package.control)
 
-    def test_audit_control_no_click_framework(self):
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.0",
-                "Click-Version": "0.1",
-            })
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError, "No Click-Framework field",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
-
-    def test_audit_control_missing_click_framework(self):
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.0",
-                "Click-Version": "0.1",
-                "Click-Framework": "missing",
-            })
-        with closing(DebFile(filename=path)) as package:
-            installer = ClickInstaller(self.temp_dir)
-            self.make_framework(installer, "present")
-            self.assertRaisesRegex(
-                ValueError, "Framework 'missing' not present on system",
-                installer.audit_control, package.control)
-
-    def test_audit_control_missing_click_framework_force(self):
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.0",
-                "Click-Version": "0.1",
-                "Click-Framework": "missing",
-            },
-            manifest={"name": "test-package", "version": "1.0"})
-        with closing(DebFile(filename=path)) as package:
-            installer = ClickInstaller(self.temp_dir, True)
-            self.make_framework(installer, "present")
-            installer.audit_control(package.control)
-
     def test_audit_control_forbids_depends(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
                 "Depends": "libc6",
             })
         with closing(DebFile(filename=path)) as package:
@@ -221,7 +179,6 @@ class TestClickInstaller(TestCase):
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={
                 "preinst": "#! /bin/sh\n",
@@ -242,7 +199,6 @@ class TestClickInstaller(TestCase):
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst})
         with closing(DebFile(filename=path)) as package:
@@ -258,7 +214,6 @@ class TestClickInstaller(TestCase):
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"manifest": "{", "preinst": static_preinst})
         with closing(DebFile(filename=path)) as package:
@@ -267,15 +222,69 @@ class TestClickInstaller(TestCase):
             self.assertRaises(
                 ValueError, installer.audit_control, package.control)
 
+    def test_audit_control_no_framework(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+            },
+            manifest={},
+            control_scripts={"preinst": static_preinst})
+        with closing(DebFile(filename=path)) as package:
+            self.assertRaisesRegex(
+                ValueError, "No framework field in manifest",
+                ClickInstaller(self.temp_dir).audit_control, package.control)
+
+    def test_audit_control_missing_framework(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "missing",
+            },
+            control_scripts={"preinst": static_preinst})
+        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "present")
+            self.assertRaisesRegex(
+                ValueError, "Framework 'missing' not present on system",
+                installer.audit_control, package.control)
+
+    def test_audit_control_missing_framework_force(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "missing",
+            })
+        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir, True)
+            self.make_framework(installer, "present")
+            installer.audit_control(package.control)
+
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
-            manifest={"name": "test-package", "version": "1.0"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
             control_scripts={"preinst": static_preinst})
         installer = ClickInstaller(self.temp_dir)
         self.make_framework(installer, "ubuntu-sdk-13.10")
@@ -287,9 +296,12 @@ class TestClickInstaller(TestCase):
                 "Package": "test-package",
                 "Version": "1.0",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
-            manifest={"name": "test-package", "version": "1.0"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
             control_scripts={"preinst": static_preinst})
         write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
         installer = ClickInstaller(self.temp_dir)
@@ -315,9 +327,12 @@ class TestClickInstaller(TestCase):
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
-            manifest={"name": "test-package", "version": "1.0"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
@@ -344,7 +359,6 @@ class TestClickInstaller(TestCase):
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
             "Click-Version": "0.1",
-            "Click-Framework": "ubuntu-sdk-13.10",
         }, status[0])
         mock_run_hooks.assert_called_once_with(
             root, "test-package", None, "1.0")
@@ -374,9 +388,12 @@ class TestClickInstaller(TestCase):
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
-            manifest={"name": "test-package", "version": "1.0"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
@@ -402,9 +419,12 @@ class TestClickInstaller(TestCase):
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.1",
-                "Click-Framework": "ubuntu-sdk-13.10",
             },
-            manifest={"name": "test-package", "version": "1.0"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
@@ -434,7 +454,6 @@ class TestClickInstaller(TestCase):
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
             "Click-Version": "0.1",
-            "Click-Framework": "ubuntu-sdk-13.10",
         }, status[0])
         mock_run_hooks.assert_called_once_with(
             root, "test-package", "1.0", "1.1")

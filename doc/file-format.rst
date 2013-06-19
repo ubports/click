@@ -34,12 +34,14 @@ the file extension remaining .click; it may change in the future.
 Control area
 ============
 
+control
+-------
+
 Every Click package must include the following control fields:
 
  * Package: unique name for the application
  * Version: version number of the application
  * Click-Version: the current version number of this specification
- * Click-Framework: the system framework for which the package was built
 
 The package manager must refuse to process packages where any of these
 fields are missing or unparseable.  It must refuse to process packages where
@@ -48,14 +50,7 @@ Click-Version compares newer than the corresponding version it implements
 to process packages whose Click-Version field has an older major number than
 the version it implements (although future developers are encouraged to
 maintain the maximum possible degree of compatibility with packages in the
-wild).  It must refuse to process packages where the Click-Framework field
-does not declare a framework implemented by the system on which the package
-is being installed.
-
-For future expansion (e.g. applications that require multiple frameworks),
-the syntax of the Click-Framework field is formally that of a Debian
-dependency relationship field.  Currently, only a simple name is permitted,
-e.g. "Click-Framework: ubuntu-sdk-13.10".
+wild).
 
 The Package field identifies the application; every package in the app store
 has a unique Package identifier, and the app store will reject clashes.  It
@@ -72,9 +67,26 @@ Debian version numbering rules.
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click system framework they declare.
 
-There must be a "manifest" file in the control area (typically
-corresponding to "manifest.json" in source trees), which must be
-UTF-8-encoded JSON.
+manifest
+--------
+
+There must be a "manifest" file in the control area (typically corresponding
+to "manifest.json" in source trees), which must be a dictionary represented
+as UTF-8-encoded JSON.  It must include the following keys:
+
+ * framework: the system framework for which the package was built
+
+The package manager must refuse to process packages where the value of
+"framework" does not declare a framework implemented by the system on which
+the package is being installed.
+
+For future expansion (e.g. applications that require multiple frameworks),
+the syntax of "framework" is formally that of a Debian dependency
+relationship field.  Currently, only a simple name is permitted, e.g.
+"framework": "ubuntu-sdk-13.10".
+
+Maintainer scripts
+------------------
 
 Maintainer scripts are forbidden, with one exception: see below.  (If they
 are permitted in future, they will at most be required to consist only of

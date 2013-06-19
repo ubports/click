@@ -96,10 +96,6 @@ class ClickBuilderBase:
     def architecture(self):
         return self.manifest.get("architecture", "all")
 
-    @property
-    def framework(self):
-        return self.manifest["framework"]
-
 
 class ClickBuilder(ClickBuilderBase):
     def list_files(self, root_path):
@@ -156,14 +152,12 @@ class ClickBuilder(ClickBuilderBase):
                     Package: %s
                     Version: %s
                     Click-Version: %s
-                    Click-Framework: %s
                     Architecture: %s
                     Maintainer: %s
                     Installed-Size: %s
                     Description: %s""" % (
-                    self.name, self.version, spec_version, self.framework,
-                    self.architecture, self.maintainer, installed_size,
-                    self.description)),
+                    self.name, self.version, spec_version, self.architecture,
+                    self.maintainer, installed_size, self.description)),
                     file=control)
 
             md5sums_path = os.path.join(control_dir, "md5sums")

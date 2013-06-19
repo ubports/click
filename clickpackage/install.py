@@ -118,15 +118,6 @@ class ClickInstaller:
                 "Click-Version: %s newer than maximum supported version %s" %
                 (click_version, spec_version))
 
-        try:
-            click_framework = control_fields["click-framework"]
-        except KeyError:
-            raise ValueError("No Click-Framework field")
-        if (not self.force_missing_framework and
-                not self._has_framework(click_framework)):
-            raise ValueError(
-                "Framework '%s' not present on system" % click_framework)
-
         for field in (
             "Pre-Depends", "Depends", "Recommends", "Suggests", "Enhances",
             "Conflicts", "Breaks",
@@ -148,8 +139,17 @@ class ClickInstaller:
 
         if not control_part.has_file("manifest"):
             raise ValueError("Package has no manifest")
-        with control_part.get_file("manifest", encoding="UTF-8") as manifest:
-            json.loads(manifest.read())
+        with control_part.get_file("manifest", encoding="UTF-8") as f:
+            manifest = json.loads(f.read())
+
+        try:
+            framework = manifest["framework"]
+        except KeyError:
+            raise ValueError("No framework field in manifest")
+        if (not self.force_missing_framework and
+                not self._has_framework(framework)):
+            raise ValueError(
+                "Framework '%s' not present on system" % framework)
 
         return package_name, package_version
 

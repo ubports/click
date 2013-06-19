@@ -71,16 +71,34 @@ class ClickBuilderBase:
     def read_manifest(self, manifest_path):
         with open(manifest_path) as manifest:
             self.manifest = json.load(manifest)
-        self.name = self.manifest["name"]
-        self.version = self.manifest["version"]
-        self.maintainer = self.manifest["maintainer"]
-        self.description = self.manifest["description"]
-        self.architecture = self.manifest.get("architecture", "all")
-        self.framework = self.manifest["framework"]
+
+    @property
+    def name(self):
+        return self.manifest["name"]
+
+    @property
+    def version(self):
+        return self.manifest["version"]
 
     @property
     def epochless_version(self):
         return re.sub(r"^\d+:", "", self.version)
+
+    @property
+    def maintainer(self):
+        return self.manifest["maintainer"]
+
+    @property
+    def description(self):
+        return self.manifest["description"]
+
+    @property
+    def architecture(self):
+        return self.manifest.get("architecture", "all")
+
+    @property
+    def framework(self):
+        return self.manifest["framework"]
 
 
 class ClickBuilder(ClickBuilderBase):

@@ -13,29 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""click-package commands."""
+"""Show the file-list contents of a Click package file."""
 
-import importlib
+from __future__ import print_function
 
-
-all_commands = (
-    "build",
-    "buildsource",
-    "contents",
-    "hook",
-    "info",
-    "install",
-    "verify",
-    )
+from optparse import OptionParser
+import subprocess
 
 
-def load_command(command):
-    return importlib.import_module("clickpackage.commands.%s" % command)
-
-
-def help_text():
-    lines = []
-    for command in all_commands:
-        mod = load_command(command)
-        lines.append("  %-21s %s" % (command, mod.__doc__.splitlines()[0]))
-    return "\n".join(lines)
+def run(argv):
+    parser = OptionParser("%prog contents [options] PATH")
+    _, args = parser.parse_args(argv)
+    if len(args) < 1:
+        parser.error("need file name")
+    path = args[0]
+    subprocess.check_call(["dpkg-deb", "-c", path])
+    return 0

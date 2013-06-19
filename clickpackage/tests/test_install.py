@@ -23,6 +23,7 @@ __all__ = [
     ]
 
 
+import json
 import os
 import stat
 import subprocess
@@ -66,8 +67,8 @@ class TestClickInstaller(TestCase):
         super(TestClickInstaller, self).setUp()
         self.use_temp_dir()
 
-    def make_fake_package(self, control_fields=None, control_scripts=None,
-                          data_files=None):
+    def make_fake_package(self, control_fields=None, manifest=None,
+                          control_scripts=None, data_files=None):
         """Build a fake package with given contents.
 
         We can afford to use dpkg-deb here since it's easy, just for testing.
@@ -82,6 +83,9 @@ class TestClickInstaller(TestCase):
             for key, value in control_fields.items():
                 print('%s: %s' % (key.title(), value), file=control)
             print(file=control)
+        if manifest is not None:
+            with mkfile(os.path.join(control_dir, "manifest")) as f:
+                print(json.dumps(manifest), file=f)
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
@@ -188,7 +192,8 @@ class TestClickInstaller(TestCase):
                 "Version": "1.0",
                 "Click-Version": "0.1",
                 "Click-Framework": "missing",
-            })
+            },
+            manifest={"name": "test-package", "version": "1.0"})
         with closing(DebFile(filename=path)) as package:
             installer = ClickInstaller(self.temp_dir, True)
             self.make_framework(installer, "present")
@@ -231,6 +236,37 @@ class TestClickInstaller(TestCase):
                 r"\(found: postinst preinst\)",
                 installer.audit_control, package.control)
 
+    def test_audit_control_requires_manifest(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+                "Click-Framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst})
+        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "ubuntu-sdk-13.10")
+            self.assertRaisesRegex(
+                ValueError, "Package has no manifest",
+                installer.audit_control, package.control)
+
+    def test_audit_control_invalid_manifest_json(self):
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.0",
+                "Click-Version": "0.1",
+                "Click-Framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"manifest": "{", "preinst": static_preinst})
+        with closing(DebFile(filename=path)) as package:
+            installer = ClickInstaller(self.temp_dir)
+            self.make_framework(installer, "ubuntu-sdk-13.10")
+            self.assertRaises(
+                ValueError, installer.audit_control, package.control)
+
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
             control_fields={
@@ -239,6 +275,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
+            manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst})
         installer = ClickInstaller(self.temp_dir)
         self.make_framework(installer, "ubuntu-sdk-13.10")
@@ -252,6 +289,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
+            manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst})
         write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
         installer = ClickInstaller(self.temp_dir)
@@ -279,6 +317,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
+            manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
@@ -337,6 +376,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
+            manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
@@ -364,6 +404,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.1",
                 "Click-Framework": "ubuntu-sdk-13.10",
             },
+            manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")

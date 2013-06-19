@@ -116,30 +116,32 @@ class ClickBuilder(ClickBuilderBase):
             return None
         return tarinfo
 
-    def build(self, dest_dir, manifest_path=None):
+    def build(self, dest_dir, manifest_path="manifest.json"):
         with make_temp_dir() as temp_dir:
-            # Data area
+            # Prepare data area.
             root_path = os.path.join(temp_dir, "data")
+
             for source_path, dest_path in self.file_map.items():
                 if dest_path.startswith("/"):
                     dest_path = dest_path[1:]
                 real_dest_path = os.path.join(root_path, dest_path)
                 shutil.copytree(source_path, real_dest_path, symlinks=True)
 
-            real_manifest_path = os.path.join(root_path, "manifest.json")
-            if manifest_path is not None:
-                shutil.copy2(manifest_path, real_manifest_path)
+            # Prepare control area.
+            control_dir = os.path.join(temp_dir, "DEBIAN")
+            osextras.ensuredir(control_dir)
+
+            # Control file names must not contain a dot, hence "manifest"
+            # rather than "manifest.json" in the control area.
+            real_manifest_path = os.path.join(control_dir, "manifest")
+            if os.path.isabs(manifest_path):
+                full_manifest_path = manifest_path
+            else:
+                full_manifest_path = os.path.join(root_path, manifest_path)
+            os.rename(full_manifest_path, real_manifest_path)
             os.chmod(real_manifest_path, 0o644)
             self.read_manifest(real_manifest_path)
 
-            data_tar_path = os.path.join(temp_dir, "data.tar.gz")
-            with contextlib.closing(FakerootTarFile.open(
-                    name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT
-                    )) as data_tar:
-                data_tar.add(
-                    root_path, arcname="./", filter=self._filter_dot_click)
-
-            # Control area.
             du_output = subprocess.check_output(
                 ["du", "-k", "-s", "--apparent-size", "."],
                 cwd=temp_dir, universal_newlines=True).rstrip("\n")
@@ -147,7 +149,6 @@ class ClickBuilder(ClickBuilderBase):
             if not match:
                 raise Exception("du gave unexpected output '%s'" % du_output)
             installed_size = match.group(1)
-            control_dir = os.path.join(temp_dir, "DEBIAN")
             control_path = os.path.join(control_dir, "control")
             osextras.ensuredir(os.path.dirname(control_path))
             with open(control_path, "w") as control:
@@ -164,6 +165,7 @@ class ClickBuilder(ClickBuilderBase):
                     self.architecture, self.maintainer, installed_size,
                     self.description)),
                     file=control)
+
             md5sums_path = os.path.join(control_dir, "md5sums")
             with open(md5sums_path, "w") as md5sums:
                 for path in sorted(self.list_files(root_path)):
@@ -175,9 +177,19 @@ class ClickBuilder(ClickBuilderBase):
                                 break
                             md5.update(buf)
                     print("%s  %s" % (md5.hexdigest(), path), file=md5sums)
+
             preinst_path = os.path.join(control_dir, "preinst")
             with open(preinst_path, "w") as preinst:
                 preinst.write(static_preinst)
+
+            # Pack everything up.
+            data_tar_path = os.path.join(temp_dir, "data.tar.gz")
+            with contextlib.closing(FakerootTarFile.open(
+                    name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT
+                    )) as data_tar:
+                data_tar.add(
+                    root_path, arcname="./", filter=self._filter_dot_click)
+
             control_tar_path = os.path.join(temp_dir, "control.tar.gz")
             control_tar = tarfile.open(
                 name=control_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT)

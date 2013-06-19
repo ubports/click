@@ -22,6 +22,7 @@ all_commands = (
     "build",
     "buildsource",
     "hook",
+    "info",
     "install",
     "verify",
     )

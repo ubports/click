@@ -13,26 +13,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Build a Click package."""
+"""Show manifest information on a Click package file."""
 
 from __future__ import print_function
 
+from contextlib import closing
+import json
 from optparse import OptionParser
 
-from clickpackage.build import ClickBuilder
+from clickpackage.install import DebFile
 
 
 def run(argv):
-    parser = OptionParser("%prog build [options] DIRECTORY")
-    parser.add_option(
-        "-m", "--manifest", metavar="PATH", default="manifest.json",
-        help="read package manifest from PATH (default: manifest.json)")
-    options, args = parser.parse_args(argv)
+    parser = OptionParser("%prog info [options] PATH")
+    _, args = parser.parse_args(argv)
     if len(args) < 1:
-        parser.error("need directory")
-    directory = args[0]
-    builder = ClickBuilder()
-    builder.add_file(directory, "./")
-    path = builder.build(".", manifest_path=options.manifest)
-    print("Successfully built package in '%s'." % path)
+        parser.error("need file name")
+    path = args[0]
+    with closing(DebFile(filename=path)) as package:
+        with package.control.get_file(
+                "manifest", encoding="UTF-8") as manifest:
+            manifest_json = json.loads(manifest.read())
+            print(json.dumps(
+                manifest_json, sort_keys=True, indent=4,
+                separators=(",", ": ")))
     return 0

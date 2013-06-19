@@ -41,7 +41,8 @@ HOOKS_DIR = "/usr/share/click-package/hooks"
 def _read_manifest_hooks(root, package, version):
     if version is None:
         return {}
-    manifest_path = os.path.join(root, package, version, "manifest.json")
+    manifest_path = os.path.join(
+        root, package, version, ".click", "info", "%s.manifest" % package)
     try:
         with open(manifest_path) as manifest:
             return json.load(manifest).get("hooks", {})

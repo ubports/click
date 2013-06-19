@@ -105,10 +105,6 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             ["dpkg-deb", "-f", path, name],
             universal_newlines=True).rstrip("\n")
 
-    def extract_control_file(self, path, name):
-        return subprocess.check_output(
-            ["dpkg-deb", "-I", path, name], universal_newlines=True)
-
     @umask(0o22)
     def test_build(self):
         self.use_temp_dir()
@@ -145,16 +141,23 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             self.assertEqual(value, self.extract_field(path, key))
         self.assertNotEqual(
             "", self.extract_field(path, "Installed-Size"))
-        self.assertRegex(
-            self.extract_control_file(path, "md5sums"),
-            r"^"
-            r"eb774c3ead632b397d6450d1df25e001  bin/bar\n"
-            r"eb774c3ead632b397d6450d1df25e001  bin/foo\n"
-            r".*  manifest.json\n"
-            r"49327ce6306df8a87522456b14a179e0  toplevel\n"
-            r"$")
-        self.assertEqual(
-            static_preinst, self.extract_control_file(path, "preinst"))
+        control_path = os.path.join(self.temp_dir, "control")
+        subprocess.check_call(["dpkg-deb", "-e", path, control_path])
+        manifest_path = os.path.join(control_path, "manifest")
+        self.assertEqual(0o644, stat.S_IMODE(os.stat(manifest_path).st_mode))
+        with open(os.path.join(scratch, "manifest.json")) as source, \
+                open(manifest_path) as target:
+            self.assertEqual(source.read(), target.read())
+        with open(os.path.join(control_path, "md5sums")) as md5sums:
+            self.assertRegex(
+                md5sums.read(),
+                r"^"
+                r"eb774c3ead632b397d6450d1df25e001  bin/bar\n"
+                r"eb774c3ead632b397d6450d1df25e001  bin/foo\n"
+                r"49327ce6306df8a87522456b14a179e0  toplevel\n"
+                r"$")
+        with open(os.path.join(control_path, "preinst")) as preinst:
+            self.assertEqual(static_preinst, preinst.read())
         contents = subprocess.check_output(
             ["dpkg-deb", "-c", path], universal_newlines=True)
         self.assertRegex(contents, r"^drwxr-xr-x root/root         0 .* \./\n")
@@ -170,7 +173,6 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         for rel_path in (
             os.path.join("bin", "foo"),
             "toplevel",
-            "manifest.json",
         ):
             with open(os.path.join(scratch, rel_path)) as source, \
                     open(os.path.join(extract_path, rel_path)) as target:
@@ -179,8 +181,6 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             os.path.islink(os.path.join(extract_path, "bin", "bar")))
         self.assertEqual(
             "foo", os.readlink(os.path.join(extract_path, "bin", "bar")))
-        manifest_path = os.path.join(extract_path, "manifest.json")
-        self.assertEqual(0o644, stat.S_IMODE(os.stat(manifest_path).st_mode))
 
     def test_build_excludes_dot_click(self):
         self.use_temp_dir()
@@ -199,7 +199,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         path = self.builder.build(self.temp_dir)
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
-        self.assertEqual(["manifest.json"], os.listdir(extract_path))
+        self.assertEqual([], os.listdir(extract_path))
 
 
 class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):

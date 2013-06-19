@@ -26,6 +26,7 @@ __all__ = [
 from functools import partial
 import grp
 import inspect
+import json
 import os
 import pwd
 import subprocess
@@ -144,6 +145,11 @@ class ClickInstaller:
                 "Maintainer scripts are forbidden in Click packages "
                 "(found: %s)" %
                 " ".join(sorted(scripts)))
+
+        if not control_part.has_file("manifest"):
+            raise ValueError("Package has no manifest")
+        with control_part.get_file("manifest", encoding="UTF-8") as manifest:
+            json.loads(manifest.read())
 
         return package_name, package_version
 

@@ -114,11 +114,13 @@ class TestClickHook(TestCase):
         with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
             print("Pattern: %s/%%s.new" % self.temp_dir, file=f)
         with mkfile(os.path.join(
-                self.temp_dir, "test-1", "1.0", "manifest.json")) as f:
+                self.temp_dir, "test-1", "1.0", ".click", "info",
+                "test-1.manifest")) as f:
             f.write(json.dumps({"hooks": {"new": "target-1"}}))
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         with mkfile(os.path.join(
-                self.temp_dir, "test-2", "2.0", "manifest.json")) as f:
+                self.temp_dir, "test-2", "2.0", ".click", "info",
+                "test-2.manifest")) as f:
             f.write(json.dumps({"hooks": {"new": "target-2"}}))
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
@@ -139,14 +141,16 @@ class TestClickHook(TestCase):
         with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
             print("Pattern: %s/%%s.old" % self.temp_dir, file=f)
         with mkfile(os.path.join(
-                self.temp_dir, "test-1", "1.0", "manifest.json")) as f:
+                self.temp_dir, "test-1", "1.0", ".click", "info",
+                "test-1.manifest")) as f:
             f.write(json.dumps({"hooks": {"old": "target-1"}}))
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         path_1 = os.path.join(self.temp_dir, "test-1.old")
         os.symlink(
             os.path.join(self.temp_dir, "test-1", "1.0", "target-1"), path_1)
         with mkfile(os.path.join(
-                self.temp_dir, "test-2", "2.0", "manifest.json")) as f:
+                self.temp_dir, "test-2", "2.0", ".click", "info",
+                "test-2.manifest")) as f:
             f.write(json.dumps({"hooks": {"old": "target-2"}}))
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         path_2 = os.path.join(self.temp_dir, "test-2.old")
@@ -167,10 +171,12 @@ class TestRunHooks(TestCase):
     @mock.patch("clickpackage.hooks.ClickHook.open")
     def test_removes_old_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
-        with mkfile(os.path.join(package_dir, "1.0", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.0", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps(
                 {"hooks": {"yelp": "foo.txt", "unity": "foo.scope"}}))
-        with mkfile(os.path.join(package_dir, "1.1", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.1", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps({}))
         run_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(2, mock_open.call_count)
@@ -184,9 +190,11 @@ class TestRunHooks(TestCase):
     @mock.patch("clickpackage.hooks.ClickHook.open")
     def test_installs_new_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
-        with mkfile(os.path.join(package_dir, "1.0", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.0", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps({"hooks": {}}))
-        with mkfile(os.path.join(package_dir, "1.1", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.1", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps({"hooks": {"a": "foo.a", "b": "foo.b"}}))
         run_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(2, mock_open.call_count)
@@ -200,9 +208,11 @@ class TestRunHooks(TestCase):
     @mock.patch("clickpackage.hooks.ClickHook.open")
     def test_upgrades_existing_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
-        with mkfile(os.path.join(package_dir, "1.0", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.0", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps({"hooks": {"a": "foo.a", "b": "foo.b"}}))
-        with mkfile(os.path.join(package_dir, "1.1", "manifest.json")) as f:
+        with mkfile(os.path.join(
+                package_dir, "1.1", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps(
                 {"hooks": {"a": "foo.a", "b": "foo.b", "c": "foo.c"}}))
         run_hooks(self.temp_dir, "test", "1.0", "1.1")

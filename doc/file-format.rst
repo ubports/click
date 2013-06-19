@@ -39,8 +39,6 @@ control
 
 Every Click package must include the following control fields:
 
- * Package: unique name for the application
- * Version: version number of the application
  * Click-Version: the current version number of this specification
 
 The package manager must refuse to process packages where any of these
@@ -52,17 +50,10 @@ the version it implements (although future developers are encouraged to
 maintain the maximum possible degree of compatibility with packages in the
 wild).
 
-The Package field identifies the application; every package in the app store
-has a unique Package identifier, and the app store will reject clashes.  It
-is the developer's responsibility to choose a unique identifier.  The
-recommended approach is to follow the Java package name convention, i.e.
-"com.mydomain.myapp", starting with the reverse of an Internet domain name
-owned by the person or organisation developing the application; note that it
-is not necessary for the application to contain any Java code in order to
-use this convention.
-
-The Version field provides a unique version for the application, following
-Debian version numbering rules.
+Several other fields are copied from the manifest, to ease interoperation
+with Debian package manipulation tools.  The manifest is the primary
+location for these fields, and Click-aware tools must not rely on their
+presence in the control file.
 
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click system framework they declare.
@@ -74,11 +65,26 @@ There must be a "manifest" file in the control area (typically corresponding
 to "manifest.json" in source trees), which must be a dictionary represented
 as UTF-8-encoded JSON.  It must include the following keys:
 
+ * name: unique name for the application
+ * version: version number of the application
  * framework: the system framework for which the package was built
 
-The package manager must refuse to process packages where the value of
-"framework" does not declare a framework implemented by the system on which
-the package is being installed.
+The package manager must refuse to process packages where any of these
+fields are missing or unparseable.  It must refuse to process packages where
+the value of "framework" does not declare a framework implemented by the
+system on which the package is being installed.
+
+The value of "name" identifies the application; every package in the app
+store has a unique "name" identifier, and the app store will reject clashes.
+It is the developer's responsibility to choose a unique identifier.  The
+recommended approach is to follow the Java package name convention, i.e.
+"com.mydomain.myapp", starting with the reverse of an Internet domain name
+owned by the person or organisation developing the application; note that it
+is not necessary for the application to contain any Java code in order to
+use this convention.
+
+The value of "version" provides a unique version for the application,
+following Debian version numbering rules.
 
 For future expansion (e.g. applications that require multiple frameworks),
 the syntax of "framework" is formally that of a Debian dependency

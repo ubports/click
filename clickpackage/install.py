@@ -96,20 +96,6 @@ class ClickInstaller:
         control_fields = control_part.debcontrol()
 
         try:
-            package_name = control_fields["Package"]
-        except KeyError:
-            raise ValueError("No Package field")
-        # TODO: perhaps just do full name validation?
-        if "/" in package_name:
-            raise ValueError(
-                "Invalid character '/' in Package: %s" % package_name)
-
-        try:
-            package_version = control_fields["Version"]
-        except KeyError:
-            raise ValueError("No Version field")
-
-        try:
             click_version = Version(control_fields["Click-Version"])
         except KeyError:
             raise ValueError("No Click-Version field")
@@ -143,13 +129,27 @@ class ClickInstaller:
             manifest = json.loads(f.read())
 
         try:
+            package_name = manifest["name"]
+        except KeyError:
+            raise ValueError('No "name" entry in manifest')
+        # TODO: perhaps just do full name validation?
+        if "/" in package_name:
+            raise ValueError(
+                'Invalid character "/" in "name" entry: %s' % package_name)
+
+        try:
+            package_version = manifest["version"]
+        except KeyError:
+            raise ValueError('No "version" entry in manifest')
+
+        try:
             framework = manifest["framework"]
         except KeyError:
-            raise ValueError("No framework field in manifest")
+            raise ValueError('No "framework" entry in manifest')
         if (not self.force_missing_framework and
                 not self._has_framework(framework)):
             raise ValueError(
-                "Framework '%s' not present on system" % framework)
+                'Framework "%s" not present on system' % framework)
 
         return package_name, package_version
 

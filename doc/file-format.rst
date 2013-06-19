@@ -72,6 +72,10 @@ Debian version numbering rules.
 All dependency relations are forbidden.  Packages implicitly depend on the
 entire contents of the Click system framework they declare.
 
+There must be a "manifest" file in the control area (typically
+corresponding to "manifest.json" in source trees), which must be
+UTF-8-encoded JSON.
+
 Maintainer scripts are forbidden, with one exception: see below.  (If they
 are permitted in future, they will at most be required to consist only of
 verified debhelper-generated fragments that can be statically analysed.)

@@ -10,8 +10,6 @@ To do
 
    * but where do we send a completion/failure signal back to?
 
- * arrangement to reprocess hooks on whole-image-update
-
  * support for installing some apps to phone memory and some to an SD card
 
    * multiple installation root directories so that some apps can be

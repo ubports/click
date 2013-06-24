@@ -3,11 +3,11 @@
 ================================================
 
 This specification covers a packaging format intended for use by
-self-contained third-party applications.  It is intentionally designed to be
-easy to create such packages and for the archive of packages to be able to
-scale to very large numbers, as well as to ensure that packages do not
-execute any unverified code as root during installation and that installed
-packages are sandboxable.
+self-contained third-party applications.  It is intentionally designed to
+make it easy to create such packages and for the archive of packages to be
+able to scale to very large numbers, as well as to ensure that packages do
+not execute any unverified code as root during installation and that
+installed packages are sandboxable.
 
 This implementation proposal uses the existing dpkg as its core, although
 that is entirely concealed from both users and application developers.  The

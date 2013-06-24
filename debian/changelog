@@ -1,5 +1,5 @@
-click-package (0.1) UNRELEASED; urgency=low
+click-package (0.1) saucy; urgency=low
 
   * Initial release.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Apr 2013 14:34:27 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 24 Jun 2013 14:43:21 +0100

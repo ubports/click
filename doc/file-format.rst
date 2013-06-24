@@ -89,8 +89,9 @@ the syntax of "framework" is formally that of a Debian dependency
 relationship field.  Currently, only a simple name is permitted, e.g.
 "framework": "ubuntu-sdk-13.10".
 
-The manifest may contain arbitrary additional keys.  The following are
-currently recognised:
+The manifest may contain arbitrary additional optional keys; new optional
+keys may be defined without changing the version number of this
+specification.  The following are currently recognised:
 
  * title: short (one-line) synopsis of the application
  * description: extended description of the application; may be

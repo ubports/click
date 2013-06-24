@@ -10,13 +10,11 @@ execute any unverified code as root during installation and that installed
 packages are sandboxable.
 
 This implementation proposal uses the existing dpkg as its core, although
-that is entirely concealed from both users and application developers.  It
-is currently intended only to demonstrate that the general goals of Click
-packages are achievable using a set of fairly minor modifications to dpkg.
-The author believes that using something based on dpkg will allow us to
-reuse substantial amounts of package-management-related code elsewhere, not
-least the many years of careful design and bug-fixing of dpkg itself;
-although there are clearly several things we need to adjust.
+that is entirely concealed from both users and application developers.  The
+author believes that using something based on dpkg will allow us to reuse
+substantial amounts of package-management-related code elsewhere, not least
+the many years of careful design and bug-fixing of dpkg itself; although
+there are clearly several things we need to adjust.
 
 General format
 ==============

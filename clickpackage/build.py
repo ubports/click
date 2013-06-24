@@ -89,8 +89,8 @@ class ClickBuilderBase:
         return self.manifest["maintainer"]
 
     @property
-    def description(self):
-        return self.manifest["description"]
+    def title(self):
+        return self.manifest["title"]
 
     @property
     def architecture(self):
@@ -157,7 +157,7 @@ class ClickBuilder(ClickBuilderBase):
                     Installed-Size: %s
                     Description: %s""" % (
                     self.name, self.version, spec_version, self.architecture,
-                    self.maintainer, installed_size, self.description)),
+                    self.maintainer, installed_size, self.title)),
                     file=control)
 
             md5sums_path = os.path.join(control_dir, "md5sums")

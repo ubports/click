@@ -61,14 +61,14 @@ class TestClickBuilderBaseMixin:
                     "name": "com.ubuntu.test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
-                    "description": "test description",
+                    "title": "test title",
                     "framework": "ubuntu-sdk-13.10"
                 }"""), file=manifest)
         self.builder.read_manifest(manifest_path)
         self.assertEqual("com.ubuntu.test", self.builder.name)
         self.assertEqual("1.0", self.builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", self.builder.maintainer)
-        self.assertEqual("test description", self.builder.description)
+        self.assertEqual("test title", self.builder.title)
         self.assertEqual("all", self.builder.architecture)
 
     def test_add_file(self):
@@ -88,7 +88,7 @@ class TestClickBuilderBaseMixin:
                         "name": "com.ubuntu.test",
                         "version": "%s",
                         "maintainer": "Foo Bar <foo@example.org>",
-                        "description": "test description",
+                        "title": "test title",
                         "framework": "ubuntu-sdk-13.10"
                     }""") % version, file=manifest)
             self.builder.read_manifest(manifest_path)
@@ -119,7 +119,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
-                "description": "test description",
+                "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
             }))
@@ -135,7 +135,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             ("Click-Version", "0.1"),
             ("Architecture", "all"),
             ("Maintainer", "Foo Bar <foo@example.org>"),
-            ("Description", "test description"),
+            ("Description", "test title"),
         ):
             self.assertEqual(value, self.extract_field(path, key))
         self.assertNotEqual(
@@ -190,7 +190,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
-                "description": "test description",
+                "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
             }))
@@ -217,7 +217,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
-                "description": "test description",
+                "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
             }))

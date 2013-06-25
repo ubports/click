@@ -93,9 +93,11 @@ class TestClickInstaller(TestCase):
             touch(os.path.join(package_dir, name))
         package_path = '%s.click' % package_dir
         with open("/dev/null", "w") as devnull:
+            env = dict(os.environ)
+            env["NO_PKG_MANGLE"] = "1"
             subprocess.check_call(
                 ["dpkg-deb", "--nocheck", "-b", package_dir, package_path],
-                stdout=devnull, stderr=devnull)
+                stdout=devnull, stderr=devnull, env=env)
         return package_path
 
     def make_framework(self, installer, name):

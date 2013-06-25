@@ -1,9 +1,9 @@
-click-package (0.1.1) UNRELEASED; urgency=low
+click-package (0.1.1) saucy; urgency=low
 
   * clickpackage.tests.test_install: Set NO_PKG_MANGLE when building fake
     packages, to avoid having Maintainer fields mangled on the buildds.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 25 Jun 2013 17:29:48 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 25 Jun 2013 17:32:00 +0100
 
 click-package (0.1) saucy; urgency=low
 

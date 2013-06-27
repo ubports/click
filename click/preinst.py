@@ -18,7 +18,7 @@
 In general there is a rule that Click packages may not have maintainer
 scripts.  However, there is one exception: a static preinst used to cause
 dpkg to fail if people attempt to install Click packages directly using dpkg
-rather than via "click-package install".  This avoids accidents, since Click
+rather than via "click install".  This avoids accidents, since Click
 packages use a different root of their filesystem tarball.
 """
 
@@ -31,7 +31,7 @@ __all__ = [
     ]
 
 
-_old_static_preinst = """\
+_older_static_preinst = """\
 #! /bin/sh
 echo "Click packages may not be installed directly using dpkg."
 echo "Use click-install instead."
@@ -39,7 +39,7 @@ exit 1
 """
 
 
-static_preinst = """\
+_old_static_preinst = """\
 #! /bin/sh
 echo "Click packages may not be installed directly using dpkg."
 echo "Use 'click-package install' instead."
@@ -47,8 +47,20 @@ exit 1
 """
 
 
+static_preinst = """\
+#! /bin/sh
+echo "Click packages may not be installed directly using dpkg."
+echo "Use 'click install' instead."
+exit 1
+"""
+
+
 def static_preinst_matches(preinst):
-    for allow_preinst in _old_static_preinst, static_preinst:
+    for allow_preinst in (
+            _older_static_preinst,
+            _old_static_preinst,
+            static_preinst,
+            ):
         if preinst == allow_preinst.encode():
             return True
     return False

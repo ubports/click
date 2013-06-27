@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for clickpackage.build."""
+"""Unit tests for click.build."""
 
 from __future__ import print_function
 
@@ -31,9 +31,9 @@ import subprocess
 import tarfile
 from textwrap import dedent
 
-from clickpackage.build import ClickBuilder, ClickSourceBuilder
-from clickpackage.preinst import static_preinst
-from clickpackage.tests.helpers import TestCase, mkfile, touch
+from click.build import ClickBuilder, ClickSourceBuilder
+from click.preinst import static_preinst
+from click.tests.helpers import TestCase, mkfile, touch
 
 
 # BAW 2013-04-15: Some tests require umask 022.  Use this decorator to

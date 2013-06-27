@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for clickpackage.osextras."""
+"""Unit tests for click.osextras."""
 
 from __future__ import print_function
 __all__ = [
@@ -23,8 +23,8 @@ __all__ = [
 
 import os
 
-from clickpackage import osextras
-from clickpackage.tests.helpers import TestCase, touch
+from click import osextras
+from click.tests.helpers import TestCase, touch
 
 
 class TestOSExtras(TestCase):

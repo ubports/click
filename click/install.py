@@ -36,10 +36,10 @@ from contextlib import closing
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
-from clickpackage import osextras
-from clickpackage.hooks import run_hooks
-from clickpackage.preinst import static_preinst_matches
-from clickpackage.versions import spec_version
+from click import osextras
+from click.hooks import run_hooks
+from click.preinst import static_preinst_matches
+from click.versions import spec_version
 
 
 CLICK_VERSION = "0.1"
@@ -66,7 +66,7 @@ class ClickInstallerPermissionDenied(Exception):
 
 
 class ClickInstaller:
-    frameworks_dir = "/usr/share/click-package/frameworks"
+    frameworks_dir = "/usr/share/click/frameworks"
 
     def __init__(self, root, force_missing_framework=False):
         self.root = root
@@ -82,7 +82,7 @@ class ClickInstaller:
         if os.path.exists(preload):
             return os.path.abspath(preload)
         # TODO: unhardcode path
-        return "/usr/lib/click-package/libclickpreload.so"
+        return "/usr/lib/click/libclickpreload.so"
 
     def _has_framework(self, name):
         return os.path.exists(os.path.join(

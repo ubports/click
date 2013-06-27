@@ -55,8 +55,8 @@ What we can do with reasonable safety is populate symlink farms.  As a
 strawman proposal, consider the following:
 
  * An integrated-with system package may add ``*.hook`` files to
-   /usr/share/click-package/hooks/.  These are standard Debian-style control
-   files with the following keys:
+   /usr/share/click/hooks/.  These are standard Debian-style control files
+   with the following keys:
 
      Pattern: <file-pattern>    (required)
      Exec: <program>            (optional)
@@ -86,20 +86,20 @@ strawman proposal, consider the following:
    values are symlink target paths used by the package manager when creating
    symlinks according to the Pattern field in ``*.hook`` files.
 
- * There is a dh_clickpackage program which installs the ``*.hook`` files in
-   system packages and adds maintainer script fragments to cause
-   click-package to catch up with any newly-provided hooks.  It may be
-   invoked using ``dh $@ --with clickpackage``.
+ * There is a dh_click program which installs the ``*.hook`` files in system
+   packages and adds maintainer script fragments to cause click to catch up
+   with any newly-provided hooks.  It may be invoked using ``dh $@ --with
+   click``.
 
  * It will often be valuable to execute a dpkg trigger after installing a
    Click package to avoid code duplication between system and Click package
    handling, although we must do so asynchronously and any errors must not
    block the installation of Click packages.  If "Trigger: yes" is set in a
-   ``*.hook`` file, then "click-package install" will activate an
-   asynchronous D-Bus service at the end of installation, passing the names
-   of all the changed paths resulting from Pattern key expansions; this will
-   activate any file triggers matching those paths, and process all the
-   packages that enter the triggers-pending state as a result.
+   ``*.hook`` file, then "click install" will activate an asynchronous D-Bus
+   service at the end of installation, passing the names of all the changed
+   paths resulting from Pattern key expansions; this will activate any file
+   triggers matching those paths, and process all the packages that enter
+   the triggers-pending state as a result.
 
  * The terms "install", "upgrade", and "removal" are taken to refer to the
    status of the hook rather than of the package.  That is, when upgrading
@@ -110,12 +110,12 @@ strawman proposal, consider the following:
 
 Thus, a worked example would have::
 
-  /usr/share/click-package/hooks/unity-lens-help.hook
+  /usr/share/click/hooks/unity-lens-help.hook
     Pattern: /usr/share/unity/lenses/help/click-%s.scope
     # unity-lens-help-update is fictional, shown for the sake of exposition
     Exec: unity-lens-help-update
 
-  /usr/share/click-package/hooks/dbus-service.hook
+  /usr/share/click/hooks/dbus-service.hook
     Pattern: /usr/share/dbus-1/services/click-%s.service
 
   com.ubuntu.unity-scope-manpages/manifest.json:

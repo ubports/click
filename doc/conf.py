@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'clickpackages', u'Click Packages Documentation',
+    ('index', 'click', u'Click Packages Documentation',
      [u'Colin Watson'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ClickPackages', u'Click Packages Documentation',
-   u'Colin Watson', 'ClickPackages', 'One line description of project.',
+  ('index', 'Click', u'Click Packages Documentation',
+   u'Colin Watson', 'Click', 'One line description of project.',
    'Miscellaneous'),
 ]
 

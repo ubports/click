@@ -98,20 +98,20 @@ perllibdir = '%s/Debian/Debhelper/Sequence' % perl_vendorlib
 # Hack to avoid install_data breaking in ./run-tests.
 if os.getuid() == 0:
     data_files = [
-        (perllibdir, ['debhelper/clickpackage.pm']),
+        (perllibdir, ['debhelper/click.pm']),
         ('/usr/share/debhelper/autoscripts', [
-            'debhelper/postinst-clickpackage',
-            'debhelper/prerm-clickpackage',
+            'debhelper/postinst-click',
+            'debhelper/prerm-click',
             ]),
         ('/usr/share/man/man1', [
-            'debhelper/dh_clickpackage.1',
+            'debhelper/dh_click.1',
             ])]
 else:
     data_files = []
 
 
 setup(
-    name="click-package",
+    name="click",
     version=version,
     description="Click package manager",
     author="Colin Watson",
@@ -119,8 +119,8 @@ setup(
     license="GNU GPL",
     packages=find_packages(),
     scripts=[
-        'bin/click-package',
-        'debhelper/dh_clickpackage',
+        'bin/click',
+        'debhelper/dh_click',
         ],
     data_files=data_files,
     cmdclass={
@@ -129,5 +129,5 @@ setup(
         'clean': clean_extra,
         },
     install_requires=requirements,
-    test_suite="clickpackage.tests",
+    test_suite="click.tests",
     )

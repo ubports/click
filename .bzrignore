@@ -1,5 +1,5 @@
 __pycache__
-./click_installer.egg-info
+./click.egg-info
 _build/doctrees
 _build/html
 doc/_build/doctrees
@@ -12,8 +12,8 @@ debhelper/*.1
 debian/*.debhelper*
 debian/*.substvars
 debian/click-dev
-debian/click-package
-debian/click-package-doc
+debian/click
+debian/click-doc
 debian/files
-debian/python3-click-package
+debian/python3-click
 debian/tmp

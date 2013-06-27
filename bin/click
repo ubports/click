@@ -27,7 +27,7 @@ from textwrap import dedent
 # Support running from the build tree.
 sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
 
-from clickpackage import commands
+from click import commands
 
 
 def main():

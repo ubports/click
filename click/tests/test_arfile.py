@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for clickpackage.arfile."""
+"""Unit tests for click.arfile."""
 
 from __future__ import print_function
 
@@ -26,8 +26,8 @@ __all__ = [
 import os
 import subprocess
 
-from clickpackage.arfile import ArFile
-from clickpackage.tests.helpers import TestCase, touch
+from click.arfile import ArFile
+from click.tests.helpers import TestCase, touch
 
 
 class TestArFile(TestCase):

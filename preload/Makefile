@@ -5,7 +5,7 @@ CFLAGS := -O2 -g -Wall
 LDLIBS := -ldl
 prefix := /usr
 libdir := $(prefix)/lib
-pkglibdir = $(libdir)/click-package
+pkglibdir = $(libdir)/click
 
 all: $(LIB)
 

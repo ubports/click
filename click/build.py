@@ -35,15 +35,15 @@ import tarfile
 import tempfile
 from textwrap import dedent
 
-from clickpackage import osextras
-from clickpackage.arfile import ArFile
-from clickpackage.preinst import static_preinst
-from clickpackage.versions import spec_version
+from click import osextras
+from click.arfile import ArFile
+from click.preinst import static_preinst
+from click.versions import spec_version
 
 
 @contextlib.contextmanager
 def make_temp_dir():
-    temp_dir = tempfile.mkdtemp(prefix="clickpackage")
+    temp_dir = tempfile.mkdtemp(prefix="click")
     try:
         os.chmod(temp_dir, 0o755)
         yield temp_dir

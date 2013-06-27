@@ -178,10 +178,10 @@ int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)
  *
  * We try to insulate against dpkg getting confused enough by malformed
  * archives to write outside the instdir.  This is not full confinement, and
- * generally for system security it should be sufficient to run
- * "click-package install" as a specialised user; as such we don't
- * necessarily wrap all possible relevant functions here.  The main purpose
- * of this is just to provide a useful error message if dpkg gets confused.
+ * generally for system security it should be sufficient to run "click
+ * install" as a specialised user; as such we don't necessarily wrap all
+ * possible relevant functions here.  The main purpose of this is just to
+ * provide a useful error message if dpkg gets confused.
  */
 
 static void clickpreload_assert_path_in_instdir (const char *verb,
@@ -191,17 +191,15 @@ static void clickpreload_assert_path_in_instdir (const char *verb,
         (pathname[base_path_len] == '\0' || pathname[base_path_len] == '/'))
         return;
 
-    /* When building click-package in a chroot with pkgbinarymangler,
-     * dpkg-deb is in fact a wrapper shell script, and bash checks at
-     * startup whether it can open /dev/tty for writing.  This is harmless,
-     * so allow it.
+    /* When building click in a chroot with pkgbinarymangler, dpkg-deb is in
+     * fact a wrapper shell script, and bash checks at startup whether it
+     * can open /dev/tty for writing.  This is harmless, so allow it.
      */
     if (strcmp (verb, "write-open") == 0 && strcmp (pathname, "/dev/tty") == 0)
         return;
 
     fprintf (stderr,
-             "Sandbox failure: 'click-package install' not permitted to %s "
-             "'%s'\n",
+             "Sandbox failure: 'click install' not permitted to %s '%s'\n",
              verb, pathname);
     exit (1);
 }

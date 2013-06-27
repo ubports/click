@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from clickpackage.hooks import ClickHook
+from click.hooks import ClickHook
 
 
 # TODO: make configurable in build system or configuration file or similar?

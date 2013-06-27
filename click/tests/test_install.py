@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for clickpackage.install."""
+"""Unit tests for click.install."""
 
 from __future__ import print_function
 
@@ -40,12 +40,12 @@ from unittest import skipUnless
 from debian.deb822 import Deb822
 # BAW 2013-04-16: Get the DebFile class from here because of compatibility
 # issues.  See the comments in that module for details.
-from clickpackage.install import DebFile
+from click.install import DebFile
 
-from clickpackage import osextras
-from clickpackage.install import ClickInstaller, ClickInstallerPermissionDenied
-from clickpackage.preinst import static_preinst
-from clickpackage.tests.helpers import TestCase, mkfile, touch
+from click import osextras
+from click.install import ClickInstaller, ClickInstallerPermissionDenied
+from click.preinst import static_preinst
+from click.tests.helpers import TestCase, mkfile, touch
 
 
 def mock_quiet_subprocess_call():
@@ -280,7 +280,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("clickpackage.install.run_hooks")
+    @mock.patch("click.install.run_hooks")
     def test_install(self, mock_run_hooks):
         path = self.make_fake_package(
             control_fields={
@@ -372,7 +372,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("clickpackage.install.run_hooks")
+    @mock.patch("click.install.run_hooks")
     def test_upgrade(self, mock_run_hooks):
         path = self.make_fake_package(
             control_fields={

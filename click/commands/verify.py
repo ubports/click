@@ -21,7 +21,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from clickpackage.install import ClickInstaller
+from click.install import ClickInstaller
 
 
 def run(argv):

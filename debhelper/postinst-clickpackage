@@ -1,3 +1,0 @@
-if [ "$1" = "configure" ] && which click-package >/dev/null 2>&1; then
-	click-package hook install #PACKAGE#
-fi

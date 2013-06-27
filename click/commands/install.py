@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from clickpackage.install import ClickInstaller
+from click.install import ClickInstaller
 
 
 # TODO: make configurable in build system or configuration file or similar?

@@ -34,7 +34,7 @@ try:
 except ImportError:
     import unittest
 
-from clickpackage import osextras
+from click import osextras
 
 
 class TestCase(unittest.TestCase):
@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
     def use_temp_dir(self):
         if self.temp_dir is not None:
             return self.temp_dir
-        self.temp_dir = tempfile.mkdtemp(prefix="clickpackage")
+        self.temp_dir = tempfile.mkdtemp(prefix="click")
         self.addCleanup(shutil.rmtree, self.temp_dir)
         return self.temp_dir
 

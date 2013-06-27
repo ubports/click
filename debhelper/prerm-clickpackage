@@ -1,3 +1,0 @@
-if which click-package >/dev/null 2>&1; then
-	click-package hook remove #PACKAGE#
-fi

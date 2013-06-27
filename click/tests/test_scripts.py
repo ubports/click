@@ -24,7 +24,7 @@ import os
 import subprocess
 from unittest import skipIf
 
-from clickpackage.tests.helpers import TestCase
+from click.tests.helpers import TestCase
 
 
 class TestScripts(TestCase):

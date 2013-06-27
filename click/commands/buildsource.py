@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from clickpackage.build import ClickSourceBuilder
+from click.build import ClickSourceBuilder
 
 
 def run(argv):

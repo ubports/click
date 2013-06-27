@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for clickpackage.hooks."""
+"""Unit tests for click.hooks."""
 
 from __future__ import print_function
 
@@ -33,9 +33,9 @@ try:
 except ImportError:
     import mock
 
-from clickpackage import hooks
-from clickpackage.hooks import ClickHook, run_hooks
-from clickpackage.tests.helpers import TestCase, mkfile
+from click import hooks
+from click.hooks import ClickHook, run_hooks
+from click.tests.helpers import TestCase, mkfile
 
 
 @contextlib.contextmanager
@@ -168,7 +168,7 @@ class TestRunHooks(TestCase):
         super(TestRunHooks, self).setUp()
         self.use_temp_dir()
 
-    @mock.patch("clickpackage.hooks.ClickHook.open")
+    @mock.patch("click.hooks.ClickHook.open")
     def test_removes_old_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
@@ -187,7 +187,7 @@ class TestRunHooks(TestCase):
             mock.call().remove("test"),
         ])
 
-    @mock.patch("clickpackage.hooks.ClickHook.open")
+    @mock.patch("click.hooks.ClickHook.open")
     def test_installs_new_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
@@ -205,7 +205,7 @@ class TestRunHooks(TestCase):
             mock.call().install(self.temp_dir, "test", "1.1", "foo.b"),
         ])
 
-    @mock.patch("clickpackage.hooks.ClickHook.open")
+    @mock.patch("click.hooks.ClickHook.open")
     def test_upgrades_existing_hooks(self, mock_open):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(

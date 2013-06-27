@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-dh_clickpackage - install system hooks for click-package
+dh_click - install system hooks for click
 
 =cut
 
@@ -11,16 +11,16 @@ use Debian::Debhelper::Dh_Lib;
 
 =head1 SYNOPSIS
 
-B<dh_clickpackage> [S<B<debhelper options>>]
+B<dh_click> [S<B<debhelper options>>]
 
 =head1 DESCRIPTION
 
-dh_clickpackage is a debhelper program that is responsible for installing
-system hooks for B<click-package>.
+dh_click is a debhelper program that is responsible for installing system
+hooks for B<click>.
 
 It also automatically generates the F<postinst> and F<postrm> commands
-needed to interface with the Ubuntu B<click-package> package.  These
-commands are inserted into the maintainer scripts by L<dh_installdeb(1)>.
+needed to interface with the Ubuntu B<click> package.  These commands are
+inserted into the maintainer scripts by L<dh_installdeb(1)>.
 
 =head1 FILES
 
@@ -29,9 +29,8 @@ commands are inserted into the maintainer scripts by L<dh_installdeb(1)>.
 =item debian/I<package>.click-hook
 
 Click package hook files, installed into
-usr/share/click-package/hooks/I<package>.hook in the package build
-directory.  See F</usr/share/doc/click-package-doc/html/hooks.html> for
-their format.
+usr/share/click/hooks/I<package>.hook in the package build directory.  See
+F</usr/share/doc/click-doc/html/hooks.html> for their format.
 
 =back
 
@@ -47,11 +46,10 @@ Do not modify F<postinst>/F<postrm> scripts.
 
 =head1 EXAMPLES
 
-dh_clickpackage is usually called indirectly in a rules file via the dh
-command.
+dh_click is usually called indirectly in a rules file via the dh command.
 
 	%:
-		dh $@ --with clickpackage
+		dh $@ --with click
 
 You must build-depend on at least debhelper (>= 7.0.8) to use this form, and
 in any case you must build-depend on click-dev to use this program at all.
@@ -70,14 +68,14 @@ foreach my $package (@{$dh{DOPACKAGES}}) {
 	my $click_hook=pkgfile($package,"click-hook");
 
 	if ($click_hook ne '') {
-		if (! -d "$tmp/usr/share/click-package/hooks") {
-			doit("install","-d","$tmp/usr/share/click-package/hooks");
+		if (! -d "$tmp/usr/share/click/hooks") {
+			doit("install","-d","$tmp/usr/share/click/hooks");
 		}
-		doit("install","-p","-m644",$click_hook,"$tmp/usr/share/click-package/hooks/$package.hook");
+		doit("install","-p","-m644",$click_hook,"$tmp/usr/share/click/hooks/$package.hook");
 
 		if (! $dh{NOSCRIPTS}) {
-			autoscript($package,"postinst","postinst-clickpackage","s/#PACKAGE#/$package/");
-			autoscript($package,"prerm","prerm-clickpackage","s/#PACKAGE#/$package/");
+			autoscript($package,"postinst","postinst-click","s/#PACKAGE#/$package/");
+			autoscript($package,"prerm","prerm-click","s/#PACKAGE#/$package/");
 		}
 	}
 }
@@ -86,7 +84,7 @@ foreach my $package (@{$dh{DOPACKAGES}}) {
 
 L<debhelper(7)>
 
-This program is a part of click-package.
+This program is a part of click.
 
 =head1 AUTHOR
 

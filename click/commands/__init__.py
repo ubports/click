@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""click-package commands."""
+"""click commands."""
 
 import importlib
 
@@ -30,7 +30,7 @@ all_commands = (
 
 
 def load_command(command):
-    return importlib.import_module("clickpackage.commands.%s" % command)
+    return importlib.import_module("click.commands.%s" % command)
 
 
 def help_text():

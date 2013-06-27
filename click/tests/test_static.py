@@ -41,14 +41,13 @@ except ImportError:
     pyflakes = None
 
 
-from clickpackage.tests.helpers import TestCase
+from click.tests.helpers import TestCase
 
 
 class TestStatic(TestCase):
     def all_paths(self):
         paths = []
-        start_dir = os.path.dirname(
-            resource_filename('clickpackage', '__init__.py'))
+        start_dir = os.path.dirname(resource_filename('click', '__init__.py'))
         for dirpath, dirnames, filenames in os.walk(start_dir):
             for ignore in ('doc', ".bzr", "__pycache__"):
                 if ignore in dirnames:

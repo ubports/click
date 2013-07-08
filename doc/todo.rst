@@ -21,6 +21,10 @@ To do
 
  * debug symbols
 
+ * manual page
+
+ * define exit statuses for "click install"
+
 Delta updates
 =============
 

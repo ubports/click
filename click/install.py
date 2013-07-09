@@ -248,7 +248,7 @@ class ClickInstaller:
         os.rename(new_path, current_path)
 
         if user is not None:
-            registry = ClickUser(user, self.root)
+            registry = ClickUser(self.root, user)
             registry[package_name] = package_version
 
         # TODO: garbage-collect old directories

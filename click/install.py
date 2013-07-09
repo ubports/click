@@ -208,8 +208,9 @@ class ClickInstaller:
         root_click = os.path.join(self.root, ".click")
         if not os.path.exists(root_click):
             os.makedirs(root_click)
-            pw = pwd.getpwnam("clickpkg")
-            os.chown(root_click, pw.pw_uid, pw.pw_gid)
+            if os.getuid() == 0:
+                pw = pwd.getpwnam("clickpkg")
+                os.chown(root_click, pw.pw_uid, pw.pw_gid)
 
         # TODO: sandbox so that this can only write to the unpack directory
         command = [

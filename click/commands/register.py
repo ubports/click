@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Register an installed Click package for the current user."""
+"""Register an installed Click package for a user."""
 
 from __future__ import print_function
 
@@ -31,6 +31,9 @@ def run(argv):
     parser.add_option(
         "--root", metavar="PATH", default=default_root,
         help="set top-level directory to PATH (default: %s)" % default_root)
+    parser.add_option(
+        "--user", metavar="USER",
+        help="register package for USER (default: current user)")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")
@@ -38,5 +41,5 @@ def run(argv):
         parser.error("need version")
     package = args[0]
     version = args[1]
-    registry = ClickUser(options.root)
+    registry = ClickUser(options.root, user=options.user)
     registry[package] = version

@@ -36,8 +36,8 @@ class TestClickUser(TestCase):
 
     def test_db(self):
         self.assertEqual(
-            os.path.expanduser("~root/.local/share/click"),
-            ClickUser("/", "root")._db)
+            os.path.join("/click", ".click", "users", "user"),
+            ClickUser("/click", "user")._db)
 
     def test_iter_missing(self):
         registry = ClickUser("/")

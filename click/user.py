@@ -51,18 +51,48 @@ class ClickUser(MutableMapping):
         if user is None:
             user = pwd.getpwuid(os.getuid()).pw_name
         self.user = user
-        # We should honour XDG_DATA_HOME, but we will often end up running
-        # as root where it will not necessarily be set to match the user's
-        # session.  To avoid confusion, it's better to never honour it than
-        # to only honour it sometimes.
-        self._db = os.path.expanduser("~%s/.local/share/click" % self.user)
+        self._user_pw = None
+        self._click_pw = None
+        # This is deliberately outside the user's home directory so that it
+        # can safely be iterated etc. as root.
+        self._db_top = os.path.join(self.root, ".click", "users")
+        self._db = os.path.join(self._db_top, self.user)
         self._dropped_privileges_count = 0
+
+    @property
+    def user_pw(self):
+        if self._user_pw is None:
+            self._user_pw = pwd.getpwnam(self.user)
+        return self._user_pw
+
+    @property
+    def click_pw(self):
+        if self._click_pw is None:
+            self._click_pw = pwd.getpwnam("clickpkg")
+        return self.click_pw
+
+    def _ensure_db(self):
+        create = []
+        path = self._db_top
+        while not os.path.exists(path):
+            create.append(path)
+            path = os.path.dirname(path)
+        for path in reversed(create):
+            os.mkdir(path)
+            if os.getuid() == 0:
+                pw = self.click_pw
+                os.chown(path, pw.pw_uid, pw.pw_gid)
+        if not os.path.exists(self._db):
+            os.mkdir(self._db)
+            if os.getuid() == 0:
+                pw = self.user_pw
+                os.chown(self._db, pw.pw_uid, pw.pw_gid)
 
     def _drop_privileges(self):
         if self._dropped_privileges_count == 0 and os.getuid() == 0:
-            pw = pwd.getpwnam(self.user)
             # We don't bother with setgroups here; we only need the
             # user/group of created filesystem nodes to be correct.
+            pw = self.user_pw
             os.setegid(pw.pw_gid)
             os.seteuid(pw.pw_uid)
         self._dropped_privileges_count += 1
@@ -109,8 +139,8 @@ class ClickUser(MutableMapping):
     def __setitem__(self, package, version):
         path = os.path.join(self._db, package)
         new_path = os.path.join(self._db, ".%s.new" % package)
+        self._ensure_db()
         with self._dropped_privileges():
-            osextras.ensuredir(self._db)
             target = os.path.join(self.root, package, version)
             if not os.path.exists(target):
                 raise ValueError("%s does not exist" % target)

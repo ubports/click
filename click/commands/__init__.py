@@ -25,6 +25,7 @@ all_commands = (
     "hook",
     "info",
     "install",
+    "register",
     "verify",
     )
 

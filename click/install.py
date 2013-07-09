@@ -39,6 +39,7 @@ from debian.debian_support import Version
 from click import osextras
 from click.hooks import run_hooks
 from click.preinst import static_preinst_matches
+from click.user import ClickUser
 from click.versions import spec_version
 
 
@@ -197,7 +198,7 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
-    def install(self, path):
+    def install(self, path, user=None):
         package_name, package_version = self.audit(path)
         package_dir = os.path.join(self.root, package_name)
         inst_dir = os.path.join(package_dir, package_version)
@@ -245,5 +246,9 @@ class ClickInstaller:
             pw = pwd.getpwnam("clickpkg")
             os.chown(new_path, pw.pw_uid, pw.pw_gid, follow_symlinks=False)
         os.rename(new_path, current_path)
+
+        if user is not None:
+            registry = ClickUser(user, self.root)
+            registry[package_name] = package_version
 
         # TODO: garbage-collect old directories

@@ -1,0 +1,126 @@
+# Copyright (C) 2013 Canonical Ltd.
+# Author: Colin Watson <cjwatson@ubuntu.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Registry of user-installed Click packages.
+
+Click packages are installed into per-package/version directories, so it is
+quite feasible for more than one version of a given package to be installed
+at once, allowing per-user installations; for instance, one user of a tablet
+may be uncomfortable with granting some new permission to an app, but
+another may be just fine with it.  To make this useful, we also need a
+registry of which users have which versions of each package installed.
+
+We might have chosen to use a proper database.  However, a major goal of
+Click packages is extreme resilience; we must never get into a situation
+where some previous error in package installation or removal makes it hard
+for the user to install or remove other packages.  Furthermore, the simpler
+application execution can be the better.  So, instead, we use just about the
+simplest "database" format imaginable: a directory of symlinks per user.
+"""
+
+from __future__ import print_function
+
+__metaclass__ = type
+__all__ = [
+    'ClickUser',
+    ]
+
+from collections import MutableMapping
+from contextlib import contextmanager
+import os
+import pwd
+
+from click import osextras
+
+
+class ClickUser(MutableMapping):
+    def __init__(self, root, user=None):
+        self.root = root
+        if user is None:
+            user = pwd.getpwuid(os.getuid()).pw_name
+        self.user = user
+        # We should honour XDG_DATA_HOME, but we will often end up running
+        # as root where it will not necessarily be set to match the user's
+        # session.  To avoid confusion, it's better to never honour it than
+        # to only honour it sometimes.
+        self._db = os.path.expanduser("~%s/.local/share/click" % self.user)
+        self._dropped_privileges_count = 0
+
+    def _drop_privileges(self):
+        if self._dropped_privileges_count == 0 and os.getuid() == 0:
+            pw = pwd.getpwnam(self.user)
+            # We don't bother with setgroups here; we only need the
+            # user/group of created filesystem nodes to be correct.
+            os.setegid(pw.pw_gid)
+            os.seteuid(pw.pw_uid)
+        self._dropped_privileges_count += 1
+
+    def _regain_privileges(self):
+        self._dropped_privileges_count -= 1
+        if self._dropped_privileges_count == 0 and os.getuid() == 0:
+            os.seteuid(0)
+            os.setegid(0)
+
+    # Note on privilege handling:
+    # We can normally get away without dropping privilege when reading, but
+    # some filesystems are strict about how much they let root work with
+    # user files (e.g. NFS root_squash).  It is better to play it safe and
+    # drop privileges for any operations on the user's database.
+    @contextmanager
+    def _dropped_privileges(self):
+        self._drop_privileges()
+        try:
+            yield
+        finally:
+            self._regain_privileges()
+
+    def __iter__(self):
+        with self._dropped_privileges():
+            for entry in osextras.listdir_force(self._db):
+                if os.path.islink(os.path.join(self._db, entry)):
+                    yield entry
+
+    def __len__(self):
+        count = 0
+        for entry in self:
+            count += 1
+        return count
+
+    def __getitem__(self, package):
+        path = os.path.join(self._db, package)
+        with self._dropped_privileges():
+            if os.path.islink(path):
+                return os.path.basename(os.readlink(path))
+            else:
+                raise KeyError
+
+    def __setitem__(self, package, version):
+        path = os.path.join(self._db, package)
+        new_path = os.path.join(self._db, ".%s.new" % package)
+        with self._dropped_privileges():
+            osextras.ensuredir(self._db)
+            target = os.path.join(self.root, package, version)
+            if not os.path.exists(target):
+                raise ValueError("%s does not exist" % target)
+            osextras.symlink_force(target, new_path)
+            os.rename(new_path, path)
+
+    def __delitem__(self, package):
+        path = os.path.join(self._db, package)
+        with self._dropped_privileges():
+            if os.path.islink(path):
+                osextras.unlink_force(path)
+            else:
+                raise KeyError

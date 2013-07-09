@@ -237,8 +237,7 @@ class ClickInstaller:
         run_hooks(self.root, package_name, old_version, package_version)
 
         new_path = os.path.join(package_dir, "current.new")
-        osextras.unlink_force(new_path)
-        os.symlink(package_version, new_path)
+        osextras.symlink_force(package_version, new_path)
         if os.getuid() == 0:
             # shutil.chown would be more convenient, but it doesn't support
             # follow_symlinks=False in Python 3.3.

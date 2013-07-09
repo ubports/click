@@ -205,6 +205,11 @@ class ClickInstaller:
         assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
 
         self._check_write_permissions(self.root)
+        root_click = os.path.join(self.root, ".click")
+        if not os.path.exists(root_click):
+            os.makedirs(root_click)
+            pw = pwd.getpwnam("clickpkg")
+            os.chown(root_click, pw.pw_uid, pw.pw_gid)
 
         # TODO: sandbox so that this can only write to the unpack directory
         command = [
@@ -213,7 +218,7 @@ class ClickInstaller:
             "--instdir", inst_dir,
             "--admindir", os.path.join(inst_dir, ".click"),
             "--path-exclude", "/.click/*",
-            "--log", os.path.join(self.root, ".click.log"),
+            "--log", os.path.join(root_click, "log"),
             "--no-triggers",
             "--install", path,
         ]

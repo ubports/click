@@ -1,6 +1,7 @@
 click (0.1.4) UNRELEASED; urgency=low
 
   * Add support for per-user package registration.
+  * Move install log file from $root/.click.log to $root/.click/log.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 09 Jul 2013 14:56:21 +0100
 

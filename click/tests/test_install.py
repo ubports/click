@@ -303,7 +303,7 @@ class TestClickInstaller(TestCase):
         self.make_framework(installer, "ubuntu-sdk-13.10")
         with mock_quiet_subprocess_call():
             installer.install(path)
-        self.assertCountEqual([".click.log", "test-package"], os.listdir(root))
+        self.assertCountEqual([".click", "test-package"], os.listdir(root))
         package_dir = os.path.join(root, "test-package")
         self.assertCountEqual(["1.0", "current"], os.listdir(package_dir))
         inst_dir = os.path.join(package_dir, "current")
@@ -399,7 +399,7 @@ class TestClickInstaller(TestCase):
         self.make_framework(installer, "ubuntu-sdk-13.10")
         with mock_quiet_subprocess_call():
             installer.install(path)
-        self.assertCountEqual([".click.log", "test-package"], os.listdir(root))
+        self.assertCountEqual([".click", "test-package"], os.listdir(root))
         self.assertCountEqual(
             ["1.0", "1.1", "current"], os.listdir(package_dir))
         self.assertTrue(os.path.islink(inst_dir))

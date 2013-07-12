@@ -79,7 +79,7 @@ class ClickInstaller:
             return os.environ["CLICK_PACKAGE_PRELOAD"]
         my_path = inspect.getsourcefile(ClickInstaller)
         preload = os.path.join(
-            os.path.dirname(my_path), os.pardir, "preload",
+            os.path.dirname(my_path), os.pardir, "preload", ".libs",
             "libclickpreload.so")
         if os.path.exists(preload):
             return os.path.abspath(preload)

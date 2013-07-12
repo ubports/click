@@ -7,7 +7,7 @@
 #  python3 (>= 3.3) | python3-mock
 #  python-tox
 
-if ! [ -r preload/libclickpreload.so ]; then
+if ! [ -r preload/.libs/libclickpreload.so ]; then
     echo "W: preload bits not built; will skip some tests" >&2
 fi
 

@@ -26,5 +26,5 @@ def run(argv):
     if len(args) < 1:
         parser.error("need package name")
     package_name = args[0]
-	print("/opt/click.ubuntu.com/%s/current" % package_name)
+    print("/opt/click.ubuntu.com/%s/current" % package_name)
     return 0

@@ -15,9 +15,15 @@ AC_SEARCH_LIBS([dlopen], [dl])
 AC_SUBST([PRELOAD_LIBS], ["$LIBS"])
 LIBS="$click_save_LIBS"
 
+AC_CACHE_CHECK([for Perl vendor library directory], [click_cv_perl_vendorlib],
+	[click_cv_perl_vendorlib=`perl -MConfig -e 'print $Config{vendorlib}'`])
+AC_SUBST([perl_vendorlib], ["$click_cv_perl_vendorlib"])
+
 AC_CONFIG_FILES([
 	Makefile
 	click/Makefile
+	debhelper/Makefile
 	preload/Makefile
 	])
+AC_CONFIG_FILES([setup.py], [chmod +x setup.py])
 AC_OUTPUT

@@ -15,7 +15,9 @@ __pycache__
 ./ltmain.sh
 ./m4
 ./missing
+./setup.py
 ./stamp-h1
+.deps
 .libs
 *.la
 *.lo

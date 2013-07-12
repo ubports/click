@@ -21,7 +21,7 @@ Description: Click packages
  This package provides common files, including the main click program.
 
 Package: click-dev
-Architecture: all
+Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of

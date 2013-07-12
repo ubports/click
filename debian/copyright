@@ -6,6 +6,14 @@ Source: https://launchpad.net/click
 Files: *
 Copyright: 2013, Canonical Ltd.
 License: GPL-3
+
+Files: pk-plugin/*
+Copyright: 2010-2013, Matthias Klumpp
+           2011, Richard Hughes
+           2013, Canonical Ltd.
+License: GPL-3
+
+License: GPL-3
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation; version 3 of the License.

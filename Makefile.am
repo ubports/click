@@ -1,3 +1,3 @@
-SUBDIRS = click debhelper preload
+SUBDIRS = click debhelper pk-plugin preload
 
 ACLOCAL_AMFLAGS = -I m4

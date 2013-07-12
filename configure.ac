@@ -19,10 +19,25 @@ AC_CACHE_CHECK([for Perl vendor library directory], [click_cv_perl_vendorlib],
 	[click_cv_perl_vendorlib=`perl -MConfig -e 'print $Config{vendorlib}'`])
 AC_SUBST([perl_vendorlib], ["$click_cv_perl_vendorlib"])
 
+PKG_CHECK_MODULES([PKPLUGIN], [
+	gio-2.0
+	glib-2.0
+	gobject-2.0 >= 2.28
+	json-glib-1.0 >= 0.10
+	packagekit-plugin
+	])
+AC_SUBST([PKPLUGIN_CFLAGS])
+AC_SUBST([PKPLUGIN_LIBS])
+AC_CACHE_CHECK([for packagekit-plugin library directory],
+	[click_cv_pkpluginlibdir],
+	[click_cv_pkpluginlibdir=`$PKG_CONFIG --variable=libdir packagekit-plugin`])
+AC_SUBST([pkpluginlibdir], ["$click_cv_pkpluginlibdir"])
+
 AC_CONFIG_FILES([
 	Makefile
 	click/Makefile
 	debhelper/Makefile
+	pk-plugin/Makefile
 	preload/Makefile
 	])
 AC_CONFIG_FILES([setup.py], [chmod +x setup.py])

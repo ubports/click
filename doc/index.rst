@@ -22,14 +22,18 @@ full-system installations or upgrades.
 Compatibility
 =============
 
-Currently, this package should remain compatible with Python 2.7 and 3.3.
+Currently, this package should remain compatible with Python 2.7, 3.2, and
+3.3; Ubuntu 12.04 LTS and Ubuntu 13.10.
 
 
 Dependencies
 ------------
 
-For Ubuntu 13.04, make sure you have the *python2.7* and *python3.3* packages
-installed.
+For Ubuntu 13.04, make sure you have the *python2.7* and *python3.3*
+packages installed.  Unless you upgraded from a previous version of Ubuntu
+and haven't removed it yet, you won't have Python 3.2 available.  Build it
+from source if necessary, install them say into ``/usr/local``, and make
+sure it is on your ``$PATH``.
 
 You'll need *gcc* in order to build the preload shared library.  Assuming you
 have this, do the following::

@@ -5,6 +5,7 @@ click (0.1.4) UNRELEASED; urgency=low
   * Add an autotools-based build system for our C components.
   * Initial version of a PackageKit plugin; still experimental and not
     packaged anywhere yet.
+  * Restore compatibility with Python 3.2 (LP: #1200670).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 09 Jul 2013 14:56:21 +0100
 

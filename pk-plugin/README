@@ -1,0 +1,28 @@
+This plugin is experimental, although it does minimally work.  To make it
+usable on Ubuntu Touch you need to disable PolicyKit authentication:
+
+  $ sudo cat /etc/polkit-1/localauthority/50-local.d/10-click.pkla
+  [Click Experimentation]
+  Identity=unix-user:phablet
+  Action=org.freedesktop.packagekit.*
+  ResultAny=yes
+  ResultInactive=yes
+  ResultActive=yes
+
+Obviously this is not ideal; we should be able to come up with a
+finer-grained way to instruct the system that normal users can install Click
+packages.
+
+Once that's done, install packagekit and gdebi (the latter an unfortunate
+requirement, but only temporary), symlink .libs/libpk_plugin_click.so into
+/usr/lib/$DEB_HOST_MULTIARCH/packagekit-plugins/libpk_plugin_click.so, and
+you should be able to do things like:
+
+  $ pkcon -p install-local foo.click
+
+I have not done any work on figuring out how to make this work on systems
+with aptdaemon.  If you want to try this on a normal Ubuntu desktop system,
+then for the time being I recommend creating an LXC container for the
+purpose:
+
+  $ sudo lxc-create -t ubuntu -n saucy-click -- -r saucy -a amd64 -b $USER

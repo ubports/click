@@ -38,6 +38,7 @@ from debian.debian_support import Version
 
 from click import osextras
 from click.hooks import run_hooks
+from click.paths import preload_path
 from click.preinst import static_preinst_matches
 from click.user import ClickUser
 from click.versions import spec_version
@@ -82,8 +83,7 @@ class ClickInstaller:
             "libclickpreload.so")
         if os.path.exists(preload):
             return os.path.abspath(preload)
-        # TODO: unhardcode path
-        return "/usr/lib/click/libclickpreload.so"
+        return preload_path
 
     def _has_framework(self, name):
         return os.path.exists(os.path.join(

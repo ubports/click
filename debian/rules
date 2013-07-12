@@ -1,15 +1,6 @@
 #! /usr/bin/make -f
 %:
-	dh $@ --with python3,sphinxdoc
-
-DEB_BUILD_GNU_TYPE := $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-DEB_HOST_GNU_TYPE := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-
-ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
-CROSS :=
-else
-CROSS := CC=$(DEB_HOST_GNU_TYPE)-gcc
-endif
+	dh $@ --with autoreconf,python3,sphinxdoc --buildsystem autoconf
 
 PY3REQUESTED := $(shell py3versions -r)
 PY3DEFAULT := $(shell py3versions -d)
@@ -19,7 +10,6 @@ PY3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
 
 override_dh_auto_build:
 	dh_auto_build
-	$(MAKE) -C preload $(CROSS)
 	set -e; for python in $(PY3); do \
 		$$python setup.py build; \
 	done
@@ -34,7 +24,6 @@ endif
 
 override_dh_auto_clean:
 	dh_auto_clean
-	$(MAKE) -C preload clean
 	$(MAKE) -C doc clean
 	rm -rf build *.egg-info .tox
 	find -name __pycache__ -print0 | xargs -0r rm -rf
@@ -44,7 +33,7 @@ override_dh_auto_install:
 	find build -name __pycache__ -print0 | xargs -0r rm -rf
 	find build -name \*.egg-info -print0 | xargs -0r rm -rf
 	dh_auto_install
-	$(MAKE) -C preload install DESTDIR=$(CURDIR)/debian/tmp
+	rm -f debian/tmp/usr/lib/*/click/*.la
 	set -e; for python in $(PY3); do \
 		$$python setup.py install --force --root=$(CURDIR)/debian/tmp \
 			--no-compile -O0 --install-layout=deb; \

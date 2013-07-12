@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Colin Watson <cjwatson@ubuntu.com>
 Standards-Version: 3.9.4
-Build-Depends: debhelper (>= 9~), python3 (>= 3.3), python3-all, python3-setuptools, python3-debian, pep8, pyflakes, python3-sphinx
+Build-Depends: debhelper (>= 9~), dh-autoreconf, python3 (>= 3.3), python3-all, python3-setuptools, python3-debian, pep8, pyflakes, python3-sphinx
 Vcs-Bzr: http://bazaar.launchpad.net/+branch/click
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.3
@@ -31,7 +31,7 @@ Description: build Click packages
 
 Package: python3-click
 Section: python
-Architecture: all
+Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, python3-debian
 Conflicts: python3-click-package
 Replaces: python3-click-package

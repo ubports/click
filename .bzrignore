@@ -13,7 +13,6 @@ __pycache__
 ./install-sh
 ./libtool
 ./ltmain.sh
-./m4
 ./missing
 ./setup.py
 ./stamp-h1
@@ -42,3 +41,4 @@ debian/click-doc
 debian/files
 debian/python3-click
 debian/tmp
+m4/*

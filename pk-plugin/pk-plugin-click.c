@@ -48,10 +48,28 @@ struct PkPluginPrivate {
 static gboolean
 click_is_click_package (const gchar *filename)
 {
-	/* TODO: This should check the content type instead.
+	/* This requires this patch to shared-mime-info:
 	 * https://bugs.freedesktop.org/show_bug.cgi?id=66689
 	 */
-	return g_str_has_suffix (filename, ".click");
+	gboolean ret = FALSE;
+	GFile *file;
+	GFileInfo *info = NULL;
+	const gchar *content_type;
+
+	file = g_file_new_for_path (filename);
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+				  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	if (!info)
+		goto out;
+	content_type = g_file_info_get_content_type (info);
+	if (strcmp (content_type, "application/x-click") == 0)
+		ret = TRUE;
+
+out:
+	if (info)
+		g_object_unref (info);
+	g_object_unref (file);
+	return ret;
 }
 
 static gchar **

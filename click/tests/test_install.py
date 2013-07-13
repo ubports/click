@@ -23,19 +23,14 @@ __all__ = [
     ]
 
 
+from contextlib import contextmanager
 import json
 import os
 import stat
 import subprocess
 
 from contextlib import closing
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 from unittest import skipUnless
-
 
 from debian.deb822 import Deb822
 # BAW 2013-04-16: Get the DebFile class from here because of compatibility
@@ -45,9 +40,10 @@ from click.install import DebFile
 from click import osextras
 from click.install import ClickInstaller, ClickInstallerPermissionDenied
 from click.preinst import static_preinst
-from click.tests.helpers import TestCase, mkfile, touch
+from click.tests.helpers import TestCase, mkfile, mock, touch
 
 
+@contextmanager
 def mock_quiet_subprocess_call():
     original_call = subprocess.call
 
@@ -59,7 +55,9 @@ def mock_quiet_subprocess_call():
                 return original_call(
                     *args, stdout=devnull, stderr=devnull, **kwargs)
 
-    return mock.patch("subprocess.call", side_effect=side_effect)
+    with mock.patch("subprocess.call") as mock_call:
+        mock_call.side_effect = side_effect
+        yield mock_call
 
 
 class TestClickInstaller(TestCase):

@@ -28,14 +28,9 @@ import json
 import os
 from textwrap import dedent
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
 from click import hooks
 from click.hooks import ClickHook, run_hooks
-from click.tests.helpers import TestCase, mkfile
+from click.tests.helpers import TestCase, mkfile, mock
 
 
 @contextlib.contextmanager

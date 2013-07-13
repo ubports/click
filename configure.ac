@@ -10,6 +10,13 @@ LT_INIT([disable-static])
 AC_PROG_CC
 CFLAGS="$CFLAGS -Wall"
 
+AC_ARG_WITH([default-root],
+	[AS_HELP_STRING([--with-default-root],
+		[set default root path for installed packages (default: /opt/click.ubuntu.com)])],
+	[DEFAULT_ROOT="$withval"],
+	[DEFAULT_ROOT=/opt/click.ubuntu.com])
+AC_SUBST([DEFAULT_ROOT])
+
 click_save_LIBS="$LIBS"
 AC_SEARCH_LIBS([dlopen], [dl])
 AC_SUBST([PRELOAD_LIBS], ["$LIBS"])

@@ -20,10 +20,7 @@ from __future__ import print_function
 from optparse import OptionParser
 
 from click.install import ClickInstaller
-
-
-# TODO: make configurable in build system or configuration file or similar?
-default_root = "/opt/click.ubuntu.com"
+from click.paths import default_root
 
 
 def run(argv):

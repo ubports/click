@@ -7,6 +7,7 @@ click (0.1.4) UNRELEASED; urgency=low
     packaged anywhere yet.
   * Restore compatibility with Python 3.2 (LP: #1200670).
   * Adjust tests to pass with mock 0.7.2 (as in Ubuntu 12.04 LTS).
+  * Make the default root directory a configure option.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 09 Jul 2013 14:56:21 +0100
 

@@ -229,8 +229,6 @@ click_get_field (JsonParser *parser, const gchar *field)
 	JsonNode *node = NULL;
 
 	node = json_parser_get_root (parser);
-	if (!JSON_NODE_HOLDS_OBJECT (node))
-		return NULL;
 	node = json_object_get_member (json_node_get_object (node), field);
 	if (!node)
 		return NULL;

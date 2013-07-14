@@ -154,3 +154,6 @@ class ClickUser(MutableMapping):
                 osextras.unlink_force(path)
             else:
                 raise KeyError
+
+    def path(self, package):
+        return os.path.join(self._db, package)

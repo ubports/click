@@ -17,6 +17,7 @@
 
 from __future__ import print_function
 
+import json
 from optparse import OptionParser
 import os
 
@@ -37,11 +38,11 @@ def list_packages(options):
                 if (os.path.islink(version_path) or
                         not os.path.isdir(version_path)):
                     continue
-                yield package, version
+                yield package, version, version_path
     else:
         registry = ClickUser(options.root, user=options.user)
         for package, version in sorted(registry.items()):
-            yield package, version
+            yield package, version, registry.path(package)
 
 
 def run(argv):
@@ -55,6 +56,22 @@ def run(argv):
     parser.add_option(
         "--user", metavar="USER",
         help="list packages registered by USER (if you have permission)")
+    parser.add_option(
+        "--manifest", default=False, action="store_true",
+        help="print JSON array of manifests of all installed packages")
     options, _ = parser.parse_args()
-    for package, version in list_packages(options):
-        print("%s\t%s" % (package, version))
+    json_output = []
+    for package, version, path in list_packages(options):
+        if options.manifest:
+            try:
+                manifest_path = os.path.join(
+                    path, ".click", "info", "%s.manifest" % package)
+                with open(manifest_path) as manifest:
+                    json_output.append(json.load(manifest))
+            except Exception:
+                pass
+        else:
+            print("%s\t%s" % (package, version))
+    if options.manifest:
+        print(json.dumps(
+            json_output, sort_keys=True, indent=4, separators=(",", ": ")))

@@ -114,3 +114,12 @@ class TestClickUser(TestCase):
         os.symlink("/1.0", path)
         del registry["a"]
         self.assertFalse(os.path.exists(path))
+
+    def test_path(self):
+        root = os.path.join(self.temp_dir, "root")
+        registry = ClickUser(root)
+        registry._db = os.path.join(self.temp_dir, "db")
+        os.makedirs(os.path.join(root, "a", "1.0"))
+        registry["a"] = "1.0"
+        self.assertEqual(
+            os.path.join(self.temp_dir, "db", "a"), registry.path("a"))

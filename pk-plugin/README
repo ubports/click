@@ -13,9 +13,8 @@ Obviously this is not ideal; we should be able to come up with a
 finer-grained way to instruct the system that normal users can install Click
 packages.
 
-Once that's done, install packagekit, packagekit-plugin-click, and gdebi
-(the last an unfortunate requirement, but only temporary), and you should be
-able to do things like:
+Once that's done, install packagekit and packagekit-plugin-click, and you
+should be able to do things like:
 
   $ pkcon -p install-local foo.click
 

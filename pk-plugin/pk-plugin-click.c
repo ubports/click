@@ -453,6 +453,12 @@ pk_plugin_initialize (PkPlugin *plugin)
 {
 	/* create private area */
 	plugin->priv = PK_TRANSACTION_PLUGIN_GET_PRIVATE (PkPluginPrivate);
+
+	/* tell PK we might be able to handle these */
+	pk_backend_implement (plugin->backend,
+			      PK_ROLE_ENUM_SIMULATE_INSTALL_FILES);
+	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_INSTALL_FILES);
+	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_GET_PACKAGES);
 }
 
 /**

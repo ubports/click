@@ -179,7 +179,7 @@ click_get_envp (void)
 		++env_len;
 	}
 
-	env_len = g_strv_length (environ);
+	env_len = environ ? g_strv_length (environ) : 0;
 	environ = g_realloc_n (environ, env_len + 2, sizeof (*environ));
 	environ[env_len] = g_strdup ("PATH=" DEFAULT_PATH);
 	environ[env_len + 1] = NULL;

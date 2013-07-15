@@ -425,9 +425,15 @@ out:
 static void
 click_skip_native_backend (PkPlugin *plugin)
 {
-	if (!pk_backend_get_is_error_set (plugin->backend))
+	if (!pk_backend_get_is_error_set (plugin->backend)) {
 		pk_backend_set_exit_code (plugin->backend,
 					  PK_EXIT_ENUM_SKIP_TRANSACTION);
+		/* Work around breakage in PackageKit 0.7; if we omit this
+		 * then transaction signals are not all disconnected and
+		 * later transactions may crash.
+		 */
+		pk_backend_finished (plugin->backend);
+	}
 }
 
 /**

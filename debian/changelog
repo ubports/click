@@ -3,8 +3,8 @@ click (0.1.4) UNRELEASED; urgency=low
   * Add support for per-user package registration.
   * Move install log file from $root/.click.log to $root/.click/log.
   * Add an autotools-based build system for our C components.
-  * Initial version of a PackageKit plugin; still experimental and not
-    packaged anywhere yet.
+  * Initial version of a PackageKit plugin, in a new packagekit-plugin-click
+    package; still experimental.
   * Restore compatibility with Python 3.2 (LP: #1200670).
   * Adjust tests to pass with mock 0.7.2 (as in Ubuntu 12.04 LTS).
   * Make the default root directory a configure option.

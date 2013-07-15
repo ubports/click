@@ -39,6 +39,7 @@ debian/click-dev
 debian/click
 debian/click-doc
 debian/files
+debian/packagekit-plugin-click
 debian/python3-click
 debian/tmp
 m4/*

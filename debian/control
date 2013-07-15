@@ -55,3 +55,13 @@ Description: Click packages (documentation)
  the file system, suitable for third-party applications.
  .
  This package provides documentation for click.
+
+Package: packagekit-plugin-click
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, click
+Description: Click packages (PackageKit plugin)
+ Click is a simplified packaging format that installs in a separate part of
+ the file system, suitable for third-party applications.
+ .
+ This package provides a PackageKit plugin adding support for Click
+ packages.

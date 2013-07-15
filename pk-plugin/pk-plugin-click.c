@@ -235,6 +235,49 @@ click_get_field (JsonParser *parser, const gchar *field)
 	return json_node_dup_string (node);
 }
 
+static JsonParser *
+click_get_list (PkTransaction *transaction)
+{
+	gboolean ret;
+	gchar **argv = NULL;
+	gint i;
+	gchar *username = NULL;
+	gchar **envp = NULL;
+	gchar *list_text = NULL;
+	JsonParser *parser = NULL;
+
+	/* TODO: debug messages on failure */
+
+	argv = g_malloc0_n (5, sizeof (*argv));
+	i = 0;
+	argv[i++] = g_strdup ("click");
+	argv[i++] = g_strdup ("list");
+	argv[i++] = g_strdup ("--manifest");
+	username = click_get_username_for_uid
+		(pk_transaction_get_uid (transaction));
+	if (username)
+		argv[i++] = g_strdup_printf ("--user=%s", username);
+	envp = click_get_envp ();
+	ret = g_spawn_sync (NULL, argv, envp,
+			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+			    NULL, NULL, &list_text, NULL, NULL, NULL);
+	if (!ret)
+		goto out;
+
+	parser = json_parser_new ();
+	if (!parser)
+		goto out;
+	json_parser_load_from_data (parser, list_text, -1, NULL);
+
+out:
+	g_strfreev (argv);
+	g_free (username);
+	g_strfreev (envp);
+	g_free (list_text);
+
+	return parser;
+}
+
 static gchar *
 click_build_pkid (const gchar *filename, const gchar *data)
 {
@@ -322,6 +365,64 @@ click_install_files (PkPlugin *plugin, PkTransaction *transaction,
 }
 
 static void
+click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
+			gpointer data)
+{
+	PkPlugin *plugin;
+	JsonObject *manifest;
+	const gchar *name;
+	const gchar *version;
+	const gchar *architecture = NULL;
+	const gchar *title = NULL;
+	gchar *pkid = NULL;
+
+	plugin = (PkPlugin *) data;
+	manifest = json_node_get_object (element_node);
+	if (!manifest)
+		return;
+	name = json_object_get_string_member (manifest, "name");
+	if (!name)
+		return;
+	version = json_object_get_string_member (manifest, "version");
+	if (!version)
+		return;
+	if (json_object_has_member (manifest, "architecture"))
+		architecture = json_object_get_string_member (manifest,
+							      "architecture");
+	if (!architecture)
+		architecture = "";
+	if (json_object_has_member (manifest, "title"))
+		title = json_object_get_string_member (manifest, "title");
+	if (!title)
+		title = "";
+
+	pkid = pk_package_id_build (name, version, architecture,
+				    "installed:click");
+	pk_backend_package (plugin->backend, PK_INFO_ENUM_INSTALLED, pkid,
+			    title);
+}
+
+static void
+click_get_packages (PkPlugin *plugin, PkTransaction *transaction)
+{
+	JsonParser *parser = NULL;
+	JsonNode *node = NULL;
+	JsonArray *array = NULL;
+
+	parser = click_get_list (transaction);
+	if (!parser)
+		goto out;
+	node = json_parser_get_root (parser);
+	array = json_node_get_array (node);
+	if (!array)
+		goto out;
+	json_array_foreach_element (array, click_get_packages_one, plugin);
+
+out:
+	g_clear_object (&parser);
+}
+
+static void
 click_skip_native_backend (PkPlugin *plugin)
 {
 	if (!pk_backend_get_is_error_set (plugin->backend))
@@ -388,6 +489,10 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 				(transaction);
 			if (g_strv_length (full_paths) == 0)
 				click_skip_native_backend (plugin);
+			break;
+
+		case PK_ROLE_ENUM_GET_PACKAGES:
+			click_get_packages (plugin, transaction);
 			break;
 
 		default:

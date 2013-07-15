@@ -472,6 +472,10 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 
 	g_debug ("Processing transaction");
 
+	/* reset the native backend */
+	pk_backend_reset (plugin->backend);
+	pk_backend_set_status (plugin->backend, PK_STATUS_ENUM_SETUP);
+
 	role = pk_transaction_get_role (transaction);
 
 	switch (role) {

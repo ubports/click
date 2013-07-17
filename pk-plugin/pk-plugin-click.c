@@ -517,3 +517,43 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 
 	g_strfreev (click_files);
 }
+
+/**
+ * pk_plugin_transaction_get_action:
+ **/
+const gchar *
+pk_plugin_transaction_get_action (PkPlugin *plugin, PkTransaction *transaction,
+				  const gchar *action_id)
+{
+	const gchar *install_actions[] = {
+		"org.freedesktop.packagekit.package-install",
+		"org.freedesktop.packagekit.package-install-untrusted",
+		NULL
+	};
+	const gchar **install_action;
+	gchar **full_paths;
+	gint i;
+
+	if (!action_id)
+		return NULL;
+
+	for (install_action = install_actions; *install_action;
+	     ++install_action) {
+		if (strcmp (action_id, *install_action) == 0) {
+			/* Use an action with weaker auth requirements if
+			 * and only if all the packages in the list are
+			 * Click packages.
+			 */
+			full_paths = pk_transaction_get_full_paths
+				(transaction);
+			for (i = 0; full_paths[i]; ++i) {
+				if (!click_is_click_package (full_paths[i]))
+					break;
+			}
+			if (!full_paths[i])
+				return "com.ubuntu.click.package-install";
+		}
+	}
+
+	return action_id;
+}

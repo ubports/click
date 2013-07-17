@@ -8,6 +8,11 @@ AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER([config.h])
 LT_INIT([disable-static])
 
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18.1])
+AC_SUBST([GETTEXT_PACKAGE], [click])
+IT_PROG_INTLTOOL
+
 AC_PROG_CC
 CFLAGS="$CFLAGS -Wall"
 
@@ -47,6 +52,7 @@ AC_CONFIG_FILES([
 	click/Makefile
 	debhelper/Makefile
 	pk-plugin/Makefile
+	po/Makefile.in
 	preload/Makefile
 	])
 AC_CONFIG_FILES([setup.py], [chmod +x setup.py])

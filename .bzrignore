@@ -14,6 +14,7 @@ __pycache__
 .libs
 *.la
 *.lo
+ABOUT-NLS
 Makefile
 Makefile.in
 _build/doctrees
@@ -26,6 +27,7 @@ dist
 .tox
 click/paths.py
 build-aux/config.guess
+build-aux/config.rpath
 build-aux/config.sub
 build-aux/depcomp
 build-aux/install-sh
@@ -43,3 +45,16 @@ debian/packagekit-plugin-click
 debian/python3-click
 debian/tmp
 m4/*
+pk-plugin/com.ubuntu.click.policy
+po/.intltool-merge-cache
+po/ChangeLog
+po/Makefile.in.in
+po/Makevars.template
+po/POTFILES
+po/Rules-quot
+po/remove-potcdate.sed
+po/stamp-it
+po/*.gmo
+po/*.header
+po/*.sed
+po/*.sin

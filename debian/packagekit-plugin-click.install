@@ -1,1 +1,2 @@
 usr/lib/*/packagekit-plugins/*.so
+usr/share/polkit-1/actions

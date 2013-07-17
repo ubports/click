@@ -69,7 +69,7 @@ class ClickUser(MutableMapping):
     def click_pw(self):
         if self._click_pw is None:
             self._click_pw = pwd.getpwnam("clickpkg")
-        return self.click_pw
+        return self._click_pw
 
     def _ensure_db(self):
         create = []

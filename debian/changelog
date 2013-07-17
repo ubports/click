@@ -1,3 +1,9 @@
+click (0.1.5) UNRELEASED; urgency=low
+
+  * Fix infinite recursion in ClickUser.click_pw.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 17 Jul 2013 15:36:24 +0100
+
 click (0.1.4) saucy; urgency=low
 
   * Add support for per-user package registration.

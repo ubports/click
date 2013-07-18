@@ -1,9 +1,9 @@
-click (0.1.7) UNRELEASED; urgency=low
+click (0.1.7) saucy; urgency=low
 
   * Correct name of .pkla file (now
     /var/lib/polkit-1/localauthority/10-vendor.d/com.ubuntu.click.pkla).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 18 Jul 2013 16:59:17 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 18 Jul 2013 17:00:46 +0100
 
 click (0.1.6) saucy; urgency=low
 

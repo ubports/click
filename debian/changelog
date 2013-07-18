@@ -1,3 +1,10 @@
+click (0.1.7) UNRELEASED; urgency=low
+
+  * Correct name of .pkla file (now
+    /var/lib/polkit-1/localauthority/10-vendor.d/com.ubuntu.click.pkla).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 18 Jul 2013 16:59:17 +0100
+
 click (0.1.6) saucy; urgency=low
 
   * Move defaults for frameworks and hooks directories to click.paths.

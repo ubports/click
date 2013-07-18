@@ -9,8 +9,8 @@ override PolicyKit's defaults:
   ResultAny=yes
 
 (This is now installed in
-/var/lib/polkit-1/localauthority/10-vendor.d/10-click.pkla, for the time
-being.)
+/var/lib/polkit-1/localauthority/10-vendor.d/com.ubuntu.click.pkla, for the
+time being.)
 
 Once that's done, install packagekit and packagekit-plugin-click, and you
 should be able to do things like:

@@ -35,12 +35,12 @@ from click.tests.helpers import TestCase, mkfile, mock
 
 @contextlib.contextmanager
 def temp_hooks_dir(new_dir):
-    old_dir = hooks.HOOKS_DIR
+    old_dir = hooks.hooks_dir
     try:
-        hooks.HOOKS_DIR = new_dir
+        hooks.hooks_dir = new_dir
         yield
     finally:
-        hooks.HOOKS_DIR = old_dir
+        hooks.hooks_dir = old_dir
 
 
 class TestClickHook(TestCase):

@@ -33,9 +33,7 @@ import subprocess
 from debian.deb822 import Deb822
 
 from click import osextras
-
-
-HOOKS_DIR = "/usr/share/click/hooks"
+from click.paths import hooks_dir
 
 
 def _read_manifest_hooks(root, package, version):
@@ -59,7 +57,7 @@ class ClickHook(Deb822):
     @classmethod
     def open(cls, name):
         try:
-            with open(os.path.join(HOOKS_DIR, "%s.hook" % name)) as f:
+            with open(os.path.join(hooks_dir, "%s.hook" % name)) as f:
                 return cls(name, f)
         except IOError:
             raise KeyError("No click hook '%s' installed" % name)

@@ -38,7 +38,7 @@ from debian.debian_support import Version
 
 from click import osextras
 from click.hooks import run_hooks
-from click.paths import preload_path
+from click.paths import frameworks_dir, preload_path
 from click.preinst import static_preinst_matches
 from click.user import ClickUser
 from click.versions import spec_version
@@ -68,8 +68,6 @@ class ClickInstallerPermissionDenied(Exception):
 
 
 class ClickInstaller:
-    frameworks_dir = "/usr/share/click/frameworks"
-
     def __init__(self, root, force_missing_framework=False):
         self.root = root
         self.force_missing_framework = force_missing_framework
@@ -87,7 +85,7 @@ class ClickInstaller:
 
     def _has_framework(self, name):
         return os.path.exists(os.path.join(
-            self.frameworks_dir, "%s.framework" % name))
+            frameworks_dir, "%s.framework" % name))
 
     def audit_control(self, control_part):
         """Check that all requirements on the control part are met.

@@ -17,3 +17,5 @@
 
 preload_path = "@pkglibdir@/libclickpreload.so"
 default_root = "@DEFAULT_ROOT@"
+frameworks_dir = "@pkgdatadir@/frameworks"
+hooks_dir = "@pkgdatadir@/hooks"

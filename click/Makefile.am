@@ -2,6 +2,7 @@ noinst_SCRIPTS = paths.py
 CLEANFILES = $(noinst_SCRIPTS)
 
 do_subst = sed \
+	-e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
 	-e 's,[@]pkglibdir[@],$(pkglibdir),g' \
 	-e 's,[@]DEFAULT_ROOT[@],$(DEFAULT_ROOT),g'
 

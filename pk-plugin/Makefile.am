@@ -18,3 +18,7 @@ dist_polkit_policy_DATA = com.ubuntu.click.policy
 
 EXTRA_DIST = com.ubuntu.click.policy.in
 DISTCLEANFILES = com.ubuntu.click.policy
+
+polkit_localauthoritydir = $(localstatedir)/lib/polkit-1/localauthority/10-vendor.d
+
+dist_polkit_localauthority_DATA = 10-click.pkla

@@ -3,10 +3,14 @@ usable on Ubuntu Touch when connected remotely (adb/ssh) you may need to
 override PolicyKit's defaults:
 
   $ sudo cat /etc/polkit-1/localauthority/50-local.d/10-click.pkla
-  [Click Experimentation]
+  [Allow installation of Click packages]
   Identity=unix-user:phablet
   Action=com.ubuntu.click.package-install
   ResultAny=yes
+
+(This is now installed in
+/var/lib/polkit-1/localauthority/10-vendor.d/10-click.pkla, for the time
+being.)
 
 Once that's done, install packagekit and packagekit-plugin-click, and you
 should be able to do things like:

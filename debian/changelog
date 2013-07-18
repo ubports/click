@@ -1,6 +1,9 @@
 click (0.1.6) UNRELEASED; urgency=low
 
   * Move defaults for frameworks and hooks directories to click.paths.
+  * Install /var/lib/polkit-1/localauthority/10-vendor.d/10-click.pkla to
+    allow the phablet user to install Click packages without being known to
+    logind, as a temporary workaround.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 18 Jul 2013 12:54:48 +0100
 

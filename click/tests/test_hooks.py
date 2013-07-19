@@ -88,6 +88,21 @@ class TestClickHookSystemLevel(TestCase):
         self.assertEqual("test-update", hook["exec"])
         self.assertFalse(hook.user_level)
 
+    def test_invalid_app_id(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print(dedent("""\
+                Pattern: /usr/share/test/${id}.test
+                # Comment
+                Exec: test-update
+                User: root
+                """), file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertRaises(
+            ValueError, hook.app_id, "package", "0.1", "app_name")
+        self.assertRaises(
+            ValueError, hook.app_id, "package", "0.1", "app/name")
+
     @mock.patch("subprocess.check_call")
     def test_run_commands(self, mock_check_call):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
@@ -213,6 +228,21 @@ class TestClickHookUserLevel(TestCase):
             "${home}/.local/share/test/${id}.test", hook["pattern"])
         self.assertEqual("test-update", hook["exec"])
         self.assertTrue(hook.user_level)
+
+    def test_invalid_app_id(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print(dedent("""\
+                User-Level: yes
+                Pattern: ${home}/.local/share/test/${id}.test
+                # Comment
+                Exec: test-update
+                """), file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertRaises(
+            ValueError, hook.app_id, "package", "0.1", "app_name")
+        self.assertRaises(
+            ValueError, hook.app_id, "package", "0.1", "app/name")
 
     @mock.patch("subprocess.check_call")
     def test_run_commands(self, mock_check_call):

@@ -132,11 +132,23 @@ class ClickInstaller:
         if "/" in package_name:
             raise ValueError(
                 'Invalid character "/" in "name" entry: %s' % package_name)
+        if "_" in package_name:
+            raise ValueError(
+                'Invalid character "/" in "name" entry: %s' % package_name)
 
         try:
             package_version = manifest["version"]
         except KeyError:
             raise ValueError('No "version" entry in manifest')
+        # TODO: perhaps just do full version validation?
+        if "/" in package_version:
+            raise ValueError(
+                'Invalid character "/" in "version" entry: %s' %
+                package_version)
+        if "_" in package_version:
+            raise ValueError(
+                'Invalid character "/" in "version" entry: %s' %
+                package_version)
 
         try:
             framework = manifest["framework"]

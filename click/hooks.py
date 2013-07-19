@@ -106,6 +106,11 @@ class ClickHook(Deb822):
         return self.user_level or self.get("single-version", "no") == "yes"
 
     def app_id(self, package, version, app_name):
+        # TODO: perhaps this check belongs further up the stack somewhere?
+        if "_" in app_name or "/" in app_name:
+            raise ValueError(
+                "Application name '%s' may not contain _ or / characters" %
+                app_name)
         return "%s_%s_%s" % (package, app_name, version)
 
     def _user_home(self, user):

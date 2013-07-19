@@ -35,9 +35,10 @@ from __future__ import print_function
 __metaclass__ = type
 __all__ = [
     'ClickUser',
+    'ClickUsers',
     ]
 
-from collections import MutableMapping
+from collections import Mapping, MutableMapping
 from contextlib import contextmanager
 import os
 import pwd
@@ -45,25 +46,23 @@ import pwd
 from click import osextras
 
 
-class ClickUser(MutableMapping):
-    def __init__(self, root, user=None):
-        self.root = root
-        if user is None:
-            user = pwd.getpwuid(os.getuid()).pw_name
-        self.user = user
-        self._user_pw = None
-        self._click_pw = None
-        # This is deliberately outside the user's home directory so that it
-        # can safely be iterated etc. as root.
-        self._db_top = os.path.join(self.root, ".click", "users")
-        self._db = os.path.join(self._db_top, self.user)
-        self._dropped_privileges_count = 0
+def _db_top(root):
+    # This is deliberately outside any user's home directory so that it can
+    # safely be iterated etc. as root.
+    return os.path.join(root, ".click", "users")
 
-    @property
-    def user_pw(self):
-        if self._user_pw is None:
-            self._user_pw = pwd.getpwnam(self.user)
-        return self._user_pw
+
+def _db_for_user(root, user):
+    return os.path.join(_db_top(root), user)
+
+
+class ClickUsers(Mapping):
+    def __init__(self, root):
+        self.root = root
+        self._click_pw = None
+        # This is deliberately outside any user's home directory so that it
+        # can safely be iterated etc. as root.
+        self._db = _db_top(self.root)
 
     @property
     def click_pw(self):
@@ -73,7 +72,7 @@ class ClickUser(MutableMapping):
 
     def _ensure_db(self):
         create = []
-        path = self._db_top
+        path = self._db
         while not os.path.exists(path):
             create.append(path)
             path = os.path.dirname(path)
@@ -82,6 +81,47 @@ class ClickUser(MutableMapping):
             if os.getuid() == 0:
                 pw = self.click_pw
                 os.chown(path, pw.pw_uid, pw.pw_gid)
+
+    def __iter__(self):
+        for entry in osextras.listdir_force(self._db):
+            if os.path.isdir(os.path.join(self._db, entry)):
+                yield entry
+
+    def __len__(self):
+        count = 0
+        for entry in self:
+            count += 1
+        return count
+
+    def __getitem__(self, user):
+        path = _db_for_user(self.root, user)
+        if os.path.isdir(path):
+            return ClickUser(self.root, user=user)
+        else:
+            raise KeyError
+
+
+class ClickUser(MutableMapping):
+    def __init__(self, root, user=None):
+        self.root = root
+        if user is None:
+            user = pwd.getpwuid(os.getuid()).pw_name
+        self.user = user
+        self._users = None
+        self._user_pw = None
+        self._db = _db_for_user(self.root, self.user)
+        self._dropped_privileges_count = 0
+
+    @property
+    def user_pw(self):
+        if self._user_pw is None:
+            self._user_pw = pwd.getpwnam(self.user)
+        return self._user_pw
+
+    def _ensure_db(self):
+        if self._users is None:
+            self._users = ClickUsers(self.root)
+        self._users._ensure_db()
         if not os.path.exists(self._db):
             os.mkdir(self._db)
             if os.getuid() == 0:

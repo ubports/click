@@ -37,7 +37,7 @@ from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
 from click import osextras
-from click.hooks import run_hooks
+from click.hooks import package_install_hooks
 from click.paths import frameworks_dir, preload_path
 from click.preinst import static_preinst_matches
 from click.user import ClickUser
@@ -236,7 +236,8 @@ class ClickInstaller:
                 old_version = None
         else:
             old_version = None
-        run_hooks(self.root, package_name, old_version, package_version)
+        package_install_hooks(
+            self.root, package_name, old_version, package_version)
 
         new_path = os.path.join(package_dir, "current.new")
         osextras.symlink_force(package_version, new_path)

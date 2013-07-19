@@ -136,7 +136,7 @@ class TestClickInstaller(TestCase):
     def test_audit_control_forbids_depends(self):
         path = self.make_fake_package(
             control_fields={
-                "Click-Version": "0.1",
+                "Click-Version": "0.2",
                 "Depends": "libc6",
             })
         with closing(DebFile(filename=path)) as package, \
@@ -147,7 +147,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_forbids_maintscript(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             control_scripts={
                 "preinst": "#! /bin/sh\n",
                 "postinst": "#! /bin/sh\n",
@@ -162,7 +162,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_requires_manifest(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             control_scripts={"preinst": static_preinst})
         with closing(DebFile(filename=path)) as package, \
              self.make_framework("ubuntu-sdk-13.10"):
@@ -172,7 +172,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_invalid_manifest_json(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             control_scripts={"manifest": "{", "preinst": static_preinst})
         with closing(DebFile(filename=path)) as package, \
              self.make_framework("ubuntu-sdk-13.10"):
@@ -182,7 +182,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_no_name(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={})
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
@@ -191,7 +191,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_name_bad_character(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={"name": "../evil"})
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
@@ -201,7 +201,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_no_version(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={"name": "test-package"})
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
@@ -210,7 +210,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_no_framework(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst})
         with closing(DebFile(filename=path)) as package:
@@ -220,7 +220,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_missing_framework(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={
                 "name": "test-package",
                 "version": "1.0",
@@ -235,7 +235,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_control_missing_framework_force(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={
                 "name": "test-package",
                 "version": "1.0",
@@ -247,7 +247,7 @@ class TestClickInstaller(TestCase):
 
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={
                 "name": "test-package",
                 "version": "1.0",
@@ -260,7 +260,7 @@ class TestClickInstaller(TestCase):
 
     def test_no_write_permission(self):
         path = self.make_fake_package(
-            control_fields={"Click-Version": "0.1"},
+            control_fields={"Click-Version": "0.2"},
             manifest={
                 "name": "test-package",
                 "version": "1.0",
@@ -281,8 +281,8 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.run_hooks")
-    def test_install(self, mock_run_hooks):
+    @mock.patch("click.install.package_install_hooks")
+    def test_install(self, mock_package_install_hooks):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
@@ -290,7 +290,7 @@ class TestClickInstaller(TestCase):
                 "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
-                "Click-Version": "0.1",
+                "Click-Version": "0.2",
             },
             manifest={
                 "name": "test-package",
@@ -322,9 +322,9 @@ class TestClickInstaller(TestCase):
             "Architecture": "all",
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
-            "Click-Version": "0.1",
+            "Click-Version": "0.2",
         }, status[0])
-        mock_run_hooks.assert_called_once_with(
+        mock_package_install_hooks.assert_called_once_with(
             root, "test-package", None, "1.0")
 
     @skipUnless(
@@ -351,7 +351,7 @@ class TestClickInstaller(TestCase):
                 "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
-                "Click-Version": "0.1",
+                "Click-Version": "0.2",
             },
             manifest={
                 "name": "test-package",
@@ -373,8 +373,8 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.run_hooks")
-    def test_upgrade(self, mock_run_hooks):
+    @mock.patch("click.install.package_install_hooks")
+    def test_upgrade(self, mock_package_install_hooks):
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
@@ -382,7 +382,7 @@ class TestClickInstaller(TestCase):
                 "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
-                "Click-Version": "0.1",
+                "Click-Version": "0.2",
             },
             manifest={
                 "name": "test-package",
@@ -417,7 +417,7 @@ class TestClickInstaller(TestCase):
             "Architecture": "all",
             "Maintainer": "Foo Bar <foo@example.org>",
             "Description": "test",
-            "Click-Version": "0.1",
+            "Click-Version": "0.2",
         }, status[0])
-        mock_run_hooks.assert_called_once_with(
+        mock_package_install_hooks.assert_called_once_with(
             root, "test-package", "1.0", "1.1")

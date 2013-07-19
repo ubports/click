@@ -1,5 +1,5 @@
 ========================================
-"Click" package file format, version 0.1
+"Click" package file format, version 0.2
 ========================================
 
 This specification covers a packaging format intended for use by
@@ -96,6 +96,7 @@ specification.  The following are currently recognised:
  * title: short (one-line) synopsis of the application
  * description: extended description of the application; may be
    multi-paragraph
+ * hooks: see :doc:`hooks`
 
 Keys beginning with the two characters "x-" are reserved for local
 extensions: this file format will never define such keys to have any

@@ -1,3 +1,22 @@
+click (0.2.0) UNRELEASED; urgency=low
+
+  * Revise and implement hooks specification.  While many things have
+    changed, the previous version was never fully implemented.  However, I
+    have incremented the default Click-Version value to 0.2 to reflect the
+    design work.
+    - The "hooks" manifest key now contains a dictionary keyed by
+      application name.  This means manifest authors have to repeat
+      themselves much less in common cases.
+    - There is now an explicit distinction between system-level and
+      user-level hooks.  System-level hooks may reflect multiple concurrent
+      versions, and require a user name.
+    - Hook symlinks are now named by a combination of the Click package
+      name, the application name, and the Click package version.
+    - The syntax of Pattern has changed to make it easier to extend with new
+      substitutions.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 19 Jul 2013 11:20:16 +0100
+
 click (0.1.7) saucy; urgency=low
 
   * Correct name of .pkla file (now

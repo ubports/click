@@ -155,10 +155,14 @@ class ClickHook(Deb822):
         if self.user_level:
             user_db = ClickUser(root, user=user)
             target = os.path.join(user_db.path(package), relative_path)
+            with user_db._dropped_privileges():
+                osextras.symlink_force(
+                    target,
+                    self.pattern(package, version, app_name, user=user))
         else:
             target = os.path.join(root, package, version, relative_path)
-        osextras.symlink_force(
-            target, self.pattern(package, version, app_name, user=user))
+            osextras.symlink_force(
+                target, self.pattern(package, version, app_name, user=None))
         self._run_commands(user=user)
 
     def remove(self, package, version, app_name, user=None):
@@ -215,7 +219,11 @@ def _app_hooks(hooks):
 
 
 def package_install_hooks(root, package, old_version, new_version, user=None):
-    """Run hooks following installation of a Click package."""
+    """Run hooks following installation of a Click package.
+
+    If user is None, only run system-level hooks.  If user is not None, only
+    run user-level hooks for that user.
+    """
     old_manifest = _read_manifest_hooks(root, package, old_version)
     new_manifest = _read_manifest_hooks(root, package, new_version)
 
@@ -226,7 +234,9 @@ def package_install_hooks(root, package, old_version, new_version, user=None):
         try:
             hook = ClickHook.open(hook_name)
         except KeyError:
-            pass
+            continue
+        if hook.user_level != (user is not None):
+            continue
         if hook.single_version:
             hook.remove(package, old_version, app_name, user=user)
 
@@ -235,5 +245,8 @@ def package_install_hooks(root, package, old_version, new_version, user=None):
             try:
                 hook = ClickHook.open(hook_name)
             except KeyError:
-                pass
-            hook.install(root, package, new_version, app_name, relative_path)
+                continue
+            if hook.user_level != (user is not None):
+                continue
+            hook.install(
+                root, package, new_version, app_name, relative_path, user=user)

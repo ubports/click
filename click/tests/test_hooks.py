@@ -364,6 +364,7 @@ class TestPackageInstallHooks(TestCase):
 
     @mock.patch("click.hooks.ClickHook.open")
     def test_removes_old_hooks(self, mock_open):
+        mock_open.return_value.user_level = False
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -383,6 +384,7 @@ class TestPackageInstallHooks(TestCase):
 
     @mock.patch("click.hooks.ClickHook.open")
     def test_installs_new_hooks(self, mock_open):
+        mock_open.return_value.user_level = False
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -393,15 +395,18 @@ class TestPackageInstallHooks(TestCase):
                 {"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}))
         package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(2, mock_open.call_count)
-        mock_open.assert_has_calls([
+        self.assert_has_calls_sparse(mock_open, [
             mock.call("a"),
-            mock.call().install(self.temp_dir, "test", "1.1", "app", "foo.a"),
+            mock.call().install(
+                self.temp_dir, "test", "1.1", "app", "foo.a", user=None),
             mock.call("b"),
-            mock.call().install(self.temp_dir, "test", "1.1", "app", "foo.b"),
+            mock.call().install(
+                self.temp_dir, "test", "1.1", "app", "foo.b", user=None),
         ])
 
     @mock.patch("click.hooks.ClickHook.open")
     def test_upgrades_existing_hooks(self, mock_open):
+        mock_open.return_value.user_level = False
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -415,11 +420,14 @@ class TestPackageInstallHooks(TestCase):
                 }))
         package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
         self.assertEqual(3, mock_open.call_count)
-        mock_open.assert_has_calls([
+        self.assert_has_calls_sparse(mock_open, [
             mock.call("a"),
-            mock.call().install(self.temp_dir, "test", "1.1", "app", "foo.a"),
+            mock.call().install(
+                self.temp_dir, "test", "1.1", "app", "foo.a", user=None),
             mock.call("b"),
-            mock.call().install(self.temp_dir, "test", "1.1", "app", "foo.b"),
+            mock.call().install(
+                self.temp_dir, "test", "1.1", "app", "foo.b", user=None),
             mock.call("c"),
-            mock.call().install(self.temp_dir, "test", "1.1", "app", "foo.c"),
+            mock.call().install(
+                self.temp_dir, "test", "1.1", "app", "foo.c", user=None),
         ])

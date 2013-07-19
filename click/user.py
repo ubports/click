@@ -177,15 +177,21 @@ class ClickUser(MutableMapping):
                 raise KeyError
 
     def __setitem__(self, package, version):
+        # Circular import.
+        from click.hooks import package_install_hooks
+
         path = os.path.join(self._db, package)
         new_path = os.path.join(self._db, ".%s.new" % package)
         self._ensure_db()
+        old_version = self.get(package)
         with self._dropped_privileges():
             target = os.path.join(self.root, package, version)
             if not os.path.exists(target):
                 raise ValueError("%s does not exist" % target)
             osextras.symlink_force(target, new_path)
             os.rename(new_path, path)
+        package_install_hooks(
+            self.root, package, old_version, version, user=self.user)
 
     def __delitem__(self, package):
         path = os.path.join(self._db, package)
@@ -194,6 +200,7 @@ class ClickUser(MutableMapping):
                 osextras.unlink_force(path)
             else:
                 raise KeyError
+        # TODO: run hooks for removal
 
     def path(self, package):
         return os.path.join(self._db, package)

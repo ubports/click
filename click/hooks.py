@@ -156,9 +156,9 @@ class ClickHook(Deb822):
             user_db = ClickUser(root, user=user)
             target = os.path.join(user_db.path(package), relative_path)
             with user_db._dropped_privileges():
-                osextras.symlink_force(
-                    target,
-                    self.pattern(package, version, app_name, user=user))
+                link = self.pattern(package, version, app_name, user=user)
+                osextras.ensuredir(os.path.dirname(link))
+                osextras.symlink_force(target, link)
         else:
             target = os.path.join(root, package, version, relative_path)
             osextras.symlink_force(

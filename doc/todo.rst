@@ -25,6 +25,8 @@ To do
 
  * define exit statuses for "click install"
 
+ * command to generate manifest template, like ``dh_make``
+
 Delta updates
 =============
 

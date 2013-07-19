@@ -44,9 +44,6 @@ from click.user import ClickUser
 from click.versions import spec_version
 
 
-CLICK_VERSION = "0.1"
-
-
 try:
     _DebFile.close
     DebFile = _DebFile

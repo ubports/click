@@ -59,7 +59,7 @@ def run(argv):
     parser.add_option(
         "--manifest", default=False, action="store_true",
         help="print JSON array of manifests of all installed packages")
-    options, _ = parser.parse_args()
+    options, _ = parser.parse_args(argv)
     json_output = []
     for package, version, path in list_packages(options):
         if options.manifest:

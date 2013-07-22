@@ -5,6 +5,9 @@ click (0.2.1) UNRELEASED; urgency=low
     to read .dpkg.cfg from it (which may fail when dropping privileges from
     root and produce a warning message).
   * Refuse to install .click directories at any level, not just the top.
+  * Add "click pkgdir" command to print the top-level package directory from
+    either a package name or a path within a package; based on work by Ted
+    Gould, for which thanks.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Sun, 21 Jul 2013 21:35:20 +0100
 

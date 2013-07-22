@@ -26,6 +26,7 @@ all_commands = (
     "info",
     "install",
     "list",
+    "pkgdir",
     "register",
     "verify",
     )

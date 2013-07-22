@@ -236,6 +236,7 @@ class ClickInstaller:
             preloads.append(env["LD_PRELOAD"])
         env["LD_PRELOAD"] = " ".join(preloads)
         env["CLICK_BASE_DIR"] = self.root
+        env.pop("HOME", None)
         subprocess.check_call(
             command, preexec_fn=partial(self._install_preexec, inst_dir),
             env=env)

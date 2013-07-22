@@ -19,12 +19,19 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+import os
+
+from click.paths import default_root
+
 
 def run(argv):
     parser = OptionParser("%prog pkgdir PACKAGE-NAME")
+    parser.add_option(
+        "--root", metavar="PATH", default=default_root,
+        help="set top-level directory to PATH (default: %s)" % default_root)
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")
     package_name = args[0]
-    print("/opt/click.ubuntu.com/%s/current" % package_name)
+    print(os.path.join(options.root, package_name, "current"))
     return 0

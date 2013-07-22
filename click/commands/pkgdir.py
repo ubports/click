@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Find an installed Click package version for the user."""
+"""Print the directory where a Click package is unpacked."""
 
 from __future__ import print_function
 
 from optparse import OptionParser
-import os
 
 from click.paths import default_root
+from click.user import ClickUser
 
 
 def run(argv):
@@ -29,9 +29,14 @@ def run(argv):
     parser.add_option(
         "--root", metavar="PATH", default=default_root,
         help="set top-level directory to PATH (default: %s)" % default_root)
+    parser.add_option(
+        "--user", metavar="USER",
+        help="look up PACKAGE-NAME for USER (if you have permission; "
+             "default: current user)")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")
     package_name = args[0]
-    print(os.path.join(options.root, package_name, "current"))
+    registry = ClickUser(options.root, user=options.user)
+    print(registry.path(package_name))
     return 0

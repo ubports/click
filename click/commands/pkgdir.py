@@ -21,7 +21,7 @@ from __future__ import print_function
 from optparse import OptionParser
 
 def run(argv):
-    parser = OptionParser("%prog package-directory PACKAGE-NAME")
+    parser = OptionParser("%prog pkgdir PACKAGE-NAME")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")

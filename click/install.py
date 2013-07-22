@@ -225,7 +225,7 @@ class ClickInstaller:
             "--force-not-root",
             "--instdir", inst_dir,
             "--admindir", os.path.join(inst_dir, ".click"),
-            "--path-exclude", "/.click/*",
+            "--path-exclude", "*/.click/*",
             "--log", os.path.join(root_click, "log"),
             "--no-triggers",
             "--install", path,

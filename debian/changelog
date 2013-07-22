@@ -4,6 +4,7 @@ click (0.2.1) UNRELEASED; urgency=low
   * Remove HOME from environment when running dpkg, so that it doesn't try
     to read .dpkg.cfg from it (which may fail when dropping privileges from
     root and produce a warning message).
+  * Refuse to install .click directories at any level, not just the top.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Sun, 21 Jul 2013 21:35:20 +0100
 

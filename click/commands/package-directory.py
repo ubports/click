@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Find and installed Click package version for the user."""
+"""Find an installed Click package version for the user."""
 
 from __future__ import print_function
 

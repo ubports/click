@@ -177,7 +177,7 @@ class ClickInstaller:
                 "No permission to write to %s; try running as root" % path)
 
     def _drop_privileges(self, username):
-        if os.getuid() != 0:
+        if os.geteuid() != 0:
             return
         pw = pwd.getpwnam(username)
         os.setgroups(
@@ -215,7 +215,7 @@ class ClickInstaller:
         root_click = os.path.join(self.root, ".click")
         if not os.path.exists(root_click):
             os.makedirs(root_click)
-            if os.getuid() == 0:
+            if os.geteuid() == 0:
                 pw = pwd.getpwnam("clickpkg")
                 os.chown(root_click, pw.pw_uid, pw.pw_gid)
 
@@ -254,7 +254,7 @@ class ClickInstaller:
 
         new_path = os.path.join(package_dir, "current.new")
         osextras.symlink_force(package_version, new_path)
-        if os.getuid() == 0:
+        if os.geteuid() == 0:
             # shutil.chown would be more convenient, but it doesn't support
             # follow_symlinks=False in Python 3.3.
             # http://bugs.python.org/issue18108

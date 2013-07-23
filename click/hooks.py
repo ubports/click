@@ -126,7 +126,7 @@ class ClickHook(Deb822):
             self["pattern"], id=app_id, user=user, home=self._user_home(user))
 
     def _drop_privileges(self, username):
-        if os.getuid() != 0:
+        if os.geteuid() != 0:
             return
         pw = pwd.getpwnam(username)
         os.setgroups(

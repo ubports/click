@@ -2,6 +2,8 @@ click (0.2.2) UNRELEASED; urgency=low
 
   * dh_click: Support --name option.
   * Avoid ClickUser.__iter__ infecting its caller with dropped privileges.
+  * Use geteuid() rather than getuid() in several places to check whether we
+    need to drop or regain privileges.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 23 Jul 2013 15:58:37 +0100
 

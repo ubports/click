@@ -129,7 +129,7 @@ class ClickUser(MutableMapping):
                 os.chown(self._db, pw.pw_uid, pw.pw_gid)
 
     def _drop_privileges(self):
-        if self._dropped_privileges_count == 0 and os.geteuid() == 0:
+        if self._dropped_privileges_count == 0 and os.getuid() == 0:
             # We don't bother with setgroups here; we only need the
             # user/group of created filesystem nodes to be correct.
             pw = self.user_pw
@@ -139,7 +139,7 @@ class ClickUser(MutableMapping):
 
     def _regain_privileges(self):
         self._dropped_privileges_count -= 1
-        if self._dropped_privileges_count == 0 and os.geteuid() == 0:
+        if self._dropped_privileges_count == 0 and os.getuid() == 0:
             os.seteuid(0)
             os.setegid(0)
 

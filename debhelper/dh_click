@@ -42,6 +42,13 @@ F</usr/share/doc/click-doc/html/hooks.html> for their format.
 
 Do not modify F<postinst>/F<postrm> scripts.
 
+=item B<--name=>I<name>
+
+Install the hook using the filename I<name> instead of the default filename,
+which is the package name. When this parameter is used, B<dh_click> looks
+for and installs files named F<debian/package.name.hook>, instead of the
+usual F<debian/package.hook>.
+
 =back
 
 =head1 EXAMPLES
@@ -66,16 +73,20 @@ init();
 foreach my $package (@{$dh{DOPACKAGES}}) {
 	my $tmp=tmpdir($package);
 	my $click_hook=pkgfile($package,"click-hook");
+	my $hookname=$package;
+	if (defined $dh{NAME}) {
+		$hookname=$dh{NAME};
+	}
 
 	if ($click_hook ne '') {
 		if (! -d "$tmp/usr/share/click/hooks") {
 			doit("install","-d","$tmp/usr/share/click/hooks");
 		}
-		doit("install","-p","-m644",$click_hook,"$tmp/usr/share/click/hooks/$package.hook");
+		doit("install","-p","-m644",$click_hook,"$tmp/usr/share/click/hooks/$hookname.hook");
 
 		if (! $dh{NOSCRIPTS}) {
-			autoscript($package,"postinst","postinst-click","s/#PACKAGE#/$package/");
-			autoscript($package,"prerm","prerm-click","s/#PACKAGE#/$package/");
+			autoscript($package,"postinst","postinst-click","s/#HOOK#/$hookname/");
+			autoscript($package,"prerm","prerm-click","s/#HOOK#/$hookname/");
 		}
 	}
 }

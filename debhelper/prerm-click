@@ -1,3 +1,3 @@
 if which click >/dev/null 2>&1; then
-	click hook remove #PACKAGE#
+	click hook remove #HOOK#
 fi

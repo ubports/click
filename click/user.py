@@ -157,10 +157,14 @@ class ClickUser(MutableMapping):
             self._regain_privileges()
 
     def __iter__(self):
+        # We cannot be lazy here, because otherwise calling code may
+        # unwittingly end up with dropped privileges.
+        entries = []
         with self._dropped_privileges():
             for entry in osextras.listdir_force(self._db):
                 if os.path.islink(os.path.join(self._db, entry)):
-                    yield entry
+                    entries.append(entry)
+        return iter(entries)
 
     def __len__(self):
         count = 0

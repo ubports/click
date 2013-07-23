@@ -2,6 +2,8 @@ click (0.2.4) UNRELEASED; urgency=low
 
   * Mangle Icon in .desktop files to point to an absolute path within the
     package unpack directory if necessary.
+  * Add a "--" separator between aa-exec's options and the subsidiary
+    command, per Jamie Strandboge.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 23 Jul 2013 23:32:12 +0100
 

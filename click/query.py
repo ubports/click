@@ -13,40 +13,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""click commands."""
+"""Query information about installed Click packages."""
 
-import importlib
+from __future__ import print_function
 
+__metaclass__ = type
+__all__ = [
+    'find_package_directory',
+    ]
 
-all_commands = (
-    "build",
-    "buildsource",
-    "contents",
-    "desktophook",
-    "hook",
-    "info",
-    "install",
-    "list",
-    "pkgdir",
-    "register",
-    "verify",
-    )
+import os
 
 
-hidden_commands = (
-    "desktophook",
-    )
+def _walk_up(path):
+    while True:
+        yield path
+        newpath = os.path.dirname(path)
+        if newpath == path:
+            return
+        path = newpath
 
 
-def load_command(command):
-    return importlib.import_module("click.commands.%s" % command)
-
-
-def help_text():
-    lines = []
-    for command in all_commands:
-        if command in hidden_commands:
-            continue
-        mod = load_command(command)
-        lines.append("  %-21s %s" % (command, mod.__doc__.splitlines()[0]))
-    return "\n".join(lines)
+def find_package_directory(path):
+    for directory in _walk_up(os.path.realpath(path)):
+        if os.path.isdir(os.path.join(directory, ".click", "info")):
+            return directory
+            break
+    else:
+        raise Exception("No package directory found for %s" % path)

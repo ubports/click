@@ -1,0 +1,3 @@
+User-Level: yes
+Pattern: ${home}/.local/share/click/hooks/desktop/${id}.desktop
+Exec: click desktophook

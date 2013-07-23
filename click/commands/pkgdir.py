@@ -19,19 +19,10 @@
 from __future__ import print_function
 
 from optparse import OptionParser
-import os
 
 from click.paths import default_root
+from click.query import find_package_directory
 from click.user import ClickUser
-
-
-def walk_up(path):
-    while True:
-        yield path
-        newpath = os.path.dirname(path)
-        if newpath == path:
-            return
-        path = newpath
 
 
 def run(argv):
@@ -47,12 +38,7 @@ def run(argv):
     if len(args) < 1:
         parser.error("need package name")
     if "/" in args[0]:
-        for path in walk_up(args[0]):
-            if os.path.isdir(os.path.join(path, ".click", "info")):
-                print(path)
-                break
-        else:
-            raise Exception("No package directory found for %s" % args[0])
+        print(find_package_directory(args[0]))
     else:
         package_name = args[0]
         registry = ClickUser(options.root, user=options.user)

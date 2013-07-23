@@ -95,8 +95,12 @@ def quote_for_desktop_exec(s):
     return '"%s"' % "".join(escaped)
 
 
+# TODO: This is a very crude .desktop file mangler; we should instead
+# implement proper (de)serialisation.
 def write_desktop_file(target_path, source_path, profile):
     with open(source_path) as source, open(target_path, "w") as target:
+        source_dir = find_package_directory(source_path)
+        seen_path = False
         print(COMMENT, file=target)
         for line in source:
             if not line.rstrip("\n") or line.startswith("#"):
@@ -116,8 +120,13 @@ def write_desktop_file(target_path, source_path, profile):
                     target.write(
                         "%s = aa-exec -p %s %s\n" %
                         (key, quote_for_desktop_exec(profile), value))
+                elif key == "Path":
+                    target.write("%s = %s\n" % (key, source_dir))
+                    seen_path = True
                 else:
                     target.write(line)
+        if not seen_path:
+            target.write("Path = %s\n" % source_dir)
 
 
 def run(argv):

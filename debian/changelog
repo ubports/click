@@ -4,6 +4,8 @@ click (0.2.3) UNRELEASED; urgency=low
   * Revert part of geteuid() change in 0.2.2; ClickUser._drop_privileges and
     ClickUser._regain_privileges need to check the real UID, or else they
     will never regain privileges.
+  * When running a hook, set HOME to the home directory of the user the hook
+    is running as.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 23 Jul 2013 22:26:23 +0100
 

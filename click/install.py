@@ -134,7 +134,7 @@ class ClickInstaller:
                 'Invalid character "/" in "name" entry: %s' % package_name)
         if "_" in package_name:
             raise ValueError(
-                'Invalid character "/" in "name" entry: %s' % package_name)
+                'Invalid character "_" in "name" entry: %s' % package_name)
 
         try:
             package_version = manifest["version"]
@@ -147,7 +147,7 @@ class ClickInstaller:
                 package_version)
         if "_" in package_version:
             raise ValueError(
-                'Invalid character "/" in "version" entry: %s' %
+                'Invalid character "_" in "version" entry: %s' %
                 package_version)
 
         try:

@@ -1,3 +1,10 @@
+click (0.2.6) UNRELEASED; urgency=low
+
+  * Adjust written .desktop files to avoid tickling some bugs in Unity 8's
+    parsing.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 24 Jul 2013 07:56:38 +0100
+
 click (0.2.5) saucy; urgency=low
 
   * Ensure that ~/.local/share/applications exists if we need to write any

@@ -101,8 +101,8 @@ def write_desktop_file(target_path, source_path, profile):
     osextras.ensuredir(os.path.dirname(target_path))
     with open(source_path) as source, open(target_path, "w") as target:
         source_dir = find_package_directory(source_path)
+        written_comment = False
         seen_path = False
-        print(COMMENT, file=target)
         for line in source:
             if not line.rstrip("\n") or line.startswith("#"):
                 # Comment
@@ -110,6 +110,8 @@ def write_desktop_file(target_path, source_path, profile):
             elif line.startswith("["):
                 # Group header
                 target.write(line)
+                if not written_comment:
+                    print(COMMENT, file=target)
             elif "=" not in line:
                 # Who knows?
                 target.write(line)
@@ -119,21 +121,21 @@ def write_desktop_file(target_path, source_path, profile):
                 value = value.strip()
                 if key == "Exec":
                     target.write(
-                        "%s = aa-exec -p %s -- %s\n" %
+                        "%s=aa-exec -p %s -- %s\n" %
                         (key, quote_for_desktop_exec(profile), value))
                 elif key == "Path":
-                    target.write("%s = %s\n" % (key, source_dir))
+                    target.write("%s=%s\n" % (key, source_dir))
                     seen_path = True
                 elif key == "Icon":
                     icon_path = os.path.join(source_dir, value)
                     if os.path.exists(icon_path):
-                        target.write("%s = %s\n" % (key, icon_path))
+                        target.write("%s=%s\n" % (key, icon_path))
                     else:
-                        target.write(line)
+                        target.write("%s=%s\n" % (key, value))
                 else:
-                    target.write(line)
+                    target.write("%s=%s\n" % (key, value))
         if not seen_path:
-            target.write("Path = %s\n" % source_dir)
+            target.write("Path=%s\n" % source_dir)
 
 
 def run(argv):

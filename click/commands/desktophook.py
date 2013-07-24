@@ -98,6 +98,7 @@ def quote_for_desktop_exec(s):
 # TODO: This is a very crude .desktop file mangler; we should instead
 # implement proper (de)serialisation.
 def write_desktop_file(target_path, source_path, profile):
+    osextras.ensuredir(os.path.dirname(target_path))
     with open(source_path) as source, open(target_path, "w") as target:
         source_dir = find_package_directory(source_path)
         seen_path = False

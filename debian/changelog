@@ -1,3 +1,10 @@
+click (0.2.5) UNRELEASED; urgency=low
+
+  * Ensure that ~/.local/share/applications exists if we need to write any
+    .desktop files.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 24 Jul 2013 07:44:02 +0100
+
 click (0.2.4) saucy; urgency=low
 
   * Mangle Icon in .desktop files to point to an absolute path within the

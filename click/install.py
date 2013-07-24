@@ -165,17 +165,6 @@ class ClickInstaller:
         with closing(DebFile(filename=path)) as package:
             return self.audit_control(package.control)
 
-    def _check_write_permissions(self, path):
-        while True:
-            if os.path.exists(path):
-                break
-            path = os.path.dirname(path)
-            if path == "/":
-                break
-        if not os.access(path, os.W_OK):
-            raise ClickInstallerPermissionDenied(
-                "No permission to write to %s; try running as root" % path)
-
     def _drop_privileges(self, username):
         if os.geteuid() != 0:
             return
@@ -190,6 +179,32 @@ class ClickInstaller:
         os.setresuid(pw.pw_uid, pw.pw_uid, pw.pw_uid)
         assert os.getresuid() == (pw.pw_uid, pw.pw_uid, pw.pw_uid)
         assert os.getresgid() == (pw.pw_gid, pw.pw_gid, pw.pw_gid)
+
+    def _euid_access(self, username, path, mode):
+        """Like os.access, but for the effective UID."""
+        # TODO: Dropping privileges and calling
+        # os.access(effective_ids=True) ought to work, but for some reason
+        # appears not to return False when it should.  It seems that we need
+        # a subprocess to check this reliably.  At least we don't have to
+        # exec anything.
+        pid = os.fork()
+        if pid == 0:  # child
+            self._drop_privileges(username)
+            os._exit(0 if os.access(path, mode) else 1)
+        else:  # parent
+            _, status = os.waitpid(pid, 0)
+            return status == 0
+
+    def _check_write_permissions(self, path):
+        while True:
+            if os.path.exists(path):
+                break
+            path = os.path.dirname(path)
+            if path == "/":
+                break
+        if not self._euid_access("clickpkg", path, os.W_OK):
+            raise ClickInstallerPermissionDenied(
+                "No permission to write to %s as clickpkg user" % path)
 
     def _install_preexec(self, inst_dir):
         self._drop_privileges("clickpkg")

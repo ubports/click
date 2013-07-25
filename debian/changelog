@@ -3,6 +3,9 @@ click (0.2.8) UNRELEASED; urgency=low
   * Check in advance whether the root is writable by the clickpkg user, not
     just by root, and do so in a way less vulnerable to useful exception
     text being eaten by a subprocess preexec_fn (LP: #1204570).
+  * Actually install
+    /var/lib/polkit-1/localauthority/10-vendor.d/com.ubuntu.click.pkla in
+    the packagekit-plugin-click binary package.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 24 Jul 2013 23:54:39 +0100
 

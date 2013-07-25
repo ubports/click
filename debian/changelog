@@ -1,4 +1,4 @@
-click (0.2.8) UNRELEASED; urgency=low
+click (0.2.8) saucy; urgency=low
 
   * Check in advance whether the root is writable by the clickpkg user, not
     just by root, and do so in a way less vulnerable to useful exception
@@ -7,7 +7,7 @@ click (0.2.8) UNRELEASED; urgency=low
     /var/lib/polkit-1/localauthority/10-vendor.d/com.ubuntu.click.pkla in
     the packagekit-plugin-click binary package.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 24 Jul 2013 23:54:39 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 25 Jul 2013 17:40:49 +0100
 
 click (0.2.7) saucy; urgency=low
 

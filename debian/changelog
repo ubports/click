@@ -1,4 +1,4 @@
-click (0.2.9) UNRELEASED; urgency=low
+click (0.2.9) saucy; urgency=low
 
   * Tolerate dangling source symlinks in "click desktophook".
   * Handle the case where the clickpkg user cannot read the .click file,
@@ -7,7 +7,7 @@ click (0.2.9) UNRELEASED; urgency=low
   * Remove old links for single-version hooks when installing new versions
     (LP: #1206115).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 29 Jul 2013 16:35:25 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 29 Jul 2013 16:56:42 +0100
 
 click (0.2.8) saucy; urgency=low
 

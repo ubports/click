@@ -30,6 +30,7 @@ import json
 import os
 import pwd
 import subprocess
+import sys
 
 from contextlib import closing
 
@@ -245,16 +246,22 @@ class ClickInstaller:
             "--no-triggers",
             "--install", path,
         ]
-        env = dict(os.environ)
-        preloads = [self._preload_path()]
-        if "LD_PRELOAD" in env:
-            preloads.append(env["LD_PRELOAD"])
-        env["LD_PRELOAD"] = " ".join(preloads)
-        env["CLICK_BASE_DIR"] = self.root
-        env.pop("HOME", None)
-        subprocess.check_call(
-            command, preexec_fn=partial(self._install_preexec, inst_dir),
-            env=env)
+        with open(path) as fd:
+            env = dict(os.environ)
+            preloads = [self._preload_path()]
+            if "LD_PRELOAD" in env:
+                preloads.append(env["LD_PRELOAD"])
+            env["LD_PRELOAD"] = " ".join(preloads)
+            env["CLICK_BASE_DIR"] = self.root
+            env["CLICK_PACKAGE_PATH"] = path
+            env["CLICK_PACKAGE_FD"] = str(fd.fileno())
+            env.pop("HOME", None)
+            kwargs = {}
+            if sys.version >= "3.2":
+                kwargs["pass_fds"] = (fd.fileno(),)
+            subprocess.check_call(
+                command, preexec_fn=partial(self._install_preexec, inst_dir),
+                env=env, **kwargs)
 
         current_path = os.path.join(package_dir, "current")
 

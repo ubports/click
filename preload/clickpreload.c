@@ -37,6 +37,7 @@
 static int (*libc_chown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
+static FILE *(*libc_fopen) (const char *, const char *) = (void *) 0;
 static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
 static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
 static int (*libc_link) (const char *, const char *) = (void *) 0;
@@ -46,12 +47,16 @@ static int (*libc_mknod) (const char *, mode_t, dev_t) = (void *) 0;
 static int (*libc_open) (const char *, int, mode_t) = (void *) 0;
 static int (*libc_open64) (const char *, int, mode_t) = (void *) 0;
 static int (*libc_symlink) (const char *, const char *) = (void *) 0;
+static int (*libc___xstat) (int, const char *, struct stat *) = (void *) 0;
+static int (*libc___xstat64) (int, const char *, struct stat64 *) = (void *) 0;
 
 uid_t euid;
 struct passwd root_pwd;
 struct group root_grp;
 const char *base_path;
 size_t base_path_len;
+const char *package_path;
+int package_fd;
 
 #define GET_NEXT_SYMBOL(name) \
     do { \
@@ -62,12 +67,15 @@ size_t base_path_len;
 
 static void __attribute__ ((constructor)) clickpreload_init (void)
 {
+    const char *package_fd_str;
+
     /* Clear any old error conditions, albeit unlikely, as per dlsym(2) */
     dlerror ();
 
     GET_NEXT_SYMBOL (chown);
     GET_NEXT_SYMBOL (execvp);
     GET_NEXT_SYMBOL (fchown);
+    GET_NEXT_SYMBOL (fopen);
     GET_NEXT_SYMBOL (getgrnam);
     GET_NEXT_SYMBOL (getpwnam);
     GET_NEXT_SYMBOL (link);
@@ -77,6 +85,8 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (open);
     GET_NEXT_SYMBOL (open64);
     GET_NEXT_SYMBOL (symlink);
+    GET_NEXT_SYMBOL (__xstat);
+    GET_NEXT_SYMBOL (__xstat64);
 
     euid = geteuid ();
     /* dpkg only cares about these fields. */
@@ -85,6 +95,10 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
 
     base_path = getenv ("CLICK_BASE_DIR");
     base_path_len = base_path ? strlen (base_path) : 0;
+
+    package_path = getenv ("CLICK_PACKAGE_PATH");
+    package_fd_str = getenv ("CLICK_PACKAGE_FD");
+    package_fd = atoi (package_fd_str);
 }
 
 /* dpkg calls chown/fchown to set permissions of extracted files.  If we
@@ -228,12 +242,53 @@ int mknod (const char *pathname, mode_t mode, dev_t dev)
     return (*libc_mknod) (pathname, mode, dev);
 }
 
+int symlink (const char *oldpath, const char *newpath)
+{
+    clickpreload_assert_path_in_instdir ("make symbolic link", newpath);
+    return (*libc_symlink) (oldpath, newpath);
+}
+
+/* As well as write sandboxing, our versions of fopen, open, and stat also
+ * trap accesses to the package path and turn them into accesses to a fixed
+ * file descriptor instead.  With some cooperation from click.install, this
+ * allows dpkg to read packages in paths not readable by the clickpkg user.
+ *
+ * We cannot do this entirely perfectly.  In particular, we have to seek to
+ * the start of the file on open, but the file offset is shared among all
+ * duplicates of a file descriptor.  Let's hope that dpkg doesn't open the
+ * .deb multiple times and expect to have independent file offsets ...
+ */
+
+FILE *fopen (const char *pathname, const char *mode)
+{
+    int for_reading =
+        (strncmp (mode, "r", 1) == 0 && strncmp (mode, "r+", 2) != 0);
+
+    if (for_reading && package_path && strcmp (pathname, package_path) == 0) {
+        int dup_fd = dup (package_fd);
+        lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
+        return fdopen (dup_fd, mode);
+    }
+
+    if (!for_reading)
+        clickpreload_assert_path_in_instdir ("write-fdopen", pathname);
+
+    return (*libc_fopen) (pathname, mode);
+}
+
 int open (const char *pathname, int flags, ...)
 {
+    int for_writing = ((flags & O_WRONLY) || (flags & O_RDWR));
     mode_t mode = 0;
     int ret;
 
-    if ((flags & O_WRONLY) || (flags & O_RDWR))
+    if (!for_writing && package_path && strcmp (pathname, package_path) == 0) {
+        int dup_fd = dup (package_fd);
+        lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
+        return dup_fd;
+    }
+
+    if (for_writing)
         clickpreload_assert_path_in_instdir ("write-open", pathname);
 
     if (flags & O_CREAT) {
@@ -249,10 +304,17 @@ int open (const char *pathname, int flags, ...)
 
 int open64 (const char *pathname, int flags, ...)
 {
+    int for_writing = ((flags & O_WRONLY) || (flags & O_RDWR));
     mode_t mode = 0;
     int ret;
 
-    if ((flags & O_WRONLY) || (flags & O_RDWR))
+    if (!for_writing && package_path && strcmp (pathname, package_path) == 0) {
+        int dup_fd = dup (package_fd);
+        lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
+        return dup_fd;
+    }
+
+    if (for_writing)
         clickpreload_assert_path_in_instdir ("write-open", pathname);
 
     if (flags & O_CREAT) {
@@ -266,8 +328,18 @@ int open64 (const char *pathname, int flags, ...)
     return ret;
 }
 
-int symlink (const char *oldpath, const char *newpath)
+int __xstat (int ver, const char *pathname, struct stat *buf)
 {
-    clickpreload_assert_path_in_instdir ("make symbolic link", newpath);
-    return (*libc_symlink) (oldpath, newpath);
+    if (package_path && strcmp (pathname, package_path) == 0)
+        return __fxstat (ver, package_fd, buf);
+
+    return (*libc___xstat) (ver, pathname, buf);
+}
+
+int __xstat64 (int ver, const char *pathname, struct stat64 *buf)
+{
+    if (package_path && strcmp (pathname, package_path) == 0)
+        return __fxstat64 (ver, package_fd, buf);
+
+    return (*libc___xstat64) (ver, pathname, buf);
 }

@@ -278,6 +278,31 @@ class TestClickHookUserLevel(TestCase):
 
     @mock.patch(
         "click.hooks.ClickHook._user_home", return_value="/home/test-user")
+    def test_install_removes_previous(self, *args):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        hook.install(
+            self.temp_dir, "org.example.package", "1.0", "test-app", "foo/bar",
+            user="test-user")
+        hook.install(
+            self.temp_dir, "org.example.package", "1.1", "test-app", "foo/bar",
+            user="test-user")
+        old_symlink_path = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.0.test")
+        symlink_path = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.1.test")
+        self.assertFalse(os.path.islink(old_symlink_path))
+        self.assertTrue(os.path.islink(symlink_path))
+        target_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user",
+            "org.example.package", "foo", "bar")
+        self.assertEqual(target_path, os.readlink(symlink_path))
+
+    @mock.patch(
+        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
     def test_upgrade(self, *args):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("User-Level: yes", file=f)

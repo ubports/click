@@ -158,17 +158,31 @@ class ClickHook(Deb822):
 
     def install(self, root, package, version, app_name, relative_path,
                 user=None):
+        # Prepare paths.
         if self.user_level:
             user_db = ClickUser(root, user=user)
             target = os.path.join(user_db.path(package), relative_path)
-            with user_db._dropped_privileges():
-                link = self.pattern(package, version, app_name, user=user)
-                osextras.ensuredir(os.path.dirname(link))
-                osextras.symlink_force(target, link)
+            link = self.pattern(package, version, app_name, user=user)
         else:
             target = os.path.join(root, package, version, relative_path)
-            osextras.symlink_force(
-                target, self.pattern(package, version, app_name, user=None))
+            link = self.pattern(package, version, app_name, user=None)
+        link_dir = os.path.dirname(link)
+
+        # Remove previous versions if necessary.
+        if self.single_version:
+            previous_prefix = "%s_%s_" % (package, app_name)
+            for previous_entry in osextras.listdir_force(link_dir):
+                if previous_entry.startswith(previous_prefix):
+                    osextras.unlink_force(
+                        os.path.join(link_dir, previous_entry))
+
+        # Install new links and run commands.
+        if self.user_level:
+            with user_db._dropped_privileges():
+                osextras.ensuredir(link_dir)
+                osextras.symlink_force(target, link)
+        else:
+            osextras.symlink_force(target, link)
         self._run_commands(user=user)
 
     def remove(self, package, version, app_name, user=None):

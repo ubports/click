@@ -17,6 +17,7 @@
 
 from __future__ import print_function
 
+import errno
 import json
 from optparse import OptionParser
 import os
@@ -51,9 +52,17 @@ def older(source_path, target_path):
 
     It's also OK for target_path to be missing.
     """
-    if not os.path.exists(target_path):
-        return True
-    return os.stat(source_path).st_mtime < os.stat(target_path).st_mtime
+    try:
+        source_mtime = os.stat(source_path)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+    try:
+        target_mtime = os.stat(target_path)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return True
+    return source_mtime < target_mtime
 
 
 def read_hooks_for(path, package, app_name):

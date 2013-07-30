@@ -30,7 +30,26 @@ sys.path.insert(0, os.path.join(sys.path[0], os.pardir))
 from click import commands
 
 
+def fix_stdout():
+    if sys.version >= "3":
+        # Force encoding to UTF-8 even in non-UTF-8 locales.
+        import io
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.detach(), encoding="UTF-8", line_buffering=True)
+    else:
+        # Avoid having to do .encode("UTF-8") everywhere.
+        import codecs
+        sys.stdout = codecs.EncodedFile(sys.stdout, "UTF-8")
+
+        def null_decode(input, errors="strict"):
+            return input, len(input)
+
+        sys.stdout.decode = null_decode
+
+
 def main():
+    fix_stdout()
+
     parser = OptionParser(dedent("""\
         %%prog COMMAND [options]
 

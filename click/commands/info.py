@@ -35,6 +35,6 @@ def run(argv):
                 "manifest", encoding="UTF-8") as manifest:
             manifest_json = json.loads(manifest.read())
             print(json.dumps(
-                manifest_json, sort_keys=True, indent=4,
+                manifest_json, ensure_ascii=False, sort_keys=True, indent=4,
                 separators=(",", ": ")))
     return 0

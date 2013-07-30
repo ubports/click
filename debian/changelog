@@ -1,6 +1,7 @@
 click (0.2.10) UNRELEASED; urgency=low
 
   * Force click's stdout encoding to UTF-8 regardless of the locale.
+  * Don't encode non-ASCII characters in JSON dumps.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 30 Jul 2013 13:58:19 +0100
 

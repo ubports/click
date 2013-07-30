@@ -74,4 +74,5 @@ def run(argv):
             print("%s\t%s" % (package, version))
     if options.manifest:
         print(json.dumps(
-            json_output, sort_keys=True, indent=4, separators=(",", ": ")))
+            json_output, ensure_ascii=False, sort_keys=True, indent=4,
+            separators=(",", ": ")))

@@ -1,10 +1,10 @@
-click (0.2.10) UNRELEASED; urgency=low
+click (0.2.10) saucy; urgency=low
 
   * Force click's stdout encoding to UTF-8 regardless of the locale.
   * Don't encode non-ASCII characters in JSON dumps.
   * Treat manifests as UTF-8.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 30 Jul 2013 13:58:19 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 30 Jul 2013 15:14:16 +0100
 
 click (0.2.9) saucy; urgency=low
 

@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 import errno
+import io
 import json
 from optparse import OptionParser
 import os
@@ -36,7 +37,7 @@ def desktop_entries(directory, only_ours=False):
             continue
         path = os.path.join(directory, entry)
         if only_ours:
-            with open(path) as f:
+            with io.open(path, encoding="UTF-8") as f:
                 if COMMENT not in f.read():
                     continue
         yield entry
@@ -70,7 +71,7 @@ def read_hooks_for(path, package, app_name):
         directory = find_package_directory(path)
         manifest_path = os.path.join(
             directory, ".click", "info", "%s.manifest" % package)
-        with open(manifest_path) as manifest:
+        with io.open(manifest_path, encoding="UTF-8") as manifest:
             return json.load(manifest).get("hooks", {}).get(app_name, {})
     except Exception:
         return {}
@@ -108,7 +109,8 @@ def quote_for_desktop_exec(s):
 # implement proper (de)serialisation.
 def write_desktop_file(target_path, source_path, profile):
     osextras.ensuredir(os.path.dirname(target_path))
-    with open(source_path) as source, open(target_path, "w") as target:
+    with io.open(source_path, encoding="UTF-8") as source, \
+         io.open(target_path, "w", encoding="UTF-8") as target:
         source_dir = find_package_directory(source_path)
         written_comment = False
         seen_path = False

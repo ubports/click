@@ -28,6 +28,7 @@ __all__ = [
 
 from functools import partial
 import grp
+import io
 import json
 import os
 import pwd
@@ -48,7 +49,7 @@ def _read_manifest_hooks(root, package, version):
     manifest_path = os.path.join(
         root, package, version, ".click", "info", "%s.manifest" % package)
     try:
-        with open(manifest_path) as manifest:
+        with io.open(manifest_path, encoding="UTF-8") as manifest:
             return json.load(manifest).get("hooks", {})
     except IOError:
         return {}

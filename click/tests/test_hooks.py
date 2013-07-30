@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Copyright (C) 2013 Canonical Ltd.
 # Author: Colin Watson <cjwatson@ubuntu.com>
 
@@ -15,7 +16,7 @@
 
 """Unit tests for click.hooks."""
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 __metaclass__ = type
 __all__ = [
@@ -161,12 +162,18 @@ class TestClickHookSystemLevel(TestCase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"new": "target-1"}}}))
+            f.write(json.dumps({
+                "maintainer": "Unicóde Person <unicode@example.org>",
+                "hooks": {"test1-app": {"new": "target-1"}},
+            }))
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"new": "target-2"}}}))
+            f.write(json.dumps({
+                "maintainer": "Unicóde Person <unicode@example.org>",
+                "hooks": {"test1-app": {"new": "target-2"}},
+            }))
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open("new")
@@ -345,12 +352,18 @@ class TestClickHookUserLevel(TestCase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"new": "target-1"}}}))
+            f.write(json.dumps({
+                "maintainer": "Unicóde Person <unicode@example.org>",
+                "hooks": {"test1-app": {"new": "target-1"}},
+            }))
         user_db["test-1"] = "1.0"
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"new": "target-2"}}}))
+            f.write(json.dumps({
+                "maintainer": "Unicóde Person <unicode@example.org>",
+                "hooks": {"test1-app": {"new": "target-2"}},
+            }))
         user_db["test-2"] = "2.0"
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open("new")

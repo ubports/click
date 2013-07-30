@@ -17,6 +17,7 @@
 
 from __future__ import print_function
 
+import io
 import json
 from optparse import OptionParser
 import os
@@ -66,7 +67,7 @@ def run(argv):
             try:
                 manifest_path = os.path.join(
                     path, ".click", "info", "%s.manifest" % package)
-                with open(manifest_path) as manifest:
+                with io.open(manifest_path, encoding="UTF-8") as manifest:
                     json_output.append(json.load(manifest))
             except Exception:
                 pass

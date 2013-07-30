@@ -26,6 +26,7 @@ __all__ = [
 
 import contextlib
 import hashlib
+import io
 import json
 import os
 import re
@@ -69,7 +70,7 @@ class ClickBuilderBase:
         self.file_map[source_path] = dest_path
 
     def read_manifest(self, manifest_path):
-        with open(manifest_path) as manifest:
+        with io.open(manifest_path, encoding="UTF-8") as manifest:
             self.manifest = json.load(manifest)
 
     @property
@@ -147,7 +148,7 @@ class ClickBuilder(ClickBuilderBase):
             installed_size = match.group(1)
             control_path = os.path.join(control_dir, "control")
             osextras.ensuredir(os.path.dirname(control_path))
-            with open(control_path, "w") as control:
+            with io.open(control_path, "w", encoding="UTF-8") as control:
                 print(dedent("""\
                     Package: %s
                     Version: %s

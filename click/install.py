@@ -246,7 +246,7 @@ class ClickInstaller:
             "--no-triggers",
             "--install", path,
         ]
-        with open(path) as fd:
+        with open(path, "rb") as fd:
             env = dict(os.environ)
             preloads = [self._preload_path()]
             if "LD_PRELOAD" in env:

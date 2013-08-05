@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-click">
+    <comment>Click package</comment>
+    <sub-class-of type="application/x-deb"/>
+    <generic-icon name="package-x-generic"/>
+    <magic priority="60">
+      <match value="!&lt;arch&gt;" type="string" offset="0">
+        <match value="debian-binary" type="string" offset="8">
+          <match value="_click-binary" type="string" offset="72"/>
+        </match>
+      </match>
+    </magic>
+    <glob pattern="*.click"/>
+  </mime-type>
+</mime-info>

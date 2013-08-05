@@ -15,4 +15,4 @@
 
 """Click package versioning."""
 
-spec_version = "0.2"
+spec_version = "0.3"

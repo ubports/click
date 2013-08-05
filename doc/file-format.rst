@@ -1,5 +1,5 @@
 ========================================
-"Click" package file format, version 0.2
+"Click" package file format, version 0.3
 ========================================
 
 This specification covers a packaging format intended for use by
@@ -22,6 +22,13 @@ General format
 The top-level binary format for Click packages is an ar archive containing
 control and data tar archives, as for .deb packages: see deb(5) for full
 details.
+
+The deb(5) format permits the insertion of underscore-prefixed ar members,
+so a "_click-binary" member should be inserted immediately after
+"debian-binary"; its contents should be the current version number of this
+specification followed by a newline.  This makes it possible to assign a
+MIME type to Click packages without having to rely solely on their
+extension.
 
 Despite the similar format, the file extension for these packages is .click,
 to discourage attempts to install using dpkg directly (although it is still

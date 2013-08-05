@@ -1,3 +1,11 @@
+click (0.3.0) UNRELEASED; urgency=low
+
+  * Insert a new "_click-binary" ar member immediately after
+    "debian-binary"; this allows detecting the MIME type of a Click package
+    even when it doesn't have the extension ".click".
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Sat, 03 Aug 2013 23:32:20 +0100
+
 click (0.2.10) saucy; urgency=low
 
   * Force click's stdout encoding to UTF-8 regardless of the locale.

@@ -113,6 +113,27 @@ class ClickBuilder(ClickBuilderBase):
             return None
         return tarinfo
 
+    def _pack(self, temp_dir, control_dir, data_dir, package_path):
+        data_tar_path = os.path.join(temp_dir, "data.tar.gz")
+        with contextlib.closing(FakerootTarFile.open(
+                name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT
+                )) as data_tar:
+            data_tar.add(data_dir, arcname="./", filter=self._filter_dot_click)
+
+        control_tar_path = os.path.join(temp_dir, "control.tar.gz")
+        control_tar = tarfile.open(
+            name=control_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT)
+        control_tar.add(control_dir, arcname="./")
+        control_tar.close()
+
+        with ArFile(name=package_path, mode="w") as package:
+            package.add_magic()
+            package.add_data("debian-binary", b"2.0\n")
+            package.add_data(
+                "_click-binary", ("%s\n" % spec_version).encode("UTF-8"))
+            package.add_file("control.tar.gz", control_tar_path)
+            package.add_file("data.tar.gz", data_tar_path)
+
     def build(self, dest_dir, manifest_path="manifest.json"):
         with make_temp_dir() as temp_dir:
             # Prepare data area.
@@ -178,27 +199,10 @@ class ClickBuilder(ClickBuilderBase):
                 preinst.write(static_preinst)
 
             # Pack everything up.
-            data_tar_path = os.path.join(temp_dir, "data.tar.gz")
-            with contextlib.closing(FakerootTarFile.open(
-                    name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT
-                    )) as data_tar:
-                data_tar.add(
-                    root_path, arcname="./", filter=self._filter_dot_click)
-
-            control_tar_path = os.path.join(temp_dir, "control.tar.gz")
-            control_tar = tarfile.open(
-                name=control_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT)
-            control_tar.add(control_dir, arcname="./")
-            control_tar.close()
-
             package_name = "%s_%s_%s.click" % (
                 self.name, self.epochless_version, self.architecture)
             package_path = os.path.join(dest_dir, package_name)
-            with ArFile(name=package_path, mode="w") as package:
-                package.add_magic()
-                package.add_data("debian-binary", b"2.0\n")
-                package.add_file("control.tar.gz", control_tar_path)
-                package.add_file("data.tar.gz", data_tar_path)
+            self._pack(temp_dir, control_dir, root_path, package_path)
             return package_path
 
 

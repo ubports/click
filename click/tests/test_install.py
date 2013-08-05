@@ -38,6 +38,7 @@ from debian.deb822 import Deb822
 from click.install import DebFile
 
 from click import install, osextras
+from click.build import ClickBuilder
 from click.install import ClickInstaller, ClickInstallerPermissionDenied
 from click.preinst import static_preinst
 from click.tests.helpers import TestCase, mkfile, mock, touch
@@ -67,16 +68,13 @@ class TestClickInstaller(TestCase):
 
     def make_fake_package(self, control_fields=None, manifest=None,
                           control_scripts=None, data_files=None):
-        """Build a fake package with given contents.
-
-        We can afford to use dpkg-deb here since it's easy, just for testing.
-        """
+        """Build a fake package with given contents."""
         control_fields = {} if control_fields is None else control_fields
         control_scripts = {} if control_scripts is None else control_scripts
         data_files = [] if data_files is None else data_files
 
-        package_dir = os.path.join(self.temp_dir, "fake-package")
-        control_dir = os.path.join(package_dir, "DEBIAN")
+        data_dir = os.path.join(self.temp_dir, "fake-package")
+        control_dir = os.path.join(self.temp_dir, "DEBIAN")
         with mkfile(os.path.join(control_dir, "control")) as control:
             for key, value in control_fields.items():
                 print('%s: %s' % (key.title(), value), file=control)
@@ -87,15 +85,12 @@ class TestClickInstaller(TestCase):
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
+        osextras.ensuredir(data_dir)
         for name in data_files:
-            touch(os.path.join(package_dir, name))
-        package_path = '%s.click' % package_dir
-        with open("/dev/null", "w") as devnull:
-            env = dict(os.environ)
-            env["NO_PKG_MANGLE"] = "1"
-            subprocess.check_call(
-                ["dpkg-deb", "--nocheck", "-b", package_dir, package_path],
-                stdout=devnull, stderr=devnull, env=env)
+            touch(os.path.join(data_dir, name))
+        package_path = '%s.click' % data_dir
+        ClickBuilder()._pack(
+            self.temp_dir, control_dir, data_dir, package_path)
         return package_path
 
     @contextmanager

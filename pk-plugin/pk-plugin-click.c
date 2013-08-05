@@ -48,9 +48,6 @@ struct PkPluginPrivate {
 static gboolean
 click_is_click_package (const gchar *filename)
 {
-	/* This requires this patch to shared-mime-info:
-	 * https://bugs.freedesktop.org/show_bug.cgi?id=66689
-	 */
 	gboolean ret = FALSE;
 	GFile *file;
 	GFileInfo *info = NULL;

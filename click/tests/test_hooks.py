@@ -67,6 +67,15 @@ class TestClickPatternFormatter(TestCase):
         self.assertEqual("$ {foo}", self.formatter.format("$ {foo}"))
         self.assertEqual("x${y", self.formatter.format("${key}${y", key="x"))
 
+    def test_possible_expansion(self):
+        self.assertEqual(
+            {"id": "abc"},
+            self.formatter.possible_expansion(
+                "x_abc_1", "x_${id}_${num}", num="1"))
+        self.assertIsNone(
+            self.formatter.possible_expansion(
+                "x_abc_1", "x_${id}_${num}", num="2"))
+
 
 class TestClickHookSystemLevel(TestCase):
     def setUp(self):

@@ -81,6 +81,37 @@ class ClickPatternFormatter(Formatter):
             value = ""
         return value, field_name
 
+    def possible_expansion(self, s, format_string, *args, **kwargs):
+        """Check if s is a possible expansion.
+
+        Any (keyword) arguments have the effect of binding some keys to
+        fixed values; unspecified keys may take any value, and will bind
+        greedily to the longest possible string.
+
+        If s is a possible expansion, then this method returns a (possibly
+        empty) dictionary mapping all the unspecified keys to their bound
+        values.  Otherwise, it returns None.
+        """
+        ret = {}
+        regex_pieces = []
+        group_names = []
+        for literal_text, field_name, format_spec, conversion in \
+                self.parse(format_string):
+            if literal_text:
+                regex_pieces.append(re.escape(literal_text))
+            if field_name is not None:
+                if field_name in kwargs:
+                    regex_pieces.append(re.escape(kwargs[field_name]))
+                else:
+                    regex_pieces.append("(.*)")
+                    group_names.append(field_name)
+        match = re.match("^%s$" % "".join(regex_pieces), s)
+        if match is None:
+            return None
+        for group in range(len(group_names)):
+            ret[group_names[group]] = match.group(group + 1)
+        return ret
+
 
 class ClickHook(Deb822):
     _formatter = ClickPatternFormatter()
@@ -163,17 +194,30 @@ class ClickHook(Deb822):
         if self.user_level:
             user_db = ClickUser(root, user=user)
             target = os.path.join(user_db.path(package), relative_path)
-            link = self.pattern(package, version, app_name, user=user)
         else:
             target = os.path.join(root, package, version, relative_path)
-            link = self.pattern(package, version, app_name, user=None)
+            assert user is None
+        link = self.pattern(package, version, app_name, user=user)
         link_dir = os.path.dirname(link)
 
         # Remove previous versions if necessary.
+        # TODO: This only works if the app ID only appears, at most, in the
+        # last component of the pattern path.
         if self.single_version:
-            previous_prefix = "%s_%s_" % (package, app_name)
             for previous_entry in osextras.listdir_force(link_dir):
-                if previous_entry.startswith(previous_prefix):
+                previous_exp = self._formatter.possible_expansion(
+                    os.path.join(link_dir, previous_entry),
+                    self["pattern"], user=user, home=self._user_home(user))
+                if previous_exp is None or "id" not in previous_exp:
+                    continue
+                previous_id = previous_exp["id"]
+                try:
+                    previous_package, previous_app_name, _ = previous_id.split(
+                        "_", 2)
+                except ValueError:
+                    continue
+                if (previous_package == package and
+                        previous_app_name == app_name):
                     osextras.unlink_force(
                         os.path.join(link_dir, previous_entry))
 

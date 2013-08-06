@@ -97,6 +97,21 @@ class TestClickHookSystemLevel(TestCase):
         self.assertEqual("test-update", hook["exec"])
         self.assertFalse(hook.user_level)
 
+    def test_hook_name_absent(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: /usr/share/test/${id}.test", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertEqual("test", hook.hook_name)
+
+    def test_hook_name_present(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: /usr/share/test/${id}.test", file=f)
+            print("Hook-Name: other", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertEqual("other", hook.hook_name)
+
     def test_invalid_app_id(self):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print(dedent("""\
@@ -245,6 +260,23 @@ class TestClickHookUserLevel(TestCase):
             "${home}/.local/share/test/${id}.test", hook["pattern"])
         self.assertEqual("test-update", hook["exec"])
         self.assertTrue(hook.user_level)
+
+    def test_hook_name_absent(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: ${home}/.local/share/test/${id}.test", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertEqual("test", hook.hook_name)
+
+    def test_hook_name_present(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: ${home}/.local/share/test/${id}.test", file=f)
+            print("Hook-Name: other", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open("test")
+        self.assertEqual("other", hook.hook_name)
 
     def test_invalid_app_id(self):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
@@ -442,9 +474,29 @@ class TestPackageInstallHooks(TestCase):
                 "Calls not found.\nExpected: %r\nActual: %r" %
                 (calls, mock_obj.mock_calls))
 
-    @mock.patch("click.hooks.ClickHook.open")
-    def test_removes_old_hooks(self, mock_open):
-        mock_open.return_value.user_level = False
+    def test_removes_old_hooks(self):
+        hooks_dir = os.path.join(self.temp_dir, "hooks")
+        with mkfile(os.path.join(hooks_dir, "unity.hook")) as f:
+            print("Pattern: %s/unity/${id}.scope" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+        with mkfile(os.path.join(hooks_dir, "yelp-docs.hook")) as f:
+            print("Pattern: %s/yelp/docs-${id}.txt" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: yelp", file=f)
+        with mkfile(os.path.join(hooks_dir, "yelp-other.hook")) as f:
+            print("Pattern: %s/yelp/other-${id}.txt" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: yelp", file=f)
+        os.mkdir(os.path.join(self.temp_dir, "unity"))
+        unity_path = os.path.join(self.temp_dir, "unity", "test_app_1.0.scope")
+        os.symlink("dummy", unity_path)
+        os.mkdir(os.path.join(self.temp_dir, "yelp"))
+        yelp_docs_path = os.path.join(
+            self.temp_dir, "yelp", "docs-test_app_1.0.txt")
+        os.symlink("dummy", yelp_docs_path)
+        yelp_other_path = os.path.join(
+            self.temp_dir, "yelp", "other-test_app_1.0.txt")
+        os.symlink("dummy", yelp_other_path)
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -453,18 +505,24 @@ class TestPackageInstallHooks(TestCase):
         with mkfile(os.path.join(
                 package_dir, "1.1", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps({}))
-        package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
-        self.assertEqual(2, mock_open.call_count)
-        self.assert_has_calls_sparse(mock_open, [
-            mock.call("unity"),
-            mock.call().remove("test", "1.0", "app", user=None),
-            mock.call("yelp"),
-            mock.call().remove("test", "1.0", "app", user=None),
-        ])
+        with temp_hooks_dir(hooks_dir):
+            package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
+        self.assertFalse(os.path.lexists(unity_path))
+        self.assertFalse(os.path.lexists(yelp_docs_path))
+        self.assertFalse(os.path.lexists(yelp_other_path))
 
-    @mock.patch("click.hooks.ClickHook.open")
-    def test_installs_new_hooks(self, mock_open):
-        mock_open.return_value.user_level = False
+    def test_installs_new_hooks(self):
+        hooks_dir = os.path.join(self.temp_dir, "hooks")
+        with mkfile(os.path.join(hooks_dir, "a.hook")) as f:
+            print("Pattern: %s/a/${id}.a" % self.temp_dir, file=f)
+        with mkfile(os.path.join(hooks_dir, "b-1.hook")) as f:
+            print("Pattern: %s/b/1-${id}.b" % self.temp_dir, file=f)
+            print("Hook-Name: b", file=f)
+        with mkfile(os.path.join(hooks_dir, "b-2.hook")) as f:
+            print("Pattern: %s/b/2-${id}.b" % self.temp_dir, file=f)
+            print("Hook-Name: b", file=f)
+        os.mkdir(os.path.join(self.temp_dir, "a"))
+        os.mkdir(os.path.join(self.temp_dir, "b"))
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -473,20 +531,43 @@ class TestPackageInstallHooks(TestCase):
                 package_dir, "1.1", ".click", "info", "test.manifest")) as f:
             f.write(json.dumps(
                 {"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}))
-        package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
-        self.assertEqual(2, mock_open.call_count)
-        self.assert_has_calls_sparse(mock_open, [
-            mock.call("a"),
-            mock.call().install(
-                self.temp_dir, "test", "1.1", "app", "foo.a", user=None),
-            mock.call("b"),
-            mock.call().install(
-                self.temp_dir, "test", "1.1", "app", "foo.b", user=None),
-        ])
+        with temp_hooks_dir(hooks_dir):
+            package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "a", "test_app_1.1.a")))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "b", "1-test_app_1.1.b")))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "b", "2-test_app_1.1.b")))
 
-    @mock.patch("click.hooks.ClickHook.open")
-    def test_upgrades_existing_hooks(self, mock_open):
-        mock_open.return_value.user_level = False
+    def test_upgrades_existing_hooks(self):
+        hooks_dir = os.path.join(self.temp_dir, "hooks")
+        with mkfile(os.path.join(hooks_dir, "a.hook")) as f:
+            print("Pattern: %s/a/${id}.a" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+        with mkfile(os.path.join(hooks_dir, "b-1.hook")) as f:
+            print("Pattern: %s/b/1-${id}.b" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: b", file=f)
+        with mkfile(os.path.join(hooks_dir, "b-2.hook")) as f:
+            print("Pattern: %s/b/2-${id}.b" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: b", file=f)
+        with mkfile(os.path.join(hooks_dir, "c.hook")) as f:
+            print("Pattern: %s/c/${id}.c" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+        os.mkdir(os.path.join(self.temp_dir, "a"))
+        a_path = os.path.join(self.temp_dir, "a", "test_app_1.0.a")
+        os.symlink("dummy", a_path)
+        os.mkdir(os.path.join(self.temp_dir, "b"))
+        b_irrelevant_path = os.path.join(
+            self.temp_dir, "b", "1-test_other-app_1.0.b")
+        os.symlink("dummy", b_irrelevant_path)
+        b_1_path = os.path.join(self.temp_dir, "b", "1-test_app_1.0.b")
+        os.symlink("dummy", b_1_path)
+        b_2_path = os.path.join(self.temp_dir, "b", "2-test_app_1.0.b")
+        os.symlink("dummy", b_2_path)
+        os.mkdir(os.path.join(self.temp_dir, "c"))
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
@@ -498,16 +579,17 @@ class TestPackageInstallHooks(TestCase):
                 {"hooks": {
                     "app": {"a": "foo.a", "b": "foo.b", "c": "foo.c"}}
                 }))
-        package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
-        self.assertEqual(3, mock_open.call_count)
-        self.assert_has_calls_sparse(mock_open, [
-            mock.call("a"),
-            mock.call().install(
-                self.temp_dir, "test", "1.1", "app", "foo.a", user=None),
-            mock.call("b"),
-            mock.call().install(
-                self.temp_dir, "test", "1.1", "app", "foo.b", user=None),
-            mock.call("c"),
-            mock.call().install(
-                self.temp_dir, "test", "1.1", "app", "foo.c", user=None),
-        ])
+        with temp_hooks_dir(hooks_dir):
+            package_install_hooks(self.temp_dir, "test", "1.0", "1.1")
+        self.assertFalse(os.path.lexists(a_path))
+        self.assertTrue(os.path.lexists(b_irrelevant_path))
+        self.assertFalse(os.path.lexists(b_1_path))
+        self.assertFalse(os.path.lexists(b_2_path))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "a", "test_app_1.1.a")))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "b", "1-test_app_1.1.b")))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "b", "2-test_app_1.1.b")))
+        self.assertTrue(os.path.lexists(
+            os.path.join(self.temp_dir, "c", "test_app_1.1.c")))

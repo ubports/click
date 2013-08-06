@@ -129,6 +129,19 @@ class ClickHook(Deb822):
         except IOError:
             raise KeyError("No click hook '%s' installed" % name)
 
+    @classmethod
+    def open_all(cls, hook_name):
+        for entry in osextras.listdir_force(hooks_dir):
+            if not entry.endswith(".hook"):
+                continue
+            try:
+                with open(os.path.join(hooks_dir, entry)) as f:
+                    hook = cls(entry[:-5], f)
+                    if hook.hook_name == hook_name:
+                        yield hook
+            except IOError:
+                pass
+
     @property
     def user_level(self):
         return self.get("user-level", "no") == "yes"
@@ -136,6 +149,10 @@ class ClickHook(Deb822):
     @property
     def single_version(self):
         return self.user_level or self.get("single-version", "no") == "yes"
+
+    @property
+    def hook_name(self):
+        return self.get("hook-name", self.name)
 
     def app_id(self, package, version, app_name):
         # TODO: perhaps this check belongs further up the stack somewhere?
@@ -261,8 +278,10 @@ class ClickHook(Deb822):
         for package, version, user in self._all_packages(root):
             manifest = _read_manifest_hooks(root, package, version)
             for app_name, hooks in manifest.items():
-                if self.name in hooks:
-                    yield package, version, app_name, user, hooks[self.name]
+                if self.hook_name in hooks:
+                    yield (
+                        package, version, app_name, user,
+                        hooks[self.hook_name])
 
     def install_all(self, root):
         for package, version, app_name, user, relative_path in (
@@ -296,22 +315,17 @@ def package_install_hooks(root, package, old_version, new_version, user=None):
     # manifest but not the new one.
     for app_name, hook_name in sorted(
             _app_hooks(old_manifest) - _app_hooks(new_manifest)):
-        try:
-            hook = ClickHook.open(hook_name)
-        except KeyError:
-            continue
-        if hook.user_level != (user is not None):
-            continue
-        if hook.single_version:
-            hook.remove(package, old_version, app_name, user=user)
+        for hook in ClickHook.open_all(hook_name):
+            if hook.user_level != (user is not None):
+                continue
+            if hook.single_version:
+                hook.remove(package, old_version, app_name, user=user)
 
     for app_name, app_hooks in sorted(new_manifest.items()):
         for hook_name, relative_path in sorted(app_hooks.items()):
-            try:
-                hook = ClickHook.open(hook_name)
-            except KeyError:
-                continue
-            if hook.user_level != (user is not None):
-                continue
-            hook.install(
-                root, package, new_version, app_name, relative_path, user=user)
+            for hook in ClickHook.open_all(hook_name):
+                if hook.user_level != (user is not None):
+                    continue
+                hook.install(
+                    root, package, new_version, app_name, relative_path,
+                    user=user)

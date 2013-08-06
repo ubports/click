@@ -164,14 +164,23 @@ Specification
      yes``" causes only the current version of each package to have a target
      path.
 
+   Hook-Name: <name> (optional)
+     The value of ``Hook-Name`` is the name that Click packages may use to
+     attach to this hook.  By default, this is the base name of the
+     ``*.hook`` file, with the ``.hook`` extension removed.
+
+     Multiple hooks may use the same hook-name, in which case all those
+     hooks will be run when installing, upgrading, or removing a Click
+     package that attaches to that name.
+
  * A Click package may attach to zero or more hooks, by including a "hooks"
    entry in its manifest.  If present, this must be a dictionary mapping
    application names to hook sets; each hook set is itself a dictionary
    mapping hook names to paths.  The hook names are used to look up
-   ``*.hook`` files with matching base names.  The paths are relative to the
-   directory where the Click package is unpacked, and are used as symlink
-   targets by the package manager when creating symlinks according to the
-   ``Pattern`` field in ``*.hook`` files.
+   ``*.hook`` files with matching hook-names (see ``Hook-Name`` above).  The
+   paths are relative to the directory where the Click package is unpacked,
+   and are used as symlink targets by the package manager when creating
+   symlinks according to the ``Pattern`` field in ``*.hook`` files.
 
  * There is a dh_click program which installs the ``*.hook`` files in system
    packages and adds maintainer script fragments to cause click to catch up
@@ -188,10 +197,11 @@ Examples
     Exec: aa-click
     User: root
 
-  /usr/share/click/hooks/desktop.hook:
+  /usr/share/click/hooks/click-desktop.hook:
     User-Level: yes
     Pattern: /opt/click.ubuntu.com/.click/desktop-files/${user}_${id}.desktop
-    Exec: desktop-click
+    Exec: click desktophook
+    Hook-Name: desktop
 
   com.ubuntu.example/manifest.json:
     "hooks": {

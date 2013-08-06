@@ -46,7 +46,7 @@ override_dh_auto_install:
 
 override_dh_install:
 	dh_install
-	DH_AUTOSCRIPTDIR=debhelper debhelper/dh_click --name=desktop
+	DH_AUTOSCRIPTDIR=debhelper debhelper/dh_click --name=click-desktop
 
 # Sphinx documentation is architecture-independent.
 override_dh_sphinxdoc-arch:

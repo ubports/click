@@ -10,6 +10,8 @@ click (0.3.0) UNRELEASED; urgency=low
     application ID is not a prefix of the pattern's basename.
   * Add an optional Hook-Name field to hook files, thereby allowing multiple
     hooks to attach to the same virtual name.
+  * Rename click's own "desktop" hook to "click-desktop", making use of the
+    new Hook-Name facility.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Sat, 03 Aug 2013 23:32:20 +0100
 

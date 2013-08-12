@@ -77,9 +77,9 @@ Specification
    will be only one).  Each application has a name.
 
  * An "application ID" is a string unique to each application instance: it
-   is made up of the Click package name, the application name (the union of
-   allowed characters for a Debian source package name and Debian version),
-   and the Click package version joined by underscores, e.g.
+   is made up of the Click package name, the application name (must consist
+   of only of characters for a Debian source package name, Debian version
+   and [A-Z]), and the Click package version joined by underscores, e.g.
    ``com.ubuntu.clock_alarm_0.1``.
 
  * An integrated-with system package may add ``*.hook`` files to

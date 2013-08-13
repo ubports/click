@@ -308,7 +308,9 @@ class TestClickInstaller(TestCase):
         self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
         status_path = os.path.join(inst_dir, ".click", "status")
         with open(status_path) as status_file:
-            status = list(Deb822.iter_paragraphs(status_file))
+            # .readlines() avoids the need for a python-apt backport to
+            # Ubuntu 12.04 LTS.
+            status = list(Deb822.iter_paragraphs(status_file.readlines()))
         self.assertEqual(1, len(status))
         self.assertEqual({
             "Package": "test-package",
@@ -403,7 +405,9 @@ class TestClickInstaller(TestCase):
         self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
         status_path = os.path.join(inst_dir, ".click", "status")
         with open(status_path) as status_file:
-            status = list(Deb822.iter_paragraphs(status_file))
+            # .readlines() avoids the need for a python-apt backport to
+            # Ubuntu 12.04 LTS.
+            status = list(Deb822.iter_paragraphs(status_file.readlines()))
         self.assertEqual(1, len(status))
         self.assertEqual({
             "Package": "test-package",

@@ -1,6 +1,8 @@
 click (0.3.1) UNRELEASED; urgency=low
 
   * Fix some more failures with mock 0.7.2.
+  * Work around the lack of a python-apt backport of
+    apt_pkg.TagFile(sequence, bytes=True) to precise.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 13 Aug 2013 10:03:06 +0200
 

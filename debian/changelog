@@ -1,4 +1,4 @@
-click (0.3.1) UNRELEASED; urgency=low
+click (0.3.1) saucy; urgency=low
 
   [ Colin Watson ]
   * Fix some more failures with mock 0.7.2.
@@ -9,7 +9,7 @@ click (0.3.1) UNRELEASED; urgency=low
   * Codify allowed characters for "application ID".
   * Fix typos in apparmor hook example.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 13 Aug 2013 10:03:06 +0200
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 13 Aug 2013 10:10:11 +0200
 
 click (0.3.0) saucy; urgency=low
 

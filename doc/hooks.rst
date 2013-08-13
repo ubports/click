@@ -77,8 +77,9 @@ Specification
    will be only one).  Each application has a name.
 
  * An "application ID" is a string unique to each application instance: it
-   is made up of the Click package name, the application name, and the Click
-   package version joined by underscores, e.g.
+   is made up of the Click package name, the application name (must consist
+   of only of characters for a Debian source package name, Debian version
+   and [A-Z]), and the Click package version joined by underscores, e.g.
    ``com.ubuntu.clock_alarm_0.1``.
 
  * An integrated-with system package may add ``*.hook`` files to
@@ -193,8 +194,8 @@ Examples
 ::
 
   /usr/share/click/hooks/apparmor.hook:
-    Pattern: /var/lib/apparmor/click/${id}.json
-    Exec: aa-click
+    Pattern: /var/lib/apparmor/clicks/${id}.json
+    Exec: /usr/bin/aa-clickhook
     User: root
 
   /usr/share/click/hooks/click-desktop.hook:

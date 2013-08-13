@@ -79,17 +79,18 @@ fields are missing or unparseable.  It must refuse to process packages where
 the value of "framework" does not declare a framework implemented by the
 system on which the package is being installed.
 
-The value of "name" identifies the application; every package in the app
-store has a unique "name" identifier, and the app store will reject clashes.
-It is the developer's responsibility to choose a unique identifier.  The
-recommended approach is to follow the Java package name convention, i.e.
-"com.mydomain.myapp", starting with the reverse of an Internet domain name
-owned by the person or organisation developing the application; note that it
-is not necessary for the application to contain any Java code in order to
-use this convention.
+The value of "name" identifies the application, following Debian source
+package name rules; every package in the app store has a unique "name"
+identifier, and the app store will reject clashes.  It is the developer's
+responsibility to choose a unique identifier.  The recommended approach is
+to follow the Java package name convention, i.e.  "com.mydomain.myapp",
+starting with the reverse of an Internet domain name owned by the person or
+organisation developing the application; note that it is not necessary for
+the application to contain any Java code in order to use this convention.
 
 The value of "version" provides a unique version for the application,
-following Debian version numbering rules.
+following Debian version numbering rules. See deb-version(5) for full
+details.
 
 For future expansion (e.g. applications that require multiple frameworks),
 the syntax of "framework" is formally that of a Debian dependency

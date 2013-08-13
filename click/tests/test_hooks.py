@@ -306,9 +306,9 @@ class TestClickHookUserLevel(TestCase):
         mock_check_call.assert_called_once_with(
             "test-update", preexec_fn=mock.ANY, shell=True)
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_install(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_install(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -325,9 +325,9 @@ class TestClickHookUserLevel(TestCase):
         self.assertTrue(os.path.islink(symlink_path))
         self.assertEqual(target_path, os.readlink(symlink_path))
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_install_removes_previous(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_install_removes_previous(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -350,9 +350,9 @@ class TestClickHookUserLevel(TestCase):
             "org.example.package", "foo", "bar")
         self.assertEqual(target_path, os.readlink(symlink_path))
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_upgrade(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_upgrade(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -370,9 +370,9 @@ class TestClickHookUserLevel(TestCase):
         self.assertTrue(os.path.islink(symlink_path))
         self.assertEqual(target_path, os.readlink(symlink_path))
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_remove(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_remove(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -384,9 +384,9 @@ class TestClickHookUserLevel(TestCase):
         hook.remove("org.example.package", "1.0", "test-app", user="test-user")
         self.assertFalse(os.path.exists(symlink_path))
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_install_all(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_install_all(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
@@ -427,9 +427,9 @@ class TestClickHookUserLevel(TestCase):
                 "target-2"),
             os.readlink(path_2))
 
-    @mock.patch(
-        "click.hooks.ClickHook._user_home", return_value="/home/test-user")
-    def test_remove_all(self, *args):
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_remove_all(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
         with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.old" % self.temp_dir, file=f)

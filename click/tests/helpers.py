@@ -78,9 +78,25 @@ class TestCase(unittest.TestCase):
 
 
 if not hasattr(mock, "call"):
-    # mock 0.7.2, the version in Ubuntu 12.04 LTS, lacks the mock.call
-    # helper.  Since it's so convenient, monkey-patch a partial backport
+    # mock 0.7.2, the version in Ubuntu 12.04 LTS, lacks mock.ANY and
+    # mock.call.  Since it's so convenient, monkey-patch a partial backport
     # (from Python 3.3 unittest.mock) into place here.
+    class _ANY(object):
+        "A helper object that compares equal to everything."
+
+        def __eq__(self, other):
+            return True
+
+        def __ne__(self, other):
+            return False
+
+        def __repr__(self):
+            return '<ANY>'
+
+
+    mock.ANY = _ANY()
+
+
     class _Call(tuple):
         """
         A tuple for holding the results of a call to a mock, either in the form

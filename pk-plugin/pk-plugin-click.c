@@ -331,8 +331,8 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 		goto out;
 
 	pkid = click_build_pkid (filename, "installed");
-	if (!pk_backend_get_is_error_set (plugin->backend)) {
-		pk_backend_package (plugin->backend, PK_INFO_ENUM_INSTALLED,
+	if (!pk_backend_job_get_is_error_set (plugin->job)) {
+		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 				    pkid, "summary goes here");
 		ret = TRUE;
 	}
@@ -395,7 +395,7 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 
 	pkid = pk_package_id_build (name, version, architecture,
 				    "installed:click");
-	pk_backend_package (plugin->backend, PK_INFO_ENUM_INSTALLED, pkid,
+	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED, pkid,
 			    title);
 }
 
@@ -422,14 +422,14 @@ out:
 static void
 click_skip_native_backend (PkPlugin *plugin)
 {
-	if (!pk_backend_get_is_error_set (plugin->backend)) {
-		pk_backend_set_exit_code (plugin->backend,
+	if (!pk_backend_job_get_is_error_set (plugin->job)) {
+		pk_backend_job_set_exit_code (plugin->job,
 					  PK_EXIT_ENUM_SKIP_TRANSACTION);
 		/* Work around breakage in PackageKit 0.7; if we omit this
 		 * then transaction signals are not all disconnected and
 		 * later transactions may crash.
 		 */
-		pk_backend_finished (plugin->backend);
+		pk_backend_job_finished (plugin->job);
 	}
 }
 
@@ -452,8 +452,6 @@ pk_plugin_initialize (PkPlugin *plugin)
 	plugin->priv = PK_TRANSACTION_PLUGIN_GET_PRIVATE (PkPluginPrivate);
 
 	/* tell PK we might be able to handle these */
-	pk_backend_implement (plugin->backend,
-			      PK_ROLE_ENUM_SIMULATE_INSTALL_FILES);
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_INSTALL_FILES);
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_GET_PACKAGES);
 }
@@ -481,14 +479,13 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 
 	g_debug ("Processing transaction");
 
-	/* reset the native backend */
-	pk_backend_reset (plugin->backend);
-	pk_backend_set_status (plugin->backend, PK_STATUS_ENUM_SETUP);
+	/* reset the native backend job */
+	pk_backend_job_reset (plugin->job);
+	pk_backend_job_set_status (plugin->job, PK_STATUS_ENUM_SETUP);
 
 	role = pk_transaction_get_role (transaction);
 
 	switch (role) {
-		case PK_ROLE_ENUM_SIMULATE_INSTALL_FILES:
 		case PK_ROLE_ENUM_INSTALL_FILES:
 			full_paths = pk_transaction_get_full_paths
 				(transaction);

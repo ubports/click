@@ -485,12 +485,30 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 
 	role = pk_transaction_get_role (transaction);
 
+	click_files = click_filter_click_packages (transaction, full_paths);
+
+	/* if we're only simulating, skip Click packages */
+	if (pk_bitfield_contain (pk_transaction_get_transaction_flags (transaction),
+				   PK_TRANSACTION_FLAG_ENUM_SIMULATE)) {
+
+		if (role == PK_ROLE_ENUM_INSTALL_FILES) {
+			/* TODO: This needs to be smarter - backend needs to Simulate() with remaining pkgs */
+			if (click_files != NULL) {
+				/* only skip transaction if an error is not already set */
+				if (!pk_backend_job_get_is_error_set (plugin->job))
+					pk_backend_job_set_exit_code (plugin->job, PK_EXIT_ENUM_SKIP_TRANSACTION);
+			}
+		}
+
+		/* FIXME: GET_PACKAGES and any other transaction which has package-ids also needs to be handled here! */
+
+		goto out;
+	}
+
 	switch (role) {
 		case PK_ROLE_ENUM_INSTALL_FILES:
 			full_paths = pk_transaction_get_full_paths
 				(transaction);
-			click_files = click_filter_click_packages (transaction,
-								   full_paths);
 			if (role == PK_ROLE_ENUM_INSTALL_FILES && click_files)
 				click_install_files (plugin, transaction,
 						     click_files);
@@ -509,6 +527,7 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 			break;
 	}
 
+out:
 	g_strfreev (click_files);
 }
 

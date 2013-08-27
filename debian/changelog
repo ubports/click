@@ -1,3 +1,10 @@
+click (0.3.2) UNRELEASED; urgency=low
+
+  [ Jamie Strandboge ]
+  * Document maintainer as an optional field.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 27 Aug 2013 12:56:21 +0200
+
 click (0.3.1) saucy; urgency=low
 
   [ Colin Watson ]

@@ -37,8 +37,7 @@ PKG_CHECK_MODULES([PKPLUGIN], [
 	glib-2.0
 	gobject-2.0 >= 2.28
 	json-glib-1.0 >= 0.10
-	packagekit-plugin >= 0.7.2 
-	packagekit-plugin < 0.8.1
+	packagekit-plugin >= 0.7.2
 	])
 AC_SUBST([PKPLUGIN_CFLAGS])
 AC_SUBST([PKPLUGIN_LIBS])

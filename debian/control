@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Colin Watson <cjwatson@ubuntu.com>
 Standards-Version: 3.9.4
-Build-Depends: debhelper (>= 9~), dh-autoreconf, autopoint (>= 0.18.1), intltool, python3 (>= 3.2), python3-all, python3-setuptools, python3-debian, python3 (>= 3.3) | python3-mock, pep8, pyflakes, python3-sphinx, libglib2.0-dev (>= 2.28), libjson-glib-dev (>= 0.10), libpackagekit-glib2-dev (>= 0.7.2), libpackagekit-glib2-dev (<< 0.8.1)
+Build-Depends: debhelper (>= 9~), dh-autoreconf, autopoint (>= 0.18.1), intltool, python3 (>= 3.2), python3-all, python3-setuptools, python3-debian, python3 (>= 3.3) | python3-mock, pep8, pyflakes, python3-sphinx, libglib2.0-dev (>= 2.28), libjson-glib-dev (>= 0.10), libpackagekit-glib2-dev (>= 0.7.2)
 Vcs-Bzr: http://bazaar.launchpad.net/+branch/click
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.2

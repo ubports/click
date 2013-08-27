@@ -102,9 +102,9 @@ keys may be defined without changing the version number of this
 specification.  The following are currently recognised:
 
  * title: short (one-line) synopsis of the application
- * maintainer: name and email address of maintainer of the application
  * description: extended description of the application; may be
    multi-paragraph
+ * maintainer: name and email address of maintainer of the application
  * hooks: see :doc:`hooks`
 
 Keys beginning with the two characters "x-" are reserved for local

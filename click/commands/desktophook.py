@@ -37,9 +37,12 @@ def desktop_entries(directory, only_ours=False):
             continue
         path = os.path.join(directory, entry)
         if only_ours:
-            with io.open(path, encoding="UTF-8") as f:
-                if COMMENT not in f.read():
-                    continue
+            try:
+                with io.open(path, encoding="UTF-8") as f:
+                    if COMMENT not in f.read():
+                        continue
+            except Exception:
+                continue
         yield entry
 
 

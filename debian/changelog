@@ -1,3 +1,10 @@
+click (0.3.4) UNRELEASED; urgency=low
+
+  * Make "click desktophook" tolerate dangling symlinks in
+    ~/.local/share/applications/.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 28 Aug 2013 18:00:24 +0200
+
 click (0.3.3) saucy; urgency=low
 
   * Recommend click-apparmor from click (suggested by Jamie Strandboge).

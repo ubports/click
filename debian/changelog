@@ -1,8 +1,8 @@
-click (0.3.3) UNRELEASED; urgency=low
+click (0.3.3) saucy; urgency=low
 
   * Recommend click-apparmor from click (suggested by Jamie Strandboge).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 27 Aug 2013 22:06:07 +0200
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 28 Aug 2013 12:17:23 +0200
 
 click (0.3.2) saucy; urgency=low
 

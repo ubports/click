@@ -149,16 +149,11 @@ class ClickBuilder(ClickBuilderBase):
             control_dir = os.path.join(temp_dir, "DEBIAN")
             osextras.ensuredir(control_dir)
 
-            # Control file names must not contain a dot, hence "manifest"
-            # rather than "manifest.json" in the control area.
-            real_manifest_path = os.path.join(control_dir, "manifest")
             if os.path.isabs(manifest_path):
                 full_manifest_path = manifest_path
             else:
                 full_manifest_path = os.path.join(root_path, manifest_path)
-            os.rename(full_manifest_path, real_manifest_path)
-            os.chmod(real_manifest_path, 0o644)
-            self.read_manifest(real_manifest_path)
+            self.read_manifest(full_manifest_path)
 
             du_output = subprocess.check_output(
                 ["du", "-k", "-s", "--apparent-size", "."],
@@ -167,6 +162,7 @@ class ClickBuilder(ClickBuilderBase):
             if not match:
                 raise Exception("du gave unexpected output '%s'" % du_output)
             installed_size = match.group(1)
+            self.manifest["installed-size"] = installed_size
             control_path = os.path.join(control_dir, "control")
             osextras.ensuredir(os.path.dirname(control_path))
             with io.open(control_path, "w", encoding="UTF-8") as control:
@@ -181,6 +177,19 @@ class ClickBuilder(ClickBuilderBase):
                     self.name, self.version, spec_version, self.architecture,
                     self.maintainer, installed_size, self.title)),
                     file=control)
+
+            # Control file names must not contain a dot, hence "manifest"
+            # rather than "manifest.json" in the control area.
+            real_manifest_path = os.path.join(control_dir, "manifest")
+            with io.open(
+                    real_manifest_path, "w", encoding="UTF-8") as manifest:
+                print(
+                    json.dumps(
+                        self.manifest, ensure_ascii=False, sort_keys=True,
+                        indent=4, separators=(",", ": ")),
+                    file=manifest)
+            os.unlink(full_manifest_path)
+            os.chmod(real_manifest_path, 0o644)
 
             md5sums_path = os.path.join(control_dir, "md5sums")
             with open(md5sums_path, "w") as md5sums:

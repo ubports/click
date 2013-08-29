@@ -1,5 +1,5 @@
 ========================================
-"Click" package file format, version 0.3
+"Click" package file format, version 0.4
 ========================================
 
 This specification covers a packaging format intended for use by
@@ -73,6 +73,9 @@ as UTF-8-encoded JSON.  It must include the following keys:
  * name: unique name for the application
  * version: version number of the application
  * framework: the system framework for which the package was built
+ * installed-size: the size of the unpacked package in KiB; this should not
+   be set directly in the source tree, but will be generated automatically
+   by "click build" using "du -k -s --apparent-size"
 
 The package manager must refuse to process packages where any of these
 fields are missing or unparseable.  It must refuse to process packages where

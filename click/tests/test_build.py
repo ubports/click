@@ -132,7 +132,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         for key, value in (
             ("Package", "com.ubuntu.test"),
             ("Version", "1.0"),
-            ("Click-Version", "0.3"),
+            ("Click-Version", "0.4"),
             ("Architecture", "all"),
             ("Maintainer", "Foo Bar <foo@example.org>"),
             ("Description", "test title"),

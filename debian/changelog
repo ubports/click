@@ -7,6 +7,8 @@ click (0.4.0) UNRELEASED; urgency=low
   * Add an optional "icon" manifest key.
   * Consistently call clickpreload_init from preloaded functions in case
     they happen to be called before libclickpreload's constructor.
+  * Run dpkg with --force-bad-path so that /sbin and /usr/sbin are not
+    required to be on $PATH; we don't use the tools dpkg gets from there.
 
   [ Loïc Minier ]
   * Add fopen64 wrapper (LP: #1218674).

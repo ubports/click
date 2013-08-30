@@ -238,7 +238,7 @@ class ClickInstaller:
         # TODO: sandbox so that this can only write to the unpack directory
         command = [
             "dpkg",
-            "--force-not-root",
+            "--force-not-root", "--force-bad-path",
             "--instdir", inst_dir,
             "--admindir", os.path.join(inst_dir, ".click"),
             "--path-exclude", "*/.click/*",

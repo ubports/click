@@ -109,6 +109,12 @@ specification.  The following are currently recognised:
    multi-paragraph
  * maintainer: name and email address of maintainer of the application
  * hooks: see :doc:`hooks`
+ * icon: icon to display in interfaces listing click packages; if the name
+   refers to an existing file when resolved relative to the base directory
+   of the package, the given file will be used; if not, the algorithm
+   described in the `Icon Theme Specification
+   <http://freedesktop.org/wiki/Specifications/icon-theme-spec/>`_ will be
+   used to locate the icon
 
 Keys beginning with the two characters "x-" are reserved for local
 extensions: this file format will never define such keys to have any

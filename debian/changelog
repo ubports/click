@@ -1,11 +1,15 @@
 click (0.4.0) UNRELEASED; urgency=low
 
+  [ Colin Watson ]
   * Add "installed-size" as a mandatory field in the control area's
     "manifest" file; it should not be present in source manifest files, and
     is generated automatically by "click build".
   * Add an optional "icon" manifest key.
   * Consistently call clickpreload_init from preloaded functions in case
     they happen to be called before libclickpreload's constructor.
+
+  [ Loïc Minier ]
+  * Add fopen64 wrapper (LP: #1218674).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 29 Aug 2013 13:47:27 +0100
 

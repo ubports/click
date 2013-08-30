@@ -38,6 +38,7 @@ static int (*libc_chown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 static FILE *(*libc_fopen) (const char *, const char *) = (void *) 0;
+static FILE *(*libc_fopen64) (const char *, const char *) = (void *) 0;
 static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
 static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
 static int (*libc_link) (const char *, const char *) = (void *) 0;
@@ -76,6 +77,7 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (execvp);
     GET_NEXT_SYMBOL (fchown);
     GET_NEXT_SYMBOL (fopen);
+    GET_NEXT_SYMBOL (fopen64);
     GET_NEXT_SYMBOL (getgrnam);
     GET_NEXT_SYMBOL (getpwnam);
     GET_NEXT_SYMBOL (link);
@@ -295,6 +297,26 @@ FILE *fopen (const char *pathname, const char *mode)
         clickpreload_assert_path_in_instdir ("write-fdopen", pathname);
 
     return (*libc_fopen) (pathname, mode);
+}
+
+FILE *fopen64 (const char *pathname, const char *mode)
+{
+    int for_reading =
+        (strncmp (mode, "r", 1) == 0 && strncmp (mode, "r+", 2) != 0);
+
+    if (!libc_fopen64)
+        clickpreload_init ();  /* also needed for package_path */
+
+    if (for_reading && package_path && strcmp (pathname, package_path) == 0) {
+        int dup_fd = dup (package_fd);
+        lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
+        return fdopen (dup_fd, mode);
+    }
+
+    if (!for_reading)
+        clickpreload_assert_path_in_instdir ("write-fdopen", pathname);
+
+    return (*libc_fopen64) (pathname, mode);
 }
 
 int open (const char *pathname, int flags, ...)

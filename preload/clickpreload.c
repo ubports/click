@@ -165,6 +165,9 @@ int execvp (const char *file, char * const argv[])
 {
     if (strcmp (file, "/.click/tmp.ci/preinst") == 0)
         _exit (0);
+
+    if (!libc_execvp)
+        clickpreload_init ();
     return (*libc_execvp) (file, argv);
 }
 
@@ -220,30 +223,45 @@ static void clickpreload_assert_path_in_instdir (const char *verb,
 
 int link (const char *oldpath, const char *newpath)
 {
+    if (!libc_link)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
     clickpreload_assert_path_in_instdir ("make hard link", newpath);
     return (*libc_link) (oldpath, newpath);
 }
 
 int mkdir (const char *pathname, mode_t mode)
 {
+    if (!libc_mkdir)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
     clickpreload_assert_path_in_instdir ("mkdir", pathname);
     return (*libc_mkdir) (pathname, mode);
 }
 
 int mkfifo (const char *pathname, mode_t mode)
 {
+    if (!libc_mkfifo)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
     clickpreload_assert_path_in_instdir ("mkfifo", pathname);
     return (*libc_mkfifo) (pathname, mode);
 }
 
 int mknod (const char *pathname, mode_t mode, dev_t dev)
 {
+    if (!libc_mknod)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
     clickpreload_assert_path_in_instdir ("mknod", pathname);
     return (*libc_mknod) (pathname, mode, dev);
 }
 
 int symlink (const char *oldpath, const char *newpath)
 {
+    if (!libc_symlink)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
     clickpreload_assert_path_in_instdir ("make symbolic link", newpath);
     return (*libc_symlink) (oldpath, newpath);
 }
@@ -264,6 +282,9 @@ FILE *fopen (const char *pathname, const char *mode)
     int for_reading =
         (strncmp (mode, "r", 1) == 0 && strncmp (mode, "r+", 2) != 0);
 
+    if (!libc_fopen)
+        clickpreload_init ();  /* also needed for package_path */
+
     if (for_reading && package_path && strcmp (pathname, package_path) == 0) {
         int dup_fd = dup (package_fd);
         lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
@@ -281,6 +302,9 @@ int open (const char *pathname, int flags, ...)
     int for_writing = ((flags & O_WRONLY) || (flags & O_RDWR));
     mode_t mode = 0;
     int ret;
+
+    if (!libc_open)
+        clickpreload_init ();  /* also needed for package_path */
 
     if (!for_writing && package_path && strcmp (pathname, package_path) == 0) {
         int dup_fd = dup (package_fd);
@@ -308,6 +332,9 @@ int open64 (const char *pathname, int flags, ...)
     mode_t mode = 0;
     int ret;
 
+    if (!libc_open64)
+        clickpreload_init ();  /* also needed for package_path */
+
     if (!for_writing && package_path && strcmp (pathname, package_path) == 0) {
         int dup_fd = dup (package_fd);
         lseek (dup_fd, 0, SEEK_SET);  /* also changes offset of package_fd */
@@ -330,6 +357,9 @@ int open64 (const char *pathname, int flags, ...)
 
 int __xstat (int ver, const char *pathname, struct stat *buf)
 {
+    if (!libc___xstat)
+        clickpreload_init ();  /* also needed for package_path */
+
     if (package_path && strcmp (pathname, package_path) == 0)
         return __fxstat (ver, package_fd, buf);
 
@@ -338,6 +368,9 @@ int __xstat (int ver, const char *pathname, struct stat *buf)
 
 int __xstat64 (int ver, const char *pathname, struct stat64 *buf)
 {
+    if (!libc___xstat64)
+        clickpreload_init ();  /* also needed for package_path */
+
     if (package_path && strcmp (pathname, package_path) == 0)
         return __fxstat64 (ver, package_fd, buf);
 

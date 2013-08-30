@@ -4,6 +4,8 @@ click (0.4.0) UNRELEASED; urgency=low
     "manifest" file; it should not be present in source manifest files, and
     is generated automatically by "click build".
   * Add an optional "icon" manifest key.
+  * Consistently call clickpreload_init from preloaded functions in case
+    they happen to be called before libclickpreload's constructor.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 29 Aug 2013 13:47:27 +0100
 

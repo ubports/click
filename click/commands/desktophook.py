@@ -52,17 +52,17 @@ def split_entry(entry):
 
 
 def older(source_path, target_path):
-    """Return True iff source_path is older than target_path.
+    """Return True if source_path is older than target_path.
 
     It's also OK for target_path to be missing.
     """
     try:
-        source_mtime = os.stat(source_path)
+        source_mtime = os.stat(source_path).st_mtime
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
     try:
-        target_mtime = os.stat(target_path)
+        target_mtime = os.stat(target_path).st_mtime
     except OSError as e:
         if e.errno == errno.ENOENT:
             return True

@@ -41,6 +41,7 @@ static FILE *(*libc_fopen) (const char *, const char *) = (void *) 0;
 static FILE *(*libc_fopen64) (const char *, const char *) = (void *) 0;
 static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
 static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
+static int (*libc_lchown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_link) (const char *, const char *) = (void *) 0;
 static int (*libc_mkdir) (const char *, mode_t) = (void *) 0;
 static int (*libc_mkfifo) (const char *, mode_t) = (void *) 0;
@@ -80,6 +81,7 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (fopen64);
     GET_NEXT_SYMBOL (getgrnam);
     GET_NEXT_SYMBOL (getpwnam);
+    GET_NEXT_SYMBOL (lchown);
     GET_NEXT_SYMBOL (link);
     GET_NEXT_SYMBOL (mkdir);
     GET_NEXT_SYMBOL (mkfifo);
@@ -103,8 +105,8 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     package_fd = atoi (package_fd_str);
 }
 
-/* dpkg calls chown/fchown to set permissions of extracted files.  If we
- * aren't running as root, we don't care.
+/* dpkg calls chown/fchown/lchown to set permissions of extracted files.  If
+ * we aren't running as root, we don't care.
  */
 int chown (const char *path, uid_t owner, gid_t group)
 {
@@ -124,6 +126,16 @@ int fchown (int fd, uid_t owner, gid_t group)
     if (!libc_fchown)
         clickpreload_init ();
     return (*libc_fchown) (fd, owner, group);
+}
+
+int lchown (const char *path, uid_t owner, gid_t group)
+{
+    if (euid != 0)
+        return 0;
+
+    if (!libc_lchown)
+        clickpreload_init ();
+    return (*libc_lchown) (path, owner, group);
 }
 
 /* Similarly, we don't much care about passwd/group lookups when we aren't

@@ -52,7 +52,7 @@ def split_entry(entry):
 
 
 def older(source_path, target_path):
-    """Return True if source_path is older than target_path.
+    """Return True iff source_path is older than target_path.
 
     It's also OK for target_path to be missing.
     """

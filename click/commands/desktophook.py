@@ -57,12 +57,12 @@ def older(source_path, target_path):
     It's also OK for target_path to be missing.
     """
     try:
-        source_mtime = os.stat(source_path)
+        source_mtime = os.stat(source_path).st_mtime
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
     try:
-        target_mtime = os.stat(target_path)
+        target_mtime = os.stat(target_path).st_mtime
     except OSError as e:
         if e.errno == errno.ENOENT:
             return True

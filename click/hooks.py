@@ -207,7 +207,8 @@ class ClickHook(Deb822):
         if self.get("trigger", "no") == "yes":
             raise NotImplementedError("'Trigger: yes' not yet implemented")
 
-    def install(self, package, version, app_name, relative_path, user=None):
+    def install_package(self, package, version, app_name, relative_path,
+                        user=None):
         # Prepare paths.
         if self.user_level:
             user_db = ClickUser(self.db, user=user)
@@ -249,7 +250,7 @@ class ClickHook(Deb822):
             osextras.symlink_force(target, link)
         self._run_commands(user=user)
 
-    def remove(self, package, version, app_name, user=None):
+    def remove_package(self, package, version, app_name, user=None):
         osextras.unlink_force(
             self.pattern(package, version, app_name, user=user))
         self._run_commands(user=user)
@@ -281,14 +282,15 @@ class ClickHook(Deb822):
                         package, version, app_name, user,
                         hooks[self.hook_name])
 
-    def install_all(self):
+    def install(self):
         for package, version, app_name, user, relative_path in (
                 self._relevant_apps()):
-            self.install(package, version, app_name, relative_path, user=user)
+            self.install_package(
+                package, version, app_name, relative_path, user=user)
 
-    def remove_all(self):
+    def remove(self):
         for package, version, app_name, user, _ in self._relevant_apps():
-            self.remove(package, version, app_name, user=user)
+            self.remove_package(package, version, app_name, user=user)
 
 
 def _app_hooks(hooks):
@@ -316,12 +318,12 @@ def package_install_hooks(db, package, old_version, new_version, user=None):
             if hook.user_level != (user is not None):
                 continue
             if hook.single_version:
-                hook.remove(package, old_version, app_name, user=user)
+                hook.remove_package(package, old_version, app_name, user=user)
 
     for app_name, app_hooks in sorted(new_manifest.items()):
         for hook_name, relative_path in sorted(app_hooks.items()):
             for hook in ClickHook.open_all(db, hook_name):
                 if hook.user_level != (user is not None):
                     continue
-                hook.install(
+                hook.install_package(
                     package, new_version, app_name, relative_path, user=user)

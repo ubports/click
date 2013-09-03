@@ -24,8 +24,8 @@ from click.hooks import ClickHook
 
 
 subcommands = {
-    "install": "install_all",
-    "remove": "remove_all",
+    "install": "install",
+    "remove": "remove",
     }
 
 

@@ -10,11 +10,6 @@ To do
 
    * but where do we send a completion/failure signal back to?
 
- * support for installing some apps to phone memory and some to an SD card
-
-   * multiple installation root directories so that some apps can be
-     "system" and some "user"
-
  * some way to manage shared data files
 
  * association with developer ID, to allow sharing of data

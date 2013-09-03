@@ -66,8 +66,8 @@ class ClickInstallerPermissionDenied(Exception):
 
 
 class ClickInstaller:
-    def __init__(self, root, force_missing_framework=False):
-        self.root = root
+    def __init__(self, db, force_missing_framework=False):
+        self.db = db
         self.force_missing_framework = force_missing_framework
 
     def _preload_path(self):
@@ -223,12 +223,12 @@ class ClickInstaller:
 
     def install(self, path, user=None):
         package_name, package_version = self.audit(path)
-        package_dir = os.path.join(self.root, package_name)
+        package_dir = os.path.join(self.db.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
-        assert os.path.dirname(os.path.dirname(inst_dir)) == self.root
+        assert os.path.dirname(os.path.dirname(inst_dir)) == self.db.overlay
 
-        self._check_write_permissions(self.root)
-        root_click = os.path.join(self.root, ".click")
+        self._check_write_permissions(self.db.overlay)
+        root_click = os.path.join(self.db.overlay, ".click")
         if not os.path.exists(root_click):
             os.makedirs(root_click)
             if os.geteuid() == 0:
@@ -252,7 +252,7 @@ class ClickInstaller:
             if "LD_PRELOAD" in env:
                 preloads.append(env["LD_PRELOAD"])
             env["LD_PRELOAD"] = " ".join(preloads)
-            env["CLICK_BASE_DIR"] = self.root
+            env["CLICK_BASE_DIR"] = self.db.overlay
             env["CLICK_PACKAGE_PATH"] = path
             env["CLICK_PACKAGE_FD"] = str(fd.fileno())
             env.pop("HOME", None)
@@ -272,7 +272,7 @@ class ClickInstaller:
         else:
             old_version = None
         package_install_hooks(
-            self.root, package_name, old_version, package_version)
+            self.db, package_name, old_version, package_version)
 
         new_path = os.path.join(package_dir, "current.new")
         osextras.symlink_force(package_version, new_path)
@@ -285,7 +285,7 @@ class ClickInstaller:
         os.rename(new_path, current_path)
 
         if user is not None:
-            registry = ClickUser(self.root, user)
+            registry = ClickUser(self.db, user)
             registry[package_name] = package_version
 
         # TODO: garbage-collect old directories

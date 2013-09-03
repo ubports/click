@@ -43,15 +43,16 @@ from click.paths import hooks_dir
 from click.user import ClickUser, ClickUsers
 
 
-def _read_manifest_hooks(root, package, version):
+def _read_manifest_hooks(db, package, version):
     if version is None:
         return {}
-    manifest_path = os.path.join(
-        root, package, version, ".click", "info", "%s.manifest" % package)
     try:
+        manifest_path = os.path.join(
+            db.path(package, version), ".click", "info",
+            "%s.manifest" % package)
         with io.open(manifest_path, encoding="UTF-8") as manifest:
             return json.load(manifest).get("hooks", {})
-    except IOError:
+    except (KeyError, IOError):
         return {}
 
 
@@ -116,27 +117,28 @@ class ClickPatternFormatter(Formatter):
 class ClickHook(Deb822):
     _formatter = ClickPatternFormatter()
 
-    def __init__(self, name, sequence=None, fields=None, encoding="utf-8"):
+    def __init__(self, db, name, sequence=None, fields=None, encoding="utf-8"):
         super(ClickHook, self).__init__(
             sequence=sequence, fields=fields, encoding=encoding)
+        self.db = db
         self.name = name
 
     @classmethod
-    def open(cls, name):
+    def open(cls, db, name):
         try:
             with open(os.path.join(hooks_dir, "%s.hook" % name)) as f:
-                return cls(name, f)
+                return cls(db, name, f)
         except IOError:
             raise KeyError("No click hook '%s' installed" % name)
 
     @classmethod
-    def open_all(cls, hook_name):
+    def open_all(cls, db, hook_name):
         for entry in osextras.listdir_force(hooks_dir):
             if not entry.endswith(".hook"):
                 continue
             try:
                 with open(os.path.join(hooks_dir, entry)) as f:
-                    hook = cls(entry[:-5], f)
+                    hook = cls(db, entry[:-5], f)
                     if hook.hook_name == hook_name:
                         yield hook
             except IOError:
@@ -205,14 +207,14 @@ class ClickHook(Deb822):
         if self.get("trigger", "no") == "yes":
             raise NotImplementedError("'Trigger: yes' not yet implemented")
 
-    def install(self, root, package, version, app_name, relative_path,
-                user=None):
+    def install(self, package, version, app_name, relative_path, user=None):
         # Prepare paths.
         if self.user_level:
-            user_db = ClickUser(root, user=user)
+            user_db = ClickUser(self.db, user=user)
             target = os.path.join(user_db.path(package), relative_path)
         else:
-            target = os.path.join(root, package, version, relative_path)
+            target = os.path.join(
+                self.db.path(package, version), relative_path)
             assert user is None
         link = self.pattern(package, version, app_name, user=user)
         link_dir = os.path.dirname(link)
@@ -252,7 +254,7 @@ class ClickHook(Deb822):
             self.pattern(package, version, app_name, user=user))
         self._run_commands(user=user)
 
-    def _all_packages(self, root):
+    def _all_packages(self):
         """Return an iterable of all unpacked packages.
 
         If running a user-level hook, this returns (package, version, user)
@@ -262,35 +264,30 @@ class ClickHook(Deb822):
         None) for each version of each unpacked package.
         """
         if self.user_level:
-            for user, user_db in ClickUsers(root).items():
+            for user, user_db in ClickUsers(self.db).items():
                 for package, version in user_db.items():
                     yield package, version, user
         else:
-            for package in osextras.listdir_force(root):
-                current_path = os.path.join(root, package, "current")
-                if os.path.islink(current_path):
-                    version = os.readlink(current_path)
-                    if "/" not in version:
-                        yield package, version, None
+            for package, version, _ in self.db.packages():
+                yield package, version, None
 
-    def _relevant_apps(self, root):
+    def _relevant_apps(self):
         """Return an iterable of all applications relevant for this hook."""
-        for package, version, user in self._all_packages(root):
-            manifest = _read_manifest_hooks(root, package, version)
+        for package, version, user in self._all_packages():
+            manifest = _read_manifest_hooks(self.db, package, version)
             for app_name, hooks in manifest.items():
                 if self.hook_name in hooks:
                     yield (
                         package, version, app_name, user,
                         hooks[self.hook_name])
 
-    def install_all(self, root):
+    def install_all(self):
         for package, version, app_name, user, relative_path in (
-                self._relevant_apps(root)):
-            self.install(
-                root, package, version, app_name, relative_path, user=user)
+                self._relevant_apps()):
+            self.install(package, version, app_name, relative_path, user=user)
 
-    def remove_all(self, root):
-        for package, version, app_name, user, _ in self._relevant_apps(root):
+    def remove_all(self):
+        for package, version, app_name, user, _ in self._relevant_apps():
             self.remove(package, version, app_name, user=user)
 
 
@@ -302,20 +299,20 @@ def _app_hooks(hooks):
     return items
 
 
-def package_install_hooks(root, package, old_version, new_version, user=None):
+def package_install_hooks(db, package, old_version, new_version, user=None):
     """Run hooks following installation of a Click package.
 
     If user is None, only run system-level hooks.  If user is not None, only
     run user-level hooks for that user.
     """
-    old_manifest = _read_manifest_hooks(root, package, old_version)
-    new_manifest = _read_manifest_hooks(root, package, new_version)
+    old_manifest = _read_manifest_hooks(db, package, old_version)
+    new_manifest = _read_manifest_hooks(db, package, new_version)
 
     # Remove any targets for single-version hooks that were in the old
     # manifest but not the new one.
     for app_name, hook_name in sorted(
             _app_hooks(old_manifest) - _app_hooks(new_manifest)):
-        for hook in ClickHook.open_all(hook_name):
+        for hook in ClickHook.open_all(db, hook_name):
             if hook.user_level != (user is not None):
                 continue
             if hook.single_version:
@@ -323,9 +320,8 @@ def package_install_hooks(root, package, old_version, new_version, user=None):
 
     for app_name, app_hooks in sorted(new_manifest.items()):
         for hook_name, relative_path in sorted(app_hooks.items()):
-            for hook in ClickHook.open_all(hook_name):
+            for hook in ClickHook.open_all(db, hook_name):
                 if hook.user_level != (user is not None):
                     continue
                 hook.install(
-                    root, package, new_version, app_name, relative_path,
-                    user=user)
+                    package, new_version, app_name, relative_path, user=user)

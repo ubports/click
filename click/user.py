@@ -57,12 +57,9 @@ def _db_for_user(root, user):
 
 
 class ClickUsers(Mapping):
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, db):
+        self.db = db
         self._click_pw = None
-        # This is deliberately outside any user's home directory so that it
-        # can safely be iterated etc. as root.
-        self._db = _db_top(self.root)
 
     @property
     def click_pw(self):
@@ -72,7 +69,8 @@ class ClickUsers(Mapping):
 
     def _ensure_db(self):
         create = []
-        path = self._db
+        # Only modify the last database.
+        path = _db_top(self.db.overlay)
         while not os.path.exists(path):
             create.append(path)
             path = os.path.dirname(path)
@@ -83,9 +81,15 @@ class ClickUsers(Mapping):
                 os.chown(path, pw.pw_uid, pw.pw_gid)
 
     def __iter__(self):
-        for entry in osextras.listdir_force(self._db):
-            if os.path.isdir(os.path.join(self._db, entry)):
-                yield entry
+        seen = set()
+        for db in self.db:
+            user_db = _db_top(db.root)
+            for entry in osextras.listdir_force(user_db):
+                if entry in seen:
+                    continue
+                if os.path.isdir(os.path.join(user_db, entry)):
+                    seen.add(entry)
+                    yield entry
 
     def __len__(self):
         count = 0
@@ -94,22 +98,24 @@ class ClickUsers(Mapping):
         return count
 
     def __getitem__(self, user):
-        path = _db_for_user(self.root, user)
-        if os.path.isdir(path):
-            return ClickUser(self.root, user=user)
+        for db in self.db:
+            path = _db_for_user(db.root, user)
+            if os.path.isdir(path):
+                # We only require the user path to exist in any database; it
+                # doesn't matter which.
+                return ClickUser(self.db, user=user)
         else:
-            raise KeyError
+            raise KeyError("User %s does not exist in any database" % user)
 
 
 class ClickUser(MutableMapping):
-    def __init__(self, root, user=None):
-        self.root = root
+    def __init__(self, db, user=None):
         if user is None:
             user = pwd.getpwuid(os.getuid()).pw_name
+        self.db = db
         self.user = user
         self._users = None
         self._user_pw = None
-        self._db = _db_for_user(self.root, self.user)
         self._dropped_privileges_count = 0
 
     @property
@@ -118,15 +124,21 @@ class ClickUser(MutableMapping):
             self._user_pw = pwd.getpwnam(self.user)
         return self._user_pw
 
+    @property
+    def overlay_db(self):
+        # Only modify the last database.
+        return _db_for_user(self.db.overlay, self.user)
+
     def _ensure_db(self):
         if self._users is None:
-            self._users = ClickUsers(self.root)
+            self._users = ClickUsers(self.db)
         self._users._ensure_db()
-        if not os.path.exists(self._db):
-            os.mkdir(self._db)
+        path = self.overlay_db
+        if not os.path.exists(path):
+            os.mkdir(path)
             if os.geteuid() == 0:
                 pw = self.user_pw
-                os.chown(self._db, pw.pw_uid, pw.pw_gid)
+                os.chown(path, pw.pw_uid, pw.pw_gid)
 
     def _drop_privileges(self):
         if self._dropped_privileges_count == 0 and os.getuid() == 0:
@@ -161,9 +173,13 @@ class ClickUser(MutableMapping):
         # unwittingly end up with dropped privileges.
         entries = []
         with self._dropped_privileges():
-            for entry in osextras.listdir_force(self._db):
-                if os.path.islink(os.path.join(self._db, entry)):
-                    entries.append(entry)
+            for db in self.db:
+                user_db = _db_for_user(db.root, self.user)
+                for entry in osextras.listdir_force(user_db):
+                    if entry in entries:
+                        continue
+                    if os.path.islink(os.path.join(user_db, entry)):
+                        entries.append(entry)
         return iter(entries)
 
     def __len__(self):
@@ -173,38 +189,62 @@ class ClickUser(MutableMapping):
         return count
 
     def __getitem__(self, package):
-        path = os.path.join(self._db, package)
-        with self._dropped_privileges():
-            if os.path.islink(path):
-                return os.path.basename(os.readlink(path))
-            else:
-                raise KeyError
+        for db in reversed(self.db):
+            user_db = _db_for_user(db.root, self.user)
+            path = os.path.join(user_db, package)
+            with self._dropped_privileges():
+                if os.path.islink(path):
+                    return os.path.basename(os.readlink(path))
+        else:
+            raise KeyError(
+                "%s does not exist in any database for user %s" %
+                (package, self.user))
 
     def __setitem__(self, package, version):
         # Circular import.
         from click.hooks import package_install_hooks
 
-        path = os.path.join(self._db, package)
-        new_path = os.path.join(self._db, ".%s.new" % package)
+        # Only modify the last database.
+        root = self.db.overlay
+        user_db = self.overlay_db
+        path = os.path.join(user_db, package)
+        new_path = os.path.join(user_db, ".%s.new" % package)
         self._ensure_db()
         old_version = self.get(package)
         with self._dropped_privileges():
-            target = os.path.join(self.root, package, version)
+            target = os.path.join(root, package, version)
             if not os.path.exists(target):
                 raise ValueError("%s does not exist" % target)
             osextras.symlink_force(target, new_path)
             os.rename(new_path, path)
         package_install_hooks(
-            self.root, package, old_version, version, user=self.user)
+            self.db, package, old_version, version, user=self.user)
 
     def __delitem__(self, package):
-        path = os.path.join(self._db, package)
+        # Only modify the last database.
+        # TODO: In the multiple-root case, this cannot fulfil the contract
+        # for __delitem__, because deleting an item from an overlay may
+        # simply expose an item in an underlay.  To fix this, we probably
+        # need to switch to normal method names at least for setting and
+        # deleting, and make this class no longer a MutableMapping.
+        user_db = self.overlay_db
+        path = os.path.join(user_db, package)
         with self._dropped_privileges():
             if os.path.islink(path):
                 osextras.unlink_force(path)
             else:
-                raise KeyError
+                raise KeyError(
+                    "%s does not exist in overlay database for user %s" %
+                    (package, self.user))
         # TODO: run hooks for removal
 
     def path(self, package):
-        return os.path.join(self._db, package)
+        for db in reversed(self.db):
+            user_db = _db_for_user(db.root, self.user)
+            path = os.path.join(user_db, package)
+            if os.path.exists(path):
+                return path
+        else:
+            raise KeyError(
+                "%s does not exist in any database for user %s" %
+                (package, self.user))

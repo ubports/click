@@ -1,3 +1,10 @@
+click (0.4.3) UNRELEASED; urgency=low
+
+  * Add support for multiple installation root directories, configured in
+    /etc/click/databases/.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 03 Sep 2013 12:57:58 +0100
+
 click (0.4.2) saucy; urgency=low
 
   * Suppress dpkg calls to lchown when not running as root (LP: #1220125).

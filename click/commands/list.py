@@ -22,26 +22,17 @@ import json
 from optparse import OptionParser
 import os
 
-from click.paths import default_root
+from click.database import ClickDB
 from click.user import ClickUser
 
 
 def list_packages(options):
+    db = ClickDB(options.root)
     if options.all:
-        for package in sorted(os.listdir(options.root)):
-            if package == ".click":
-                continue
-            package_path = os.path.join(options.root, package)
-            if not os.path.isdir(package_path):
-                continue
-            for version in sorted(os.listdir(package_path)):
-                version_path = os.path.join(package_path, version)
-                if (os.path.islink(version_path) or
-                        not os.path.isdir(version_path)):
-                    continue
-                yield package, version, version_path
+        for package, version, path in db.packages(all_versions=True):
+            yield package, version, path
     else:
-        registry = ClickUser(options.root, user=options.user)
+        registry = ClickUser(db, user=options.user)
         for package, version in sorted(registry.items()):
             yield package, version, registry.path(package)
 
@@ -49,8 +40,7 @@ def list_packages(options):
 def run(argv):
     parser = OptionParser("%prog list [options]")
     parser.add_option(
-        "--root", metavar="PATH", default=default_root,
-        help="set top-level directory to PATH (default: %s)" % default_root)
+        "--root", metavar="PATH", help="look for additional packages in PATH")
     parser.add_option(
         "--all", default=False, action="store_true",
         help="list all installed packages")

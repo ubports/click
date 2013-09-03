@@ -33,6 +33,7 @@ build-aux/depcomp
 build-aux/install-sh
 build-aux/ltmain.sh
 build-aux/missing
+conf/databases/99_default.conf
 debhelper/*.1
 debian/*.debhelper*
 debian/*.substvars

@@ -19,8 +19,8 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
+from click.database import ClickDB
 from click.hooks import ClickHook
-from click.paths import default_root
 
 
 subcommands = {
@@ -32,8 +32,7 @@ subcommands = {
 def run(argv):
     parser = OptionParser("%prog hook [options] {install|remove} HOOK")
     parser.add_option(
-        "--root", metavar="PATH", default=default_root,
-        help="set top-level directory to PATH (default: %s)" % default_root)
+        "--root", metavar="PATH", help="look for additional packages in PATH")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need subcommand (install, remove)")
@@ -43,7 +42,8 @@ def run(argv):
             "unknown subcommand '%s' (known: install, remove)" % subcommand)
     if len(args) < 2:
         parser.error("need hook name")
+    db = ClickDB(options.root)
     name = args[1]
-    hook = ClickHook.open(name)
-    getattr(hook, subcommands[subcommand])(options.root)
+    hook = ClickHook.open(db, name)
+    getattr(hook, subcommands[subcommand])()
     return 0

@@ -39,6 +39,7 @@ from click.install import DebFile
 
 from click import install, osextras
 from click.build import ClickBuilder
+from click.database import ClickDB
 from click.install import ClickInstaller, ClickInstallerPermissionDenied
 from click.preinst import static_preinst
 from click.tests.helpers import TestCase, mkfile, mock, touch
@@ -65,6 +66,7 @@ class TestClickInstaller(TestCase):
     def setUp(self):
         super(TestClickInstaller, self).setUp()
         self.use_temp_dir()
+        self.db = ClickDB(self.temp_dir)
 
     def make_fake_package(self, control_fields=None, manifest=None,
                           control_scripts=None, data_files=None):
@@ -111,14 +113,14 @@ class TestClickInstaller(TestCase):
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, "No Click-Version field",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_bad_click_version(self):
         path = self.make_fake_package(control_fields={"Click-Version": "|"})
         with closing(DebFile(filename=path)) as package:
             self.assertRaises(
                 ValueError,
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_new_click_version(self):
         path = self.make_fake_package(control_fields={"Click-Version": "999"})
@@ -126,7 +128,7 @@ class TestClickInstaller(TestCase):
             self.assertRaisesRegex(
                 ValueError,
                 "Click-Version: 999 newer than maximum supported version .*",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_forbids_depends(self):
         path = self.make_fake_package(
@@ -138,7 +140,7 @@ class TestClickInstaller(TestCase):
              self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
                 ValueError, "Depends field is forbidden in Click packages",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_forbids_maintscript(self):
         path = self.make_fake_package(
@@ -153,7 +155,7 @@ class TestClickInstaller(TestCase):
                 ValueError,
                 r"Maintainer scripts are forbidden in Click packages "
                 r"\(found: postinst preinst\)",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_requires_manifest(self):
         path = self.make_fake_package(
@@ -163,7 +165,7 @@ class TestClickInstaller(TestCase):
              self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
                 ValueError, "Package has no manifest",
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_invalid_manifest_json(self):
         path = self.make_fake_package(
@@ -173,7 +175,7 @@ class TestClickInstaller(TestCase):
              self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaises(
                 ValueError,
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_no_name(self):
         path = self.make_fake_package(
@@ -182,7 +184,7 @@ class TestClickInstaller(TestCase):
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, 'No "name" entry in manifest',
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_name_bad_character(self):
         path = self.make_fake_package(
@@ -192,7 +194,7 @@ class TestClickInstaller(TestCase):
             self.assertRaisesRegex(
                 ValueError,
                 'Invalid character "/" in "name" entry: ../evil',
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_no_version(self):
         path = self.make_fake_package(
@@ -201,7 +203,7 @@ class TestClickInstaller(TestCase):
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, 'No "version" entry in manifest',
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_no_framework(self):
         path = self.make_fake_package(
@@ -211,7 +213,7 @@ class TestClickInstaller(TestCase):
         with closing(DebFile(filename=path)) as package:
             self.assertRaisesRegex(
                 ValueError, 'No "framework" entry in manifest',
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_missing_framework(self):
         path = self.make_fake_package(
@@ -226,7 +228,7 @@ class TestClickInstaller(TestCase):
              self.make_framework("present"):
             self.assertRaisesRegex(
                 ValueError, 'Framework "missing" not present on system',
-                ClickInstaller(self.temp_dir).audit_control, package.control)
+                ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_missing_framework_force(self):
         path = self.make_fake_package(
@@ -238,7 +240,7 @@ class TestClickInstaller(TestCase):
             })
         with closing(DebFile(filename=path)) as package, \
              self.make_framework("present"):
-            ClickInstaller(self.temp_dir, True).audit_control(package.control)
+            ClickInstaller(self.db, True).audit_control(package.control)
 
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(
@@ -250,7 +252,7 @@ class TestClickInstaller(TestCase):
             },
             control_scripts={"preinst": static_preinst})
         with self.make_framework("ubuntu-sdk-13.10"):
-            installer = ClickInstaller(self.temp_dir)
+            installer = ClickInstaller(self.db)
             self.assertEqual(("test-package", "1.0"), installer.audit(path))
 
     def test_no_write_permission(self):
@@ -264,7 +266,7 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst})
         write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
         with self.make_framework("ubuntu-sdk-13.10"):
-            installer = ClickInstaller(self.temp_dir)
+            installer = ClickInstaller(self.db)
             temp_dir_mode = os.stat(self.temp_dir).st_mode
             try:
                 os.chmod(self.temp_dir, temp_dir_mode & write_mask)
@@ -295,7 +297,8 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
-        installer = ClickInstaller(root)
+        db = ClickDB(root)
+        installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
             installer.install(path)
@@ -322,7 +325,7 @@ class TestClickInstaller(TestCase):
             "Click-Version": "0.2",
         }, status[0])
         mock_package_install_hooks.assert_called_once_with(
-            root, "test-package", None, "1.0")
+            db, "test-package", None, "1.0")
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -358,7 +361,7 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst},
             data_files=["foo"])
         root = os.path.join(self.temp_dir, "root")
-        installer = ClickInstaller(root)
+        installer = ClickInstaller(ClickDB(root))
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock.patch("subprocess.call") as mock_call:
             mock_call.side_effect = call_side_effect
@@ -393,7 +396,8 @@ class TestClickInstaller(TestCase):
         inst_dir = os.path.join(package_dir, "current")
         os.makedirs(os.path.join(package_dir, "1.0"))
         os.symlink("1.0", inst_dir)
-        installer = ClickInstaller(root)
+        db = ClickDB(root)
+        installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
             installer.install(path)
@@ -419,4 +423,4 @@ class TestClickInstaller(TestCase):
             "Click-Version": "0.2",
         }, status[0])
         mock_package_install_hooks.assert_called_once_with(
-            root, "test-package", "1.0", "1.1")
+            db, "test-package", "1.0", "1.1")

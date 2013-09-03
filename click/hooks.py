@@ -24,6 +24,7 @@ __metaclass__ = type
 __all__ = [
     "ClickHook",
     "package_install_hooks",
+    "run_user_hooks",
     ]
 
 from functools import partial
@@ -132,14 +133,14 @@ class ClickHook(Deb822):
             raise KeyError("No click hook '%s' installed" % name)
 
     @classmethod
-    def open_all(cls, db, hook_name):
+    def open_all(cls, db, hook_name=None):
         for entry in osextras.listdir_force(hooks_dir):
             if not entry.endswith(".hook"):
                 continue
             try:
                 with open(os.path.join(hooks_dir, entry)) as f:
                     hook = cls(db, entry[:-5], f)
-                    if hook.hook_name == hook_name:
+                    if hook_name is None or hook.hook_name == hook_name:
                         yield hook
             except IOError:
                 pass
@@ -255,42 +256,49 @@ class ClickHook(Deb822):
             self.pattern(package, version, app_name, user=user))
         self._run_commands(user=user)
 
-    def _all_packages(self):
+    def _all_packages(self, user=None):
         """Return an iterable of all unpacked packages.
 
         If running a user-level hook, this returns (package, version, user)
-        for the current version of each package registered for each user.
+        for the current version of each package registered for each user, or
+        only for a single user if user is not None.
 
         If running a system-level hook, this returns (package, version,
         None) for each version of each unpacked package.
         """
         if self.user_level:
-            for user, user_db in ClickUsers(self.db).items():
+            if user is not None:
+                user_db = ClickUser(self.db, user=user)
                 for package, version in user_db.items():
                     yield package, version, user
+            else:
+                for user_name, user_db in ClickUsers(self.db).items():
+                    for package, version in user_db.items():
+                        yield package, version, user_name
         else:
             for package, version, _ in self.db.packages():
                 yield package, version, None
 
-    def _relevant_apps(self):
+    def _relevant_apps(self, user=None):
         """Return an iterable of all applications relevant for this hook."""
-        for package, version, user in self._all_packages():
+        for package, version, user_name in self._all_packages(user=user):
             manifest = _read_manifest_hooks(self.db, package, version)
             for app_name, hooks in manifest.items():
                 if self.hook_name in hooks:
                     yield (
-                        package, version, app_name, user,
+                        package, version, app_name, user_name,
                         hooks[self.hook_name])
 
-    def install(self):
-        for package, version, app_name, user, relative_path in (
-                self._relevant_apps()):
+    def install(self, user=None):
+        for package, version, app_name, user_name, relative_path in (
+                self._relevant_apps(user=user)):
             self.install_package(
-                package, version, app_name, relative_path, user=user)
+                package, version, app_name, relative_path, user=user_name)
 
-    def remove(self):
-        for package, version, app_name, user, _ in self._relevant_apps():
-            self.remove_package(package, version, app_name, user=user)
+    def remove(self, user=None):
+        for package, version, app_name, user_name, _ in (
+                self._relevant_apps(user=user)):
+            self.remove_package(package, version, app_name, user=user_name)
 
 
 def _app_hooks(hooks):
@@ -327,3 +335,17 @@ def package_install_hooks(db, package, old_version, new_version, user=None):
                     continue
                 hook.install_package(
                     package, new_version, app_name, relative_path, user=user)
+
+
+def run_user_hooks(db, user=None):
+    """Run user-level hooks for all packages registered for a user.
+
+    This is useful to catch up with packages that may have been preinstalled
+    and registered for all users.  It is suitable for running at session
+    startup.
+    """
+    if user is None:
+        user = pwd.getpwuid(os.getuid()).pw_name
+    for hook in ClickHook.open_all(db):
+        if hook.user_level:
+            hook.install(user=user)

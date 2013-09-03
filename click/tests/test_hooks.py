@@ -444,6 +444,26 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "target-2"),
             os.readlink(path_2))
 
+        os.unlink(path_1)
+        os.unlink(path_2)
+        hook.install(user="another-user")
+        self.assertFalse(os.path.lexists(path_1))
+        self.assertFalse(os.path.lexists(path_2))
+
+        hook.install(user="test-user")
+        self.assertTrue(os.path.lexists(path_1))
+        self.assertEqual(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-1",
+                "target-1"),
+            os.readlink(path_1))
+        self.assertTrue(os.path.lexists(path_2))
+        self.assertEqual(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-2",
+                "target-2"),
+            os.readlink(path_2))
+
     @mock.patch("click.hooks.ClickHook._user_home")
     def test_remove(self, mock_user_home):
         mock_user_home.return_value = "/home/test-user"

@@ -1,6 +1,6 @@
 click (0.4.2) UNRELEASED; urgency=low
 
-  * Suppress dpkg calls to lchown when not running as root.
+  * Suppress dpkg calls to lchown when not running as root (LP: #1220125).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 02 Sep 2013 17:46:14 +0100
 

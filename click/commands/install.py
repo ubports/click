@@ -32,11 +32,15 @@ def run(argv):
         help="install despite missing system framework")
     parser.add_option(
         "--user", metavar="USER", help="register package for USER")
+    parser.add_option(
+        "--all-users", default=False, action="store_true",
+        help="register package for all users")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")
     db = ClickDB(options.root)
     package_path = args[0]
     installer = ClickInstaller(db, options.force_missing_framework)
-    installer.install(package_path, user=options.user)
+    installer.install(
+        package_path, user=options.user, all_users=options.all_users)
     return 0

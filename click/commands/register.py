@@ -30,6 +30,9 @@ def run(argv):
     parser.add_option(
         "--user", metavar="USER",
         help="register package for USER (default: current user)")
+    parser.add_option(
+        "--all-users", default=False, action="store_true",
+        help="register package for all users")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")
@@ -38,5 +41,5 @@ def run(argv):
     db = ClickDB(options.root)
     package = args[0]
     version = args[1]
-    registry = ClickUser(db, user=options.user)
+    registry = ClickUser(db, user=options.user, all_users=options.all_users)
     registry[package] = version

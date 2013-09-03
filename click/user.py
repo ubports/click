@@ -46,6 +46,11 @@ import pwd
 from click import osextras
 
 
+# Pseudo-username selected to be invalid as a real username, and alluding to
+# group syntaxes used in other systems.
+ALL_USERS = "@all"
+
+
 def _db_top(root):
     # This is deliberately outside any user's home directory so that it can
     # safely be iterated etc. as root.
@@ -85,7 +90,7 @@ class ClickUsers(Mapping):
         for db in self.db:
             user_db = _db_top(db.root)
             for entry in osextras.listdir_force(user_db):
-                if entry in seen:
+                if entry == ALL_USERS or entry in seen:
                     continue
                 if os.path.isdir(os.path.join(user_db, entry)):
                     seen.add(entry)
@@ -109,17 +114,23 @@ class ClickUsers(Mapping):
 
 
 class ClickUser(MutableMapping):
-    def __init__(self, db, user=None):
+    """Database of package versions registered for a single user."""
+
+    def __init__(self, db, user=None, all_users=False):
         if user is None:
             user = pwd.getpwuid(os.getuid()).pw_name
         self.db = db
         self.user = user
+        self.all_users = all_users
+        if self.all_users:
+            self.user = ALL_USERS
         self._users = None
         self._user_pw = None
         self._dropped_privileges_count = 0
 
     @property
     def user_pw(self):
+        assert not self.all_users
         if self._user_pw is None:
             self._user_pw = pwd.getpwnam(self.user)
         return self._user_pw
@@ -136,12 +147,13 @@ class ClickUser(MutableMapping):
         path = self.overlay_db
         if not os.path.exists(path):
             os.mkdir(path)
-            if os.geteuid() == 0:
+            if os.geteuid() == 0 and not self.all_users:
                 pw = self.user_pw
                 os.chown(path, pw.pw_uid, pw.pw_gid)
 
     def _drop_privileges(self):
-        if self._dropped_privileges_count == 0 and os.getuid() == 0:
+        if (self._dropped_privileges_count == 0 and os.getuid() == 0 and
+                not self.all_users):
             # We don't bother with setgroups here; we only need the
             # user/group of created filesystem nodes to be correct.
             pw = self.user_pw
@@ -151,7 +163,8 @@ class ClickUser(MutableMapping):
 
     def _regain_privileges(self):
         self._dropped_privileges_count -= 1
-        if self._dropped_privileges_count == 0 and os.getuid() == 0:
+        if (self._dropped_privileges_count == 0 and os.getuid() == 0 and
+                not self.all_users):
             os.seteuid(0)
             os.setegid(0)
 
@@ -180,6 +193,15 @@ class ClickUser(MutableMapping):
                         continue
                     if os.path.islink(os.path.join(user_db, entry)):
                         entries.append(entry)
+                if not self.all_users:
+                    all_users_db = _db_for_user(db.root, ALL_USERS)
+                    for entry in osextras.listdir_force(all_users_db):
+                        if entry in entries:
+                            continue
+                        # TODO: support whiteout
+                        if os.path.islink(os.path.join(all_users_db, entry)):
+                            entries.append(entry)
+
         return iter(entries)
 
     def __len__(self):
@@ -195,6 +217,11 @@ class ClickUser(MutableMapping):
             with self._dropped_privileges():
                 if os.path.islink(path):
                     return os.path.basename(os.readlink(path))
+            all_users_db = _db_for_user(db.root, ALL_USERS)
+            path = os.path.join(all_users_db, package)
+            # TODO: support whiteout
+            if os.path.islink(path):
+                return os.path.basename(os.readlink(path))
         else:
             raise KeyError(
                 "%s does not exist in any database for user %s" %
@@ -217,8 +244,9 @@ class ClickUser(MutableMapping):
                 raise ValueError("%s does not exist" % target)
             osextras.symlink_force(target, new_path)
             os.rename(new_path, path)
-        package_install_hooks(
-            self.db, package, old_version, version, user=self.user)
+        if not self.all_users:
+            package_install_hooks(
+                self.db, package, old_version, version, user=self.user)
 
     def __delitem__(self, package):
         # Only modify the last database.
@@ -242,6 +270,11 @@ class ClickUser(MutableMapping):
         for db in reversed(self.db):
             user_db = _db_for_user(db.root, self.user)
             path = os.path.join(user_db, package)
+            if os.path.exists(path):
+                return path
+            all_users_db = _db_for_user(db.root, ALL_USERS)
+            path = os.path.join(all_users_db, package)
+            # TODO: support whiteout
             if os.path.exists(path):
                 return path
         else:

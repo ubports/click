@@ -2,6 +2,9 @@ click (0.4.3) UNRELEASED; urgency=low
 
   * Add support for multiple installation root directories, configured in
     /etc/click/databases/.
+  * Add --all-users option to "click install" and "click register": this
+    registers the installed package for a special pseudo-user "@all", making
+    it visible to all users.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 03 Sep 2013 12:57:58 +0100
 

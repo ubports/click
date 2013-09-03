@@ -221,7 +221,7 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
-    def install(self, path, user=None):
+    def install(self, path, user=None, all_users=False):
         package_name, package_version = self.audit(path)
         package_dir = os.path.join(self.db.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
@@ -284,8 +284,8 @@ class ClickInstaller:
             os.chown(new_path, pw.pw_uid, pw.pw_gid, follow_symlinks=False)
         os.rename(new_path, current_path)
 
-        if user is not None:
-            registry = ClickUser(self.db, user)
+        if user is not None or all_users:
+            registry = ClickUser(self.db, user=user, all_users=all_users)
             registry[package_name] = package_version
 
         # TODO: garbage-collect old directories

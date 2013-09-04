@@ -135,7 +135,7 @@ def write_desktop_file(target_path, source_path, profile):
                 value = value.strip()
                 if key == "Exec":
                     target.write(
-                        "%s=aa-exec -p %s -- %s\n" %
+                        "%s=aa-exec-click -p %s -- %s\n" %
                         (key, quote_for_desktop_exec(profile), value))
                 elif key == "Path":
                     target.write("%s=%s\n" % (key, source_dir))

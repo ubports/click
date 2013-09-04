@@ -9,6 +9,8 @@ click (0.4.3) UNRELEASED; urgency=low
     packages for a given user.  This is useful at session startup to catch
     up with packages that may have been preinstalled and registered for all
     users.
+  * Run "click hook install-user" on session startup from an Upstart user
+    job.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 03 Sep 2013 12:57:58 +0100
 

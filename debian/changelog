@@ -1,7 +1,8 @@
 click (0.4.3) UNRELEASED; urgency=low
 
   * Add support for multiple installation root directories, configured in
-    /etc/click/databases/.
+    /etc/click/databases/.  Define /usr/share/click/preinstalled,
+    /custom/click, and /opt/click.ubuntu.com by default.
   * Add --all-users option to "click install" and "click register": this
     registers the installed package for a special pseudo-user "@all", making
     it visible to all users.

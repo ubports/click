@@ -127,6 +127,7 @@ class ClickUser(MutableMapping):
         self._users = None
         self._user_pw = None
         self._dropped_privileges_count = 0
+        self._old_umask = None
 
     @property
     def user_pw(self):
@@ -159,12 +160,15 @@ class ClickUser(MutableMapping):
             pw = self.user_pw
             os.setegid(pw.pw_gid)
             os.seteuid(pw.pw_uid)
+            self._old_umask = os.umask(osextras.get_umask() | 0o002)
         self._dropped_privileges_count += 1
 
     def _regain_privileges(self):
         self._dropped_privileges_count -= 1
         if (self._dropped_privileges_count == 0 and os.getuid() == 0 and
                 not self.all_users):
+            if self._old_umask is not None:
+                os.umask(self._old_umask)
             os.seteuid(0)
             os.setegid(0)
 

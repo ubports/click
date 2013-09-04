@@ -192,6 +192,7 @@ class ClickHook(Deb822):
         assert os.getresuid() == (pw.pw_uid, pw.pw_uid, pw.pw_uid)
         assert os.getresgid() == (pw.pw_gid, pw.pw_gid, pw.pw_gid)
         os.environ["HOME"] = pw.pw_dir
+        os.umask(osextras.get_umask() | 0o002)
 
     def _run_commands_user(self, user=None):
         if self.user_level:

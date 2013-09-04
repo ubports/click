@@ -180,6 +180,7 @@ class ClickInstaller:
         os.setresuid(pw.pw_uid, pw.pw_uid, pw.pw_uid)
         assert os.getresuid() == (pw.pw_uid, pw.pw_uid, pw.pw_uid)
         assert os.getresgid() == (pw.pw_gid, pw.pw_gid, pw.pw_gid)
+        os.umask(0o022)
 
     def _euid_access(self, username, path, mode):
         """Like os.access, but for the effective UID."""

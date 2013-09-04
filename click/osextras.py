@@ -75,3 +75,9 @@ def symlink_force(source, link_name):
     """Create symlink link_name -> source, even if link_name exists."""
     unlink_force(link_name)
     os.symlink(source, link_name)
+
+
+def get_umask():
+    mask = os.umask(0)
+    os.umask(mask)
+    return mask

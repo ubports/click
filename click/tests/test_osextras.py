@@ -110,3 +110,12 @@ class TestOSExtras(TestCase):
         osextras.symlink_force("source", path)
         self.assertTrue(os.path.islink(path))
         self.assertEqual("source", os.readlink(path))
+
+    def test_umask(self):
+        old_mask = os.umask(0o040)
+        try:
+            self.assertEqual(0o040, osextras.get_umask())
+            os.umask(0o002)
+            self.assertEqual(0o002, osextras.get_umask())
+        finally:
+            os.umask(old_mask)

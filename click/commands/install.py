@@ -18,13 +18,18 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+from textwrap import dedent
 
 from click.database import ClickDB
 from click.install import ClickInstaller
 
 
 def run(argv):
-    parser = OptionParser("%prog install [options] PACKAGE-FILE")
+    parser = OptionParser(dedent("""\
+        %prog install [options] PACKAGE-FILE
+
+        This is a low-level tool; to install a package you should generally
+        use "pkcon install-local foo.click" instead."""))
     parser.add_option(
         "--root", metavar="PATH", help="install packages underneath PATH")
     parser.add_option(

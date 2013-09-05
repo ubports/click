@@ -25,7 +25,7 @@ from click.install import ClickInstaller
 
 
 def run(argv):
-    parser = OptionParser("%prog verify PACKAGE-FILE")
+    parser = OptionParser("%prog verify [options] PACKAGE-FILE")
     parser.add_option(
         "--force-missing-framework", action="store_true", default=False,
         help="ignore missing system framework")

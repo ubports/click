@@ -1,6 +1,7 @@
 click (0.4.4) UNRELEASED; urgency=low
 
   * Amend "click help install" to recommend using "pkcon install-local".
+  * Run hooks when removing a per-user package registration.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

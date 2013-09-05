@@ -32,7 +32,12 @@ from textwrap import dedent
 
 from click import hooks
 from click.database import ClickDB
-from click.hooks import ClickHook, ClickPatternFormatter, package_install_hooks
+from click.hooks import (
+    ClickHook,
+    ClickPatternFormatter,
+    package_install_hooks,
+    package_remove_hooks,
+    )
 from click.user import ClickUser
 from click.tests.helpers import TestCase, mkfile, mock
 
@@ -613,3 +618,39 @@ class TestPackageInstallHooks(TestClickHookBase):
             os.path.join(self.temp_dir, "b", "2-test_app_1.1.b")))
         self.assertTrue(os.path.lexists(
             os.path.join(self.temp_dir, "c", "test_app_1.1.c")))
+
+
+class TestPackageRemoveHooks(TestClickHookBase):
+    def test_removes_hooks(self):
+        hooks_dir = os.path.join(self.temp_dir, "hooks")
+        with mkfile(os.path.join(hooks_dir, "unity.hook")) as f:
+            print("Pattern: %s/unity/${id}.scope" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+        with mkfile(os.path.join(hooks_dir, "yelp-docs.hook")) as f:
+            print("Pattern: %s/yelp/docs-${id}.txt" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: yelp", file=f)
+        with mkfile(os.path.join(hooks_dir, "yelp-other.hook")) as f:
+            print("Pattern: %s/yelp/other-${id}.txt" % self.temp_dir, file=f)
+            print("Single-Version: yes", file=f)
+            print("Hook-Name: yelp", file=f)
+        os.mkdir(os.path.join(self.temp_dir, "unity"))
+        unity_path = os.path.join(self.temp_dir, "unity", "test_app_1.0.scope")
+        os.symlink("dummy", unity_path)
+        os.mkdir(os.path.join(self.temp_dir, "yelp"))
+        yelp_docs_path = os.path.join(
+            self.temp_dir, "yelp", "docs-test_app_1.0.txt")
+        os.symlink("dummy", yelp_docs_path)
+        yelp_other_path = os.path.join(
+            self.temp_dir, "yelp", "other-test_app_1.0.txt")
+        os.symlink("dummy", yelp_other_path)
+        package_dir = os.path.join(self.temp_dir, "test")
+        with mkfile(os.path.join(
+                package_dir, "1.0", ".click", "info", "test.manifest")) as f:
+            f.write(json.dumps(
+                {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}}))
+        with temp_hooks_dir(hooks_dir):
+            package_remove_hooks(self.db, "test", "1.0")
+        self.assertFalse(os.path.lexists(unity_path))
+        self.assertFalse(os.path.lexists(yelp_docs_path))
+        self.assertFalse(os.path.lexists(yelp_other_path))

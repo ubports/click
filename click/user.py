@@ -253,6 +253,9 @@ class ClickUser(MutableMapping):
                 self.db, package, old_version, version, user=self.user)
 
     def __delitem__(self, package):
+        # Circular import.
+        from click.hooks import package_remove_hooks
+
         # Only modify the last database.
         # TODO: In the multiple-root case, this cannot fulfil the contract
         # for __delitem__, because deleting an item from an overlay may
@@ -263,12 +266,14 @@ class ClickUser(MutableMapping):
         path = os.path.join(user_db, package)
         with self._dropped_privileges():
             if os.path.islink(path):
+                old_version = os.path.basename(os.readlink(path))
                 osextras.unlink_force(path)
             else:
                 raise KeyError(
                     "%s does not exist in overlay database for user %s" %
                     (package, self.user))
-        # TODO: run hooks for removal
+        if not self.all_users:
+            package_remove_hooks(self.db, package, old_version, user=self.user)
 
     def path(self, package):
         for db in reversed(self.db):

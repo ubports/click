@@ -2,8 +2,8 @@ click (0.4.4) UNRELEASED; urgency=low
 
   * Amend "click help install" to recommend using "pkcon install-local".
   * Run hooks when removing a per-user package registration.
-  * Adjust "click help verify"'s usage line to indicate that options are
-    allowed.
+  * Adjust usage lines for "click help verify" and "click help pkgdir" to
+    indicate that options are allowed.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

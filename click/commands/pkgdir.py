@@ -26,7 +26,7 @@ from click.user import ClickUser
 
 
 def run(argv):
-    parser = OptionParser("%prog pkgdir {PACKAGE-NAME|PATH}")
+    parser = OptionParser("%prog pkgdir [options] {PACKAGE-NAME|PATH}")
     parser.add_option(
         "--root", metavar="PATH", help="look for additional packages in PATH")
     parser.add_option(

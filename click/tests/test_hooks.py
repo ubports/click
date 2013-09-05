@@ -494,19 +494,6 @@ class TestClickHookUserLevel(TestClickHookBase):
 
 
 class TestPackageInstallHooks(TestClickHookBase):
-    def assert_has_calls_sparse(self, mock_obj, calls):
-        """Like mock.assert_has_calls, but allows other calls in between."""
-        expected_calls = list(calls)
-        for call in mock_obj.mock_calls:
-            if not expected_calls:
-                return
-            if call == expected_calls[0]:
-                expected_calls.pop(0)
-        if expected_calls:
-            raise AssertionError(
-                "Calls not found.\nExpected: %r\nActual: %r" %
-                (calls, mock_obj.mock_calls))
-
     def test_removes_old_hooks(self):
         hooks_dir = os.path.join(self.temp_dir, "hooks")
         with mkfile(os.path.join(hooks_dir, "unity.hook")) as f:

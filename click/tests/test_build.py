@@ -115,14 +115,14 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
-            }))
+            }, f)
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "/")
@@ -190,14 +190,14 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         scratch = os.path.join(self.temp_dir, "scratch")
         touch(os.path.join(scratch, ".click", "evil-file"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
-            }))
+            }, f)
         self.builder.add_file(scratch, "/")
         path = self.builder.build(self.temp_dir)
         extract_path = os.path.join(self.temp_dir, "extract")
@@ -217,14 +217,14 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
         touch(os.path.join(scratch, "bin", "foo"))
         touch(os.path.join(scratch, ".git", "config"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
-            }))
+            }, f)
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "./")

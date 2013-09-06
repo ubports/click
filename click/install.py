@@ -123,7 +123,7 @@ class ClickInstaller:
         if not control_part.has_file("manifest"):
             raise ValueError("Package has no manifest")
         with control_part.get_file("manifest", encoding="UTF-8") as f:
-            manifest = json.loads(f.read())
+            manifest = json.load(f)
 
         try:
             package_name = manifest["name"]

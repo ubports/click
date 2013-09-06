@@ -5,6 +5,8 @@ click (0.4.4) UNRELEASED; urgency=low
   * Adjust usage lines for "click help verify" and "click help pkgdir" to
     indicate that options are allowed.
   * Add a click(1) manual page.
+  * Use json.dump and json.load in most places rather than json.dumps and
+    json.loads (which unnecessarily construct strings).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

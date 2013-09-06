@@ -21,6 +21,7 @@ import io
 import json
 from optparse import OptionParser
 import os
+import sys
 
 from click.database import ClickDB
 from click.user import ClickUser
@@ -64,6 +65,6 @@ def run(argv):
         else:
             print("%s\t%s" % (package, version))
     if options.manifest:
-        print(json.dumps(
-            json_output, ensure_ascii=False, sort_keys=True, indent=4,
-            separators=(",", ": ")))
+        json.dump(
+            json_output, sys.stdout, ensure_ascii=False, sort_keys=True,
+            indent=4, separators=(",", ": "))

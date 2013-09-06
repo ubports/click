@@ -196,20 +196,20 @@ class TestClickHookSystemLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-1"}},
-            }))
+            }, f)
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-2"}},
-            }))
+            }, f)
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open(self.db, "new")
@@ -231,7 +231,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"old": "target-1"}}}))
+            json.dump({"hooks": {"test1-app": {"old": "target-1"}}}, f)
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.old")
         os.symlink(
@@ -239,7 +239,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test2-app": {"old": "target-2"}}}))
+            json.dump({"hooks": {"test2-app": {"old": "target-2"}}}, f)
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
         os.symlink(
@@ -416,20 +416,20 @@ class TestClickHookUserLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-1"}},
-            }))
+            }, f)
         user_db["test-1"] = "1.0"
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({
+            json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-2"}},
-            }))
+            }, f)
         user_db["test-2"] = "2.0"
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open(self.db, "new")
@@ -479,7 +479,7 @@ class TestClickHookUserLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test1-app": {"old": "target-1"}}}))
+            json.dump({"hooks": {"test1-app": {"old": "target-1"}}}, f)
         user_db["test-1"] = "1.0"
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.old")
@@ -487,7 +487,7 @@ class TestClickHookUserLevel(TestClickHookBase):
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
-            f.write(json.dumps({"hooks": {"test2-app": {"old": "target-2"}}}))
+            json.dump({"hooks": {"test2-app": {"old": "target-2"}}}, f)
         user_db["test-2"] = "2.0"
         path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
         os.symlink(os.path.join(user_db.path("test-2"), "target-2"), path_2)
@@ -525,11 +525,12 @@ class TestPackageInstallHooks(TestClickHookBase):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps(
-                {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}}))
+            json.dump(
+                {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}},
+                f)
         with mkfile(os.path.join(
                 package_dir, "1.1", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps({}))
+            json.dump({}, f)
         with temp_hooks_dir(hooks_dir):
             package_install_hooks(self.db, "test", "1.0", "1.1")
         self.assertFalse(os.path.lexists(unity_path))
@@ -551,11 +552,10 @@ class TestPackageInstallHooks(TestClickHookBase):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps({"hooks": {}}))
+            json.dump({"hooks": {}}, f)
         with mkfile(os.path.join(
                 package_dir, "1.1", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps(
-                {"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}))
+            json.dump({"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}, f)
         with temp_hooks_dir(hooks_dir):
             package_install_hooks(self.db, "test", "1.0", "1.1")
         self.assertTrue(os.path.lexists(
@@ -596,14 +596,13 @@ class TestPackageInstallHooks(TestClickHookBase):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps(
-                {"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}))
+            json.dump({"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}, f)
         with mkfile(os.path.join(
                 package_dir, "1.1", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps(
+            json.dump(
                 {"hooks": {
                     "app": {"a": "foo.a", "b": "foo.b", "c": "foo.c"}}
-                }))
+                }, f)
         with temp_hooks_dir(hooks_dir):
             package_install_hooks(self.db, "test", "1.0", "1.1")
         self.assertFalse(os.path.lexists(a_path))
@@ -647,8 +646,9 @@ class TestPackageRemoveHooks(TestClickHookBase):
         package_dir = os.path.join(self.temp_dir, "test")
         with mkfile(os.path.join(
                 package_dir, "1.0", ".click", "info", "test.manifest")) as f:
-            f.write(json.dumps(
-                {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}}))
+            json.dump(
+                {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}},
+                f)
         with temp_hooks_dir(hooks_dir):
             package_remove_hooks(self.db, "test", "1.0")
         self.assertFalse(os.path.lexists(unity_path))

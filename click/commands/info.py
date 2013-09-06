@@ -20,6 +20,7 @@ from __future__ import print_function
 from contextlib import closing
 import json
 from optparse import OptionParser
+import sys
 
 from click.install import DebFile
 
@@ -33,8 +34,8 @@ def run(argv):
     with closing(DebFile(filename=path)) as package:
         with package.control.get_file(
                 "manifest", encoding="UTF-8") as manifest:
-            manifest_json = json.loads(manifest.read())
-            print(json.dumps(
-                manifest_json, ensure_ascii=False, sort_keys=True, indent=4,
-                separators=(",", ": ")))
+            manifest_json = json.load(manifest)
+            json.dump(
+                manifest_json, sys.stdout, ensure_ascii=False, sort_keys=True,
+                indent=4, separators=(",", ": "))
     return 0

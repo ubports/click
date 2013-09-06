@@ -28,8 +28,9 @@ def run(argv):
     parser = OptionParser(dedent("""\
         %prog install [options] PACKAGE-FILE
 
-        This is a low-level tool; to install a package you should generally
-        use "pkcon install-local foo.click" instead."""))
+        This is a low-level tool; to install a package as an ordinary user
+        you should generally use "pkcon install-local PACKAGE-FILE"
+        instead."""))
     parser.add_option(
         "--root", metavar="PATH", help="install packages underneath PATH")
     parser.add_option(

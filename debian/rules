@@ -16,7 +16,7 @@ override_dh_auto_build:
 	set -e; for python in $(PY3); do \
 		$$python setup.py build; \
 	done
-	$(MAKE) -C doc html
+	$(MAKE) -C doc html man
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:

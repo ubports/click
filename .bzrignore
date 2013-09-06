@@ -21,6 +21,7 @@ _build/doctrees
 _build/html
 doc/_build/doctrees
 doc/_build/html
+doc/_build/man
 build
 *.egg-info
 dist

@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'click', u'Click Packages Documentation',
+    ('manpage', 'click', u'package management tool for Ubuntu Touch',
      [u'Colin Watson'], 1)
 ]
 

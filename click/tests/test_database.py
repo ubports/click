@@ -24,17 +24,19 @@ __all__ = [
     ]
 
 
+import json
 import os
 
-from click.database import ClickDB, ClickSingleDB
-from click.tests.helpers import TestCase
+from click.database import ClickDB
+from click.tests.helpers import TestCase, mkfile, mock
 
 
 class TestClickSingleDB(TestCase):
     def setUp(self):
         super(TestClickSingleDB, self).setUp()
         self.use_temp_dir()
-        self.db = ClickSingleDB(self.temp_dir)
+        self.master_db = ClickDB(extra_root=self.temp_dir, use_system=False)
+        self.db = self.master_db._db[-1]
 
     def test_path(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
@@ -69,6 +71,119 @@ class TestClickSingleDB(TestCase):
             ("b", "0.1", os.path.join(self.temp_dir, "b", "0.1")),
             ("c", "2.0", os.path.join(self.temp_dir, "c", "2.0")),
         ], list(self.db.packages(all_versions=True)))
+
+    @mock.patch("subprocess.call")
+    def test_app_running(self, mock_call):
+        mock_call.return_value = 0
+        self.assertTrue(self.db._app_running("foo", "bar", "1.0"))
+        mock_call.assert_called_once_with(
+            ["upstart-app-pid", "foo_bar_1.0"], stdout=mock.ANY)
+        mock_call.return_value = 1
+        self.assertFalse(self.db._app_running("foo", "bar", "1.0"))
+
+    @mock.patch("click.osextras.find_on_path")
+    @mock.patch("subprocess.call")
+    def test_any_app_running(self, mock_call, mock_find_on_path):
+        manifest_path = os.path.join(
+            self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+        with mkfile(manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        mock_call.return_value = 0
+        mock_find_on_path.return_value = False
+        self.assertFalse(self.db._any_app_running("a", "1.0"))
+        mock_find_on_path.return_value = True
+        self.assertTrue(self.db._any_app_running("a", "1.0"))
+        mock_call.assert_called_once_with(
+            ["upstart-app-pid", "a_a-app_1.0"], stdout=mock.ANY)
+        mock_call.return_value = 1
+        self.assertFalse(self.db._any_app_running("a", "1.0"))
+
+    @mock.patch("click.osextras.find_on_path")
+    @mock.patch("subprocess.call")
+    def test_maybe_remove_registered(self, mock_call, mock_find_on_path):
+        version_path = os.path.join(self.temp_dir, "a", "1.0")
+        manifest_path = os.path.join(
+            version_path, ".click", "info", "a.manifest")
+        with mkfile(manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        user_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user", "a")
+        os.makedirs(os.path.dirname(user_path))
+        os.symlink(version_path, user_path)
+        mock_call.return_value = 0
+        mock_find_on_path.return_value = True
+        self.db.maybe_remove("a", "1.0")
+        self.assertTrue(os.path.exists(version_path))
+        self.assertTrue(os.path.exists(user_path))
+
+    @mock.patch("click.osextras.find_on_path")
+    @mock.patch("subprocess.call")
+    def test_maybe_remove_running(self, mock_call, mock_find_on_path):
+        version_path = os.path.join(self.temp_dir, "a", "1.0")
+        manifest_path = os.path.join(
+            version_path, ".click", "info", "a.manifest")
+        with mkfile(manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        mock_call.return_value = 0
+        mock_find_on_path.return_value = True
+        self.db.maybe_remove("a", "1.0")
+        gcinuse_path = os.path.join(
+            self.temp_dir, ".click", "users", "@gcinuse", "a")
+        self.assertTrue(os.path.islink(gcinuse_path))
+        self.assertEqual(version_path, os.readlink(gcinuse_path))
+        self.assertTrue(os.path.exists(version_path))
+        self.db.maybe_remove("a", "1.0")
+        self.assertTrue(os.path.islink(gcinuse_path))
+        self.assertEqual(version_path, os.readlink(gcinuse_path))
+        self.assertTrue(os.path.exists(version_path))
+
+    @mock.patch("click.osextras.find_on_path")
+    @mock.patch("subprocess.call")
+    def test_maybe_remove_not_running(self, mock_call, mock_find_on_path):
+        version_path = os.path.join(self.temp_dir, "a", "1.0")
+        manifest_path = os.path.join(
+            version_path, ".click", "info", "a.manifest")
+        with mkfile(manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        current_path = os.path.join(self.temp_dir, "a", "current")
+        os.symlink("1.0", current_path)
+        mock_call.return_value = 1
+        mock_find_on_path.return_value = True
+        self.db.maybe_remove("a", "1.0")
+        gcinuse_path = os.path.join(
+            self.temp_dir, ".click", "users", "@gcinuse", "a")
+        self.assertFalse(os.path.islink(gcinuse_path))
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "a")))
+
+    @mock.patch("click.osextras.find_on_path")
+    @mock.patch("subprocess.call")
+    def test_gc(self, mock_call, mock_find_on_path):
+        a_path = os.path.join(self.temp_dir, "a", "1.0")
+        a_manifest_path = os.path.join(a_path, ".click", "info", "a.manifest")
+        with mkfile(a_manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        b_path = os.path.join(self.temp_dir, "b", "1.0")
+        b_manifest_path = os.path.join(b_path, ".click", "info", "b.manifest")
+        with mkfile(b_manifest_path) as manifest:
+            json.dump({"hooks": {"b-app": {}}}, manifest)
+        c_path = os.path.join(self.temp_dir, "c", "1.0")
+        c_manifest_path = os.path.join(c_path, ".click", "info", "c.manifest")
+        with mkfile(c_manifest_path) as manifest:
+            json.dump({"hooks": {"c-app": {}}}, manifest)
+        a_user_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user", "a")
+        os.makedirs(os.path.dirname(a_user_path))
+        os.symlink(a_path, a_user_path)
+        b_gcinuse_path = os.path.join(
+            self.temp_dir, ".click", "users", "@gcinuse", "b")
+        os.makedirs(os.path.dirname(b_gcinuse_path))
+        os.symlink(b_path, b_gcinuse_path)
+        mock_call.return_value = 1
+        mock_find_on_path.return_value = True
+        self.db.gc(verbose=False)
+        self.assertTrue(os.path.exists(a_path))
+        self.assertFalse(os.path.exists(b_path))
+        self.assertTrue(os.path.exists(c_path))
 
 
 class TestClickDB(TestCase):

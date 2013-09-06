@@ -218,6 +218,23 @@ Options:
                             user).
 --all-users                 Register package for all users.
 
+click unregister PACKAGE-NAME
+-----------------------------
+
+Unregister an installed Click package for a user, and remove it entirely if
+no other users still have it registered and if it does not appear to be
+running.  This will normally cause user-level hooks to be run for that user,
+which are needed for things such as removing the application's ``.desktop``
+file from the user interface.
+
+Options:
+
+--root=PATH                 Look for additional packages in PATH.
+--user=USER                 Unregister package for USER (default:
+                            ``$SUDO_USER``, if known).
+--all-users                 Unregister package that was previously
+                            registered for all users.
+
 click verify PACKAGE-FILE
 -------------------------
 

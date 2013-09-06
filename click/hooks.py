@@ -274,6 +274,8 @@ class ClickHook(Deb822):
                     yield package, version, user
             else:
                 for user_name, user_db in ClickUsers(self.db).items():
+                    if user_name.startswith("@"):
+                        continue
                     for package, version in user_db.items():
                         yield package, version, user_name
         else:

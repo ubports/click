@@ -29,6 +29,7 @@ all_commands = (
     "list",
     "pkgdir",
     "register",
+    "unregister",
     "verify",
     )
 

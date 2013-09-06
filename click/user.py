@@ -46,9 +46,10 @@ import pwd
 from click import osextras
 
 
-# Pseudo-username selected to be invalid as a real username, and alluding to
-# group syntaxes used in other systems.
+# Pseudo-usernames selected to be invalid as a real username, and alluding
+# to group syntaxes used in other systems.
 ALL_USERS = "@all"
+GC_IN_USE_USER = "@gcinuse"
 
 
 def _db_top(root):
@@ -90,7 +91,7 @@ class ClickUsers(Mapping):
         for db in self.db:
             user_db = _db_top(db.root)
             for entry in osextras.listdir_force(user_db):
-                if entry == ALL_USERS or entry in seen:
+                if entry in seen:
                     continue
                 if os.path.isdir(os.path.join(user_db, entry)):
                     seen.add(entry)
@@ -130,8 +131,12 @@ class ClickUser(MutableMapping):
         self._old_umask = None
 
     @property
+    def pseudo_user(self):
+        return self.user.startswith("@")
+
+    @property
     def user_pw(self):
-        assert not self.all_users
+        assert not self.pseudo_user
         if self._user_pw is None:
             self._user_pw = pwd.getpwnam(self.user)
         return self._user_pw
@@ -148,13 +153,13 @@ class ClickUser(MutableMapping):
         path = self.overlay_db
         if not os.path.exists(path):
             os.mkdir(path)
-            if os.geteuid() == 0 and not self.all_users:
+            if os.geteuid() == 0 and not self.pseudo_user:
                 pw = self.user_pw
                 os.chown(path, pw.pw_uid, pw.pw_gid)
 
     def _drop_privileges(self):
         if (self._dropped_privileges_count == 0 and os.getuid() == 0 and
-                not self.all_users):
+                not self.pseudo_user):
             # We don't bother with setgroups here; we only need the
             # user/group of created filesystem nodes to be correct.
             pw = self.user_pw
@@ -166,7 +171,7 @@ class ClickUser(MutableMapping):
     def _regain_privileges(self):
         self._dropped_privileges_count -= 1
         if (self._dropped_privileges_count == 0 and os.getuid() == 0 and
-                not self.all_users):
+                not self.pseudo_user):
             if self._old_umask is not None:
                 os.umask(self._old_umask)
             os.seteuid(0)
@@ -248,7 +253,7 @@ class ClickUser(MutableMapping):
                 raise ValueError("%s does not exist" % target)
             osextras.symlink_force(target, new_path)
             os.rename(new_path, path)
-        if not self.all_users:
+        if not self.pseudo_user:
             package_install_hooks(
                 self.db, package, old_version, version, user=self.user)
 
@@ -272,7 +277,7 @@ class ClickUser(MutableMapping):
                 raise KeyError(
                     "%s does not exist in overlay database for user %s" %
                     (package, self.user))
-        if not self.all_users:
+        if not self.pseudo_user:
             package_remove_hooks(self.db, package, old_version, user=self.user)
 
     def path(self, package):

@@ -7,6 +7,8 @@ click (0.4.4) UNRELEASED; urgency=low
   * Add a click(1) manual page.
   * Use json.dump and json.load in most places rather than json.dumps and
     json.loads (which unnecessarily construct strings).
+  * Add "click unregister", which unregisters a package for a user and
+    removes it from disk if it is not being used.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

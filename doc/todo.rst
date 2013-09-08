@@ -16,8 +16,6 @@ To do
 
  * debug symbols
 
- * manual page
-
  * define exit statuses for "click install"
 
  * command to generate manifest template, like ``dh_make``

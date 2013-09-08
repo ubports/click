@@ -18,4 +18,14 @@
     </defaults>
   </action>
 
+  <action id="com.ubuntu.click.package-remove">
+    <_description gettext-domain="click">Remove package</_description>
+    <_message gettext-domain="click">To remove software, you need to authenticate.</_message>
+    <defaults>
+      <allow_any>auth_self</allow_any>
+      <allow_inactive>auth_self</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>

@@ -19,13 +19,14 @@ from __future__ import print_function
 
 from optparse import OptionParser
 import os
+import sys
 
 from click.database import ClickDB
 from click.user import ClickUser
 
 
 def run(argv):
-    parser = OptionParser("%prog unregister [options] PACKAGE-NAME")
+    parser = OptionParser("%prog unregister [options] PACKAGE-NAME [VERSION]")
     parser.add_option(
         "--root", metavar="PATH", help="look for additional packages in PATH")
     parser.add_option(
@@ -47,6 +48,12 @@ def run(argv):
     package = args[0]
     registry = ClickUser(db, user=options.user, all_users=options.all_users)
     old_version = registry[package]
+    if len(args) >= 2 and old_version != args[1]:
+        print(
+            "Not removing %s %s; expected version %s" %
+            (package, old_version, args[1]),
+            file=sys.stderr)
+        sys.exit(1)
     del registry[package]
     db.maybe_remove(package, old_version)
     # TODO: remove data

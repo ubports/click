@@ -42,6 +42,7 @@ COMMAND OVERVIEW
     click list
     click pkgdir {PACKAGE-NAME|PATH}
     click register PACKAGE-NAME VERSION
+    click unregister PACKAGE-NAME [VERSION]
     click verify PACKAGE-FILE
 
 COMMANDS
@@ -218,14 +219,17 @@ Options:
                             user).
 --all-users                 Register package for all users.
 
-click unregister PACKAGE-NAME
------------------------------
+click unregister PACKAGE-NAME [VERSION]
+---------------------------------------
 
 Unregister an installed Click package for a user, and remove it entirely if
 no other users still have it registered and if it does not appear to be
 running.  This will normally cause user-level hooks to be run for that user,
 which are needed for things such as removing the application's ``.desktop``
 file from the user interface.
+
+If a version is specified, then the registered version must match it in
+order to be removed.
 
 Options:
 

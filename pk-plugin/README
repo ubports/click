@@ -5,7 +5,7 @@ override PolicyKit's defaults:
   $ sudo cat /etc/polkit-1/localauthority/50-local.d/10-click.pkla
   [Allow installation of Click packages]
   Identity=unix-user:phablet
-  Action=com.ubuntu.click.package-install
+  Action=com.ubuntu.click.package-install;com.ubuntu.click.package-remove
   ResultAny=yes
 
 (This is now installed in

@@ -402,8 +402,7 @@ class TestClickInstaller(TestCase):
              mock_quiet_subprocess_call():
             installer.install(path)
         self.assertCountEqual([".click", "test-package"], os.listdir(root))
-        self.assertCountEqual(
-            ["1.0", "1.1", "current"], os.listdir(package_dir))
+        self.assertCountEqual(["1.1", "current"], os.listdir(package_dir))
         self.assertTrue(os.path.islink(inst_dir))
         self.assertEqual("1.1", os.readlink(inst_dir))
         self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))

@@ -32,10 +32,6 @@
 #define I_KNOW_THE_PACKAGEKIT_PLUGIN_API_IS_SUBJECT_TO_CHANGE
 #include <plugin/packagekit-plugin.h>
 
-#if PK_CHECK_VERSION(0,8,1) && !PK_CHECK_VERSION(0,8,10)
-#error "PackageKit >= 0.8.1 and < 0.8.10 not supported"
-#endif
-
 
 struct PkPluginPrivate {
 	guint			 dummy;
@@ -425,19 +421,11 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 		goto out;
 
 	pkid = click_build_pkid (filename, "local:click");
-#if PK_CHECK_VERSION(0,8,10)
 	if (!pk_backend_job_get_is_error_set (plugin->job)) {
 		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 					pkid, "summary goes here");
 		ret = TRUE;
 	}
-#else
-	if (!pk_backend_get_is_error_set (plugin->backend)) {
-		pk_backend_package (plugin->backend, PK_INFO_ENUM_INSTALLED,
-				    pkid, "summary goes here");
-		ret = TRUE;
-	}
-#endif
 
 out:
 	g_strfreev (argv);
@@ -497,13 +485,8 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 
 	pkid = pk_package_id_build (name, version, architecture,
 				    "local:click");
-#if PK_CHECK_VERSION(0,8,10)
 	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED, pkid,
 				title);
-#else
-	pk_backend_package (plugin->backend, PK_INFO_ENUM_INSTALLED, pkid,
-			    title);
-#endif
 }
 
 static void
@@ -590,21 +573,9 @@ click_remove_packages (PkPlugin *plugin, PkTransaction *transaction,
 static void
 click_skip_native_backend (PkPlugin *plugin)
 {
-#if PK_CHECK_VERSION(0,8,10)
 	if (!pk_backend_job_get_is_error_set (plugin->job))
 		pk_backend_job_set_exit_code (plugin->job,
 					      PK_EXIT_ENUM_SKIP_TRANSACTION);
-#else
-	if (!pk_backend_get_is_error_set (plugin->backend)) {
-		pk_backend_set_exit_code (plugin->backend,
-					  PK_EXIT_ENUM_SKIP_TRANSACTION);
-		/* Work around breakage in PackageKit 0.7; if we omit this
-		 * then transaction signals are not all disconnected and
-		 * later transactions may crash.
-		 */
-		pk_backend_finished (plugin->backend);
-	}
-#endif
 }
 
 /**
@@ -626,10 +597,6 @@ pk_plugin_initialize (PkPlugin *plugin)
 	plugin->priv = PK_TRANSACTION_PLUGIN_GET_PRIVATE (PkPluginPrivate);
 
 	/* tell PK we might be able to handle these */
-#if !PK_CHECK_VERSION(0,8,10)
-	pk_backend_implement (plugin->backend,
-			      PK_ROLE_ENUM_SIMULATE_INSTALL_FILES);
-#endif
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_INSTALL_FILES);
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_GET_PACKAGES);
 }
@@ -655,49 +622,22 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 	gchar **full_paths = NULL;
 	gchar **package_ids = NULL;
 	gchar **click_data = NULL;
-#if PK_CHECK_VERSION(0,8,10)
 	PkBitfield flags;
-#endif
 	gboolean simulating;
 
 	g_debug ("Processing transaction");
 
-#if PK_CHECK_VERSION(0,8,10)
 	/* reset the native backend job */
 	pk_backend_job_reset (plugin->job);
 	pk_backend_job_set_status (plugin->job, PK_STATUS_ENUM_SETUP);
-#else
-	/* reset the native backend */
-	pk_backend_reset (plugin->backend);
-	pk_backend_set_status (plugin->backend, PK_STATUS_ENUM_SETUP);
-#endif
 
 	role = pk_transaction_get_role (transaction);
 
-#if PK_CHECK_VERSION(0,8,10)
 	flags = pk_transaction_get_transaction_flags (transaction);
 	simulating = pk_bitfield_contain (flags,
 					  PK_TRANSACTION_FLAG_ENUM_SIMULATE);
-#else
-	switch (role) {
-		case PK_ROLE_ENUM_SIMULATE_INSTALL_FILES:
-		case PK_ROLE_ENUM_SIMULATE_INSTALL_PACKAGES:
-		case PK_ROLE_ENUM_SIMULATE_REMOVE_PACKAGES:
-		case PK_ROLE_ENUM_SIMULATE_UPDATE_PACKAGES:
-		case PK_ROLE_ENUM_SIMULATE_REPAIR_SYSTEM:
-			simulating = TRUE;
-			break;
-
-		default:
-			simulating = FALSE;
-			break;
-	}
-#endif
 
 	switch (role) {
-#if !PK_CHECK_VERSION(0,8,10)
-		case PK_ROLE_ENUM_SIMULATE_INSTALL_FILES:
-#endif
 		case PK_ROLE_ENUM_INSTALL_FILES:
 			/* TODO: Simulation needs to be smarter - backend
 			 * needs to Simulate() with remaining packages.
@@ -722,9 +662,6 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 				click_get_packages (plugin, transaction);
 			break;
 
-#if !PK_CHECK_VERSION(0,8,10)
-		case PK_ROLE_ENUM_SIMULATE_REMOVE_PACKAGES:
-#endif
 		case PK_ROLE_ENUM_REMOVE_PACKAGES:
 			package_ids = pk_transaction_get_package_ids
 				(transaction);

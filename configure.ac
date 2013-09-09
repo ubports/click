@@ -32,19 +32,25 @@ AC_CACHE_CHECK([for Perl vendor library directory], [click_cv_perl_vendorlib],
 	[click_cv_perl_vendorlib=`perl -MConfig -e 'print $Config{vendorlib}'`])
 AC_SUBST([perl_vendorlib], ["$click_cv_perl_vendorlib"])
 
-PKG_CHECK_MODULES([PKPLUGIN], [
-	gio-2.0
-	glib-2.0
-	gobject-2.0 >= 2.28
-	json-glib-1.0 >= 0.10
-	packagekit-plugin >= 0.7.2
-	])
-AC_SUBST([PKPLUGIN_CFLAGS])
-AC_SUBST([PKPLUGIN_LIBS])
-AC_CACHE_CHECK([for packagekit-plugin library directory],
-	[click_cv_pkpluginlibdir],
-	[click_cv_pkpluginlibdir=`$PKG_CONFIG --variable=libdir packagekit-plugin`])
-AC_SUBST([pkpluginlibdir], ["$click_cv_pkpluginlibdir"])
+AC_ARG_ENABLE([packagekit],
+	AS_HELP_STRING([--disable-packagekit], [disable PackageKit plugin]),
+	[], [enable_packagekit=yes])
+if test "x$enable_packagekit" = xyes; then
+	PKG_CHECK_MODULES([PKPLUGIN], [
+		gio-2.0
+		glib-2.0
+		gobject-2.0 >= 2.28
+		json-glib-1.0 >= 0.10
+		packagekit-plugin >= 0.8.10
+		])
+	AC_SUBST([PKPLUGIN_CFLAGS])
+	AC_SUBST([PKPLUGIN_LIBS])
+	AC_CACHE_CHECK([for packagekit-plugin library directory],
+		[click_cv_pkpluginlibdir],
+		[click_cv_pkpluginlibdir=`$PKG_CONFIG --variable=libdir packagekit-plugin`])
+	AC_SUBST([pkpluginlibdir], ["$click_cv_pkpluginlibdir"])
+fi
+AM_CONDITIONAL([PACKAGEKIT], [test "x$enable_packagekit" = xyes])
 
 AC_CONFIG_FILES([
 	Makefile

@@ -1,0 +1,9 @@
+#! /bin/sh
+set -e
+
+packagekit_version="$(dpkg-query -f '${Version}\n' -W libpackagekit-glib2-dev || echo 0)"
+if dpkg --compare-versions "$packagekit_version" ge 0.8.10; then
+	echo yes
+else
+	echo no
+fi

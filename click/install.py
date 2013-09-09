@@ -289,4 +289,5 @@ class ClickInstaller:
             registry = ClickUser(self.db, user=user, all_users=all_users)
             registry[package_name] = package_version
 
-        # TODO: garbage-collect old directories
+        if old_version is not None:
+            self.db.maybe_remove(package_name, old_version)

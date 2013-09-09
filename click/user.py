@@ -295,3 +295,15 @@ class ClickUser(MutableMapping):
             raise KeyError(
                 "%s does not exist in any database for user %s" %
                 (package, self.user))
+
+    def writeable(self, package):
+        user_db = self.overlay_db
+        path = os.path.join(user_db, package)
+        if os.path.exists(path):
+            return True
+        all_users_db = _db_for_user(self.db.overlay, ALL_USERS)
+        path = os.path.join(all_users_db, package)
+        # TODO: support whiteout
+        if os.path.exists(path):
+            return True
+        return False

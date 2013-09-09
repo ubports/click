@@ -279,7 +279,7 @@ class ClickHook(Deb822):
                     for package, version in user_db.items():
                         yield package, version, user_name
         else:
-            for package, version, _ in self.db.packages():
+            for package, version, _, _ in self.db.packages():
                 yield package, version, None
 
     def _relevant_apps(self, user=None):

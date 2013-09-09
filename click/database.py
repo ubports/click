@@ -247,12 +247,13 @@ class ClickDB(Sequence):
                 "%s %s does not exist in any database" % (package, version))
 
     def packages(self, all_versions=False):
-        """Return current package versions in only this database.
+        """Return current package versions in all databases.
 
         If all_versions=True, return all versions, not just current ones.
         """
         seen = set()
         for db in reversed(self._db):
+            writeable = db is self._db[-1]
             for package, version, path in \
                     db.packages(all_versions=all_versions):
                 if all_versions:
@@ -260,7 +261,7 @@ class ClickDB(Sequence):
                 else:
                     seen_id = package
                 if seen_id not in seen:
-                    yield package, version, path
+                    yield package, version, path, writeable
                     seen.add(seen_id)
 
     def maybe_remove(self, package, version):

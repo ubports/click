@@ -23,6 +23,9 @@ click (0.4.4) UNRELEASED; urgency=low
     properties of installed packages.
   * Add the dynamic key "_directory" to "click list --manifest" output,
     showing the directory where each package is unpacked (LP: #1221760).
+  * Add the dynamic key "_removable" to "click list --manifest" output,
+    which is 1 if a package is unpacked in a location from which it can be
+    removed, otherwise 0.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

@@ -267,8 +267,8 @@ class TestClickDB(TestCase):
         pkg2_current = os.path.join(self.temp_dir, "b", "pkg2", "current")
         os.symlink("0.1", pkg2_current)
         self.assertEqual([
-            ("pkg1", "1.1", pkg1_current),
-            ("pkg2", "0.1", pkg2_current),
+            ("pkg1", "1.1", pkg1_current, True),
+            ("pkg2", "0.1", pkg2_current, True),
         ], list(db.packages()))
 
     def test_packages_all(self):
@@ -287,7 +287,10 @@ class TestClickDB(TestCase):
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg2", "0.1"))
         os.symlink("0.1", os.path.join(self.temp_dir, "b", "pkg2", "current"))
         self.assertEqual([
-            ("pkg1", "1.1", os.path.join(self.temp_dir, "b", "pkg1", "1.1")),
-            ("pkg2", "0.1", os.path.join(self.temp_dir, "b", "pkg2", "0.1")),
-            ("pkg1", "1.0", os.path.join(self.temp_dir, "a", "pkg1", "1.0")),
+            ("pkg1", "1.1", os.path.join(self.temp_dir, "b", "pkg1", "1.1"),
+             True),
+            ("pkg2", "0.1", os.path.join(self.temp_dir, "b", "pkg2", "0.1"),
+             True),
+            ("pkg1", "1.0", os.path.join(self.temp_dir, "a", "pkg1", "1.0"),
+             False),
         ], list(db.packages(all_versions=True)))

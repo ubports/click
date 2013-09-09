@@ -126,6 +126,8 @@ manifest files, and attempts to set them there will be ignored.  The
 following dynamic keys are currently defined:
 
  * _directory: the directory where a package is unpacked
+ * _removable: 1 if a package is unpacked in a location from which it can be
+   removed, otherwise 0
 
 Maintainer scripts
 ------------------

@@ -225,3 +225,16 @@ class TestClickUser(TestCase):
         self.assertEqual(os.path.join(user_dbs[0], "b"), registry.path("b"))
         self.assertEqual(os.path.join(user_dbs[1], "c"), registry.path("c"))
         self.assertRaises(KeyError, registry.path, "d")
+
+    def test_writeable(self):
+        registry = ClickUser(self.db, "user")
+        os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
+        registry["a"] = "1.0"
+        self.assertTrue(registry.writeable("a"))
+
+    def test_writeable_multiple_root(self):
+        user_dbs, registry = self._setUpMultiDB()
+        self.assertTrue(registry.writeable("a"))
+        self.assertFalse(registry.writeable("b"))
+        self.assertTrue(registry.writeable("c"))
+        self.assertFalse(registry.writeable("d"))

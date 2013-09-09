@@ -30,12 +30,15 @@ from click.user import ClickUser
 def list_packages(options):
     db = ClickDB(options.root)
     if options.all:
-        for package, version, path in db.packages(all_versions=True):
-            yield package, version, path
+        for package, version, path, writeable in \
+                db.packages(all_versions=True):
+            yield package, version, path, writeable
     else:
         registry = ClickUser(db, user=options.user)
         for package, version in sorted(registry.items()):
-            yield package, version, registry.path(package)
+            yield (
+                package, version, registry.path(package),
+                registry.writeable(package))
 
 
 def run(argv):
@@ -53,7 +56,7 @@ def run(argv):
         help="format output as a JSON array of manifests")
     options, _ = parser.parse_args(argv)
     json_output = []
-    for package, version, path in list_packages(options):
+    for package, version, path, writeable in list_packages(options):
         if options.manifest:
             try:
                 manifest_path = os.path.join(
@@ -65,6 +68,7 @@ def run(argv):
                         if key.startswith("_"):
                             del manifest_json[key]
                     manifest_json["_directory"] = path
+                    manifest_json["_removable"] = 1 if writeable else 0
                     json_output.append(manifest_json)
             except Exception:
                 pass

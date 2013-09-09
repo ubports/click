@@ -64,6 +64,7 @@ def run(argv):
                     for key in keys:
                         if key.startswith("_"):
                             del manifest_json[key]
+                    manifest_json["_directory"] = path
                     json_output.append(manifest_json)
             except Exception:
                 pass

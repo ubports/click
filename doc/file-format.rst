@@ -122,7 +122,10 @@ particular meaning.
 
 Keys beginning with an underscore ("_") are reserved for use as dynamic
 properties of installed packages.  They must not appear in packages'
-manifest files, and attempts to set them there will be ignored.
+manifest files, and attempts to set them there will be ignored.  The
+following dynamic keys are currently defined:
+
+ * _directory: the directory where a package is unpacked
 
 Maintainer scripts
 ------------------

@@ -21,6 +21,8 @@ click (0.4.4) UNRELEASED; urgency=low
   * Implement PackageKit search by name and by details.
   * Reserve manifest keys starting with an underscore for use as dynamic
     properties of installed packages.
+  * Add the dynamic key "_directory" to "click list --manifest" output,
+    showing the directory where each package is unpacked (LP: #1221760).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

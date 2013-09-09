@@ -38,7 +38,7 @@ AC_ARG_ENABLE([packagekit],
 if test "x$enable_packagekit" = xyes; then
 	PKG_CHECK_MODULES([PKPLUGIN], [
 		gio-2.0
-		glib-2.0
+		glib-2.0 >= 2.34
 		gobject-2.0 >= 2.28
 		json-glib-1.0 >= 0.10
 		packagekit-plugin >= 0.8.10

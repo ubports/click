@@ -249,16 +249,16 @@ click_get_envp (void)
 }
 
 static JsonParser *
-click_get_manifest (const gchar *filename)
+click_get_manifest (PkPlugin *plugin, const gchar *filename)
 {
 	gboolean ret;
 	gchar **argv = NULL;
 	gint i;
 	gchar **envp = NULL;
 	gchar *manifest_text = NULL;
+	gchar *click_stderr = NULL;
+	gint click_status;
 	JsonParser *parser = NULL;
-
-	/* TODO: debug messages on failure */
 
 	argv = g_malloc0_n (4, sizeof (*argv));
 	i = 0;
@@ -266,11 +266,23 @@ click_get_manifest (const gchar *filename)
 	argv[i++] = g_strdup ("info");
 	argv[i++] = g_strdup (filename);
 	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
-			    NULL, NULL, &manifest_text, NULL, NULL, NULL);
+	ret = g_spawn_sync (NULL, argv, envp, G_SPAWN_SEARCH_PATH,
+			    NULL, NULL, &manifest_text, &click_stderr,
+			    &click_status, NULL);
 	if (!ret)
 		goto out;
+	if (!g_spawn_check_exit_status (click_status, NULL)) {
+		if (pk_backend_job_get_is_error_set (plugin->job)) {
+			/* PK already has an error; just log this. */
+			g_warning ("\"click info %s\" failed.", filename);
+			g_warning ("Stderr: %s", click_stderr);
+		} else
+			pk_backend_job_error_code (
+				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"\"click info %s\" failed.\n%s",
+				filename, click_stderr);
+		goto out;
+	}
 
 	parser = json_parser_new ();
 	if (!parser)
@@ -281,6 +293,7 @@ out:
 	g_strfreev (argv);
 	g_strfreev (envp);
 	g_free (manifest_text);
+	g_free (click_stderr);
 
 	return parser;
 }
@@ -298,7 +311,7 @@ click_get_field (JsonParser *parser, const gchar *field)
 }
 
 static JsonParser *
-click_get_list (PkTransaction *transaction)
+click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 {
 	gboolean ret;
 	gchar **argv = NULL;
@@ -306,9 +319,9 @@ click_get_list (PkTransaction *transaction)
 	gchar *username = NULL;
 	gchar **envp = NULL;
 	gchar *list_text = NULL;
+	gchar *click_stderr = NULL;
+	gint click_status;
 	JsonParser *parser = NULL;
-
-	/* TODO: debug messages on failure */
 
 	argv = g_malloc0_n (5, sizeof (*argv));
 	i = 0;
@@ -320,11 +333,22 @@ click_get_list (PkTransaction *transaction)
 	if (username)
 		argv[i++] = g_strdup_printf ("--user=%s", username);
 	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
-			    NULL, NULL, &list_text, NULL, NULL, NULL);
+	ret = g_spawn_sync (NULL, argv, envp, G_SPAWN_SEARCH_PATH,
+			    NULL, NULL, &list_text, &click_stderr,
+			    &click_status, NULL);
 	if (!ret)
 		goto out;
+	if (!g_spawn_check_exit_status (click_status, NULL)) {
+		if (pk_backend_job_get_is_error_set (plugin->job)) {
+			/* PK already has an error; just log this. */
+			g_warning ("\"click list\" failed.");
+			g_warning ("Stderr: %s", click_stderr);
+		} else
+			pk_backend_job_error_code (
+				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"\"click list\" failed.\n%s", click_stderr);
+		goto out;
+	}
 
 	parser = json_parser_new ();
 	if (!parser)
@@ -336,12 +360,13 @@ out:
 	g_free (username);
 	g_strfreev (envp);
 	g_free (list_text);
+	g_free (click_stderr);
 
 	return parser;
 }
 
 static gchar *
-click_build_pkid (const gchar *filename, const gchar *data)
+click_build_pkid (PkPlugin *plugin, const gchar *filename, const gchar *data)
 {
 	JsonParser *parser = NULL;
 	gchar *name = NULL;
@@ -349,7 +374,7 @@ click_build_pkid (const gchar *filename, const gchar *data)
 	gchar *architecture = NULL;
 	gchar *pkid = NULL;
 
-	parser = click_get_manifest (filename);
+	parser = click_get_manifest (plugin, filename);
 	if (!parser)
 		goto out;
 	name = click_get_field (parser, "name");
@@ -399,6 +424,8 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	gint i;
 	gchar *username = NULL;
 	gchar **envp = NULL;
+	gchar *click_stderr = NULL;
+	gint click_status;
 	gchar *pkid = NULL;
 
 	argv = g_malloc0_n (6, sizeof (*argv));
@@ -414,13 +441,27 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	argv[i++] = g_strdup (filename);
 	envp = click_get_envp ();
 	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL |
-			    G_SPAWN_STDERR_TO_DEV_NULL,
-			    NULL, NULL, NULL, NULL, NULL, NULL);
+			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
+			    NULL, NULL, NULL, &click_stderr, &click_status,
+			    NULL);
 	if (!ret)
 		goto out;
+	if (!g_spawn_check_exit_status (click_status, NULL)) {
+		ret = FALSE;
+		if (pk_backend_job_get_is_error_set (plugin->job)) {
+			/* PK already has an error; just log this. */
+			g_warning ("%s failed to install", filename);
+			g_warning ("Stderr: %s", click_stderr);
+		} else
+			pk_backend_job_error_code (
+				plugin->job,
+				PK_ERROR_ENUM_PACKAGE_FAILED_TO_INSTALL,
+				"%s failed to install.\n%s",
+				filename, click_stderr);
+		goto out;
+	}
 
-	pkid = click_build_pkid (filename, "local:click");
+	pkid = click_build_pkid (plugin, filename, "local:click");
 	if (!pk_backend_job_get_is_error_set (plugin->job)) {
 		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 					pkid, "summary goes here");
@@ -431,6 +472,7 @@ out:
 	g_strfreev (argv);
 	g_free (username);
 	g_strfreev (envp);
+	g_free (click_stderr);
 	g_free (pkid);
 
 	return ret;
@@ -496,7 +538,7 @@ click_get_packages (PkPlugin *plugin, PkTransaction *transaction)
 	JsonNode *node = NULL;
 	JsonArray *array = NULL;
 
-	parser = click_get_list (transaction);
+	parser = click_get_list (plugin, transaction);
 	if (!parser)
 		goto out;
 	node = json_parser_get_root (parser);
@@ -520,6 +562,8 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 	gchar *name = NULL;
 	gchar *version = NULL;
 	gchar **envp = NULL;
+	gchar *click_stderr = NULL;
+	gint click_status;
 
 	argv = g_malloc0_n (6, sizeof (*argv));
 	i = 0;
@@ -540,9 +584,25 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 	argv[i++] = g_strdup (version);
 	envp = click_get_envp ();
 	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL |
-			    G_SPAWN_STDERR_TO_DEV_NULL,
-			    NULL, NULL, NULL, NULL, NULL, NULL);
+			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
+			    NULL, NULL, NULL, &click_stderr, &click_status,
+			    NULL);
+	if (!ret)
+		goto out;
+	if (!g_spawn_check_exit_status (click_status, NULL)) {
+		ret = FALSE;
+		if (pk_backend_job_get_is_error_set (plugin->job)) {
+			/* PK already has an error; just log this. */
+			g_warning ("%s failed to remove", package_id);
+			g_warning ("Stderr: %s", click_stderr);
+		} else
+			pk_backend_job_error_code (
+				plugin->job,
+				PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				"%s failed to remove.\n%s",
+				package_id, click_stderr);
+		goto out;
+	}
 
 out:
 	g_strfreev (argv);
@@ -550,6 +610,7 @@ out:
 	g_free (name);
 	g_free (version);
 	g_strfreev (envp);
+	g_free (click_stderr);
 
 	return ret;
 }
@@ -627,8 +688,8 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 
 	g_debug ("Processing transaction");
 
-	/* reset the native backend job */
 	pk_backend_job_reset (plugin->job);
+	pk_transaction_signals_reset (transaction, plugin->job);
 	pk_backend_job_set_status (plugin->job, PK_STATUS_ENUM_SETUP);
 
 	role = pk_transaction_get_role (transaction);

@@ -16,6 +16,8 @@ click (0.4.4) UNRELEASED; urgency=low
   * Remove code supporting PackageKit 0.7 API, and instead arrange to
     disable the PackageKit plugin if the new API is not available, since we
     don't need to build it on Ubuntu 12.04 LTS.
+  * Report errors from click subprocesses in PackageKit plugin
+    (LP: #1218483).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

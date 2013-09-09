@@ -18,6 +18,7 @@ click (0.4.4) UNRELEASED; urgency=low
     don't need to build it on Ubuntu 12.04 LTS.
   * Report errors from click subprocesses in PackageKit plugin
     (LP: #1218483).
+  * Implement PackageKit search by name and by details.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
@@ -631,6 +633,107 @@ click_remove_packages (PkPlugin *plugin, PkTransaction *transaction,
 	}
 }
 
+struct click_search_data {
+	PkPlugin *plugin;
+	gchar **values;
+	gboolean search_details;
+};
+
+static void
+click_search_emit (PkPlugin *plugin, const gchar *name, const gchar *version,
+		   const gchar *architecture, const gchar *title)
+{
+	gchar *package_id;
+
+	package_id = pk_package_id_build (name, version, architecture,
+					  "local:click");
+	g_debug ("Found package: %s", package_id);
+	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
+				package_id, title);
+
+	g_free (package_id);
+}
+
+static void
+click_search_one (JsonArray *array, guint index, JsonNode *element_node,
+		  gpointer vdata)
+{
+	struct click_search_data *data;
+	JsonObject *manifest;
+	const gchar *name;
+	const gchar *version;
+	const gchar *architecture = NULL;
+	const gchar *title = NULL;
+	const gchar *description = NULL;
+	gchar **value;
+
+	data = (struct click_search_data *) vdata;
+	manifest = json_node_get_object (element_node);
+	if (!manifest)
+		return;
+	name = json_object_get_string_member (manifest, "name");
+	if (!name)
+		return;
+	version = json_object_get_string_member (manifest, "version");
+	if (!version)
+		return;
+	if (json_object_has_member (manifest, "architecture"))
+		architecture = json_object_get_string_member (manifest,
+							      "architecture");
+	if (!architecture)
+		architecture = "";
+	if (data->search_details && json_object_has_member (manifest, "title"))
+		title = json_object_get_string_member (manifest, "title");
+	if (!title)
+		title = "";
+	if (data->search_details &&
+	    json_object_has_member (manifest, "description"))
+		description = json_object_get_string_member (manifest,
+							     "description");
+	if (!description)
+		description = "";
+
+	for (value = data->values; *value; ++value) {
+		if (strcasestr (name, *value)) {
+			click_search_emit (data->plugin, name, version,
+					   architecture, title);
+			break;
+		}
+		if (data->search_details &&
+		    (strcasestr (title, *value) ||
+		     strcasestr (description, *value))) {
+			click_search_emit (data->plugin, name, version,
+					   architecture, title);
+			break;
+		}
+	}
+}
+
+static void
+click_search (PkPlugin *plugin, PkTransaction *transaction, gchar **values,
+	      gboolean search_details)
+{
+	JsonParser *parser = NULL;
+	JsonNode *node = NULL;
+	JsonArray *array = NULL;
+	struct click_search_data data;
+
+	parser = click_get_list (plugin, transaction);
+	if (!parser)
+		goto out;
+	node = json_parser_get_root (parser);
+	array = json_node_get_array (node);
+	if (!array)
+		goto out;
+	data.plugin = plugin;
+	data.values = values;
+	data.search_details = search_details;
+	json_array_foreach_element (array, click_search_one, &data);
+
+out:
+	g_clear_object (&parser);
+}
+
 static void
 click_skip_native_backend (PkPlugin *plugin)
 {
@@ -684,6 +787,7 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 	gchar **full_paths = NULL;
 	gchar **package_ids = NULL;
 	gchar **click_data = NULL;
+	gchar **values;
 	PkBitfield flags;
 	gboolean simulating;
 
@@ -737,6 +841,13 @@ pk_plugin_transaction_started (PkPlugin *plugin, PkTransaction *transaction)
 				(transaction);
 			if (g_strv_length (package_ids) == 0)
 				click_skip_native_backend (plugin);
+			break;
+
+		case PK_ROLE_ENUM_SEARCH_NAME:
+		case PK_ROLE_ENUM_SEARCH_DETAILS:
+			values = pk_transaction_get_values (transaction);
+			click_search (plugin, transaction, values,
+				      role == PK_ROLE_ENUM_SEARCH_DETAILS);
 			break;
 
 		default:

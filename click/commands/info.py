@@ -35,6 +35,10 @@ def run(argv):
         with package.control.get_file(
                 "manifest", encoding="UTF-8") as manifest:
             manifest_json = json.load(manifest)
+            keys = list(manifest_json)
+            for key in keys:
+                if key.startswith("_"):
+                    del manifest_json[key]
             json.dump(
                 manifest_json, sys.stdout, ensure_ascii=False, sort_keys=True,
                 indent=4, separators=(",", ": "))

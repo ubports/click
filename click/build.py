@@ -32,6 +32,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 from textwrap import dedent
@@ -72,6 +73,13 @@ class ClickBuilderBase:
     def read_manifest(self, manifest_path):
         with io.open(manifest_path, encoding="UTF-8") as manifest:
             self.manifest = json.load(manifest)
+            keys = sorted(self.manifest)
+            for key in keys:
+                if key.startswith("_"):
+                    print(
+                        "Ignoring reserved dynamic key '%s'." % key,
+                        file=sys.stderr)
+                    del self.manifest[key]
 
     @property
     def name(self):

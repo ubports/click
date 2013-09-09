@@ -120,6 +120,10 @@ Keys beginning with the two characters "x-" are reserved for local
 extensions: this file format will never define such keys to have any
 particular meaning.
 
+Keys beginning with an underscore ("_") are reserved for use as dynamic
+properties of installed packages.  They must not appear in packages'
+manifest files, and attempts to set them there will be ignored.
+
 Maintainer scripts
 ------------------
 

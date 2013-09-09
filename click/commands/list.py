@@ -59,7 +59,12 @@ def run(argv):
                 manifest_path = os.path.join(
                     path, ".click", "info", "%s.manifest" % package)
                 with io.open(manifest_path, encoding="UTF-8") as manifest:
-                    json_output.append(json.load(manifest))
+                    manifest_json = json.load(manifest)
+                    keys = list(manifest_json)
+                    for key in keys:
+                        if key.startswith("_"):
+                            del manifest_json[key]
+                    json_output.append(manifest_json)
             except Exception:
                 pass
         else:

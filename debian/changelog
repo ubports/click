@@ -19,6 +19,8 @@ click (0.4.4) UNRELEASED; urgency=low
   * Report errors from click subprocesses in PackageKit plugin
     (LP: #1218483).
   * Implement PackageKit search by name and by details.
+  * Reserve manifest keys starting with an underscore for use as dynamic
+    properties of installed packages.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Sep 2013 11:31:24 +0100
 

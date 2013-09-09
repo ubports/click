@@ -660,6 +660,7 @@ pk_plugin_initialize (PkPlugin *plugin)
 	/* tell PK we might be able to handle these */
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_INSTALL_FILES);
 	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_GET_PACKAGES);
+	pk_backend_implement (plugin->backend, PK_ROLE_ENUM_REMOVE_PACKAGES);
 }
 
 /**

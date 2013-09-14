@@ -227,7 +227,7 @@ class TestClickInstaller(TestCase):
         with closing(DebFile(filename=path)) as package, \
              self.make_framework("present"):
             self.assertRaisesRegex(
-                ValueError, 'Framework "missing" not present on system',
+                ValueError, 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit_control, package.control)
 
     def test_audit_control_missing_framework_force(self):

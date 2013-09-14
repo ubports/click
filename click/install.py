@@ -158,7 +158,8 @@ class ClickInstaller:
         if (not self.force_missing_framework and
                 not self._has_framework(framework)):
             raise ValueError(
-                'Framework "%s" not present on system' % framework)
+                'Framework "%s" not present on system (use '
+                '--force-missing-framework option to override)' % framework)
 
         return package_name, package_version
 

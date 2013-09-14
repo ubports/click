@@ -1,3 +1,10 @@
+click (0.4.5) UNRELEASED; urgency=low
+
+  * Document --force-missing-framework option in the error message produced
+    when a package's required framework is not present.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Sat, 14 Sep 2013 16:02:18 +0100
+
 click (0.4.4) saucy; urgency=low
 
   * Amend "click help install" to recommend using "pkcon install-local".

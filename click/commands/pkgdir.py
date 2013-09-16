@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+import sys
 
 from click.database import ClickDB
 from click.query import find_package_directory
@@ -36,11 +37,15 @@ def run(argv):
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package name")
-    if "/" in args[0]:
-        print(find_package_directory(args[0]))
-    else:
-        db = ClickDB(options.root)
-        package_name = args[0]
-        registry = ClickUser(db, user=options.user)
-        print(registry.path(package_name))
+    try:
+        if "/" in args[0]:
+            print(find_package_directory(args[0]))
+        else:
+            db = ClickDB(options.root)
+            package_name = args[0]
+            registry = ClickUser(db, user=options.user)
+            print(registry.path(package_name))
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return 1
     return 0

@@ -198,6 +198,9 @@ exists.  This is particularly useful in hooks that need to find the
 top-level package directory based on a symbolic link to a single file within
 it.
 
+Exits zero if and only if a directory for the given package name or path was
+found.
+
 Options:
 
 --root=PATH                 Look for additional packages in PATH.

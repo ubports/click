@@ -21,7 +21,7 @@ from optparse import OptionParser
 from textwrap import dedent
 
 from click.database import ClickDB
-from click.hooks import ClickHook, run_user_hooks
+from click.hooks import ClickHook, run_system_hooks, run_user_hooks
 
 
 per_hook_subcommands = {
@@ -38,6 +38,7 @@ def run(argv):
 
           install HOOK
           remove HOOK
+          install-system
           install-user [--user=USER]"""))
     parser.add_option(
         "--root", metavar="PATH", help="look for additional packages in PATH")
@@ -48,7 +49,8 @@ def run(argv):
             "applicable to install-user)"))
     options, args = parser.parse_args(argv)
     if len(args) < 1:
-        parser.error("need subcommand (install, remove, install-user)")
+        parser.error(
+            "need subcommand (install, remove, install-system, install-user)")
     subcommand = args[0]
     if subcommand in per_hook_subcommands:
         if len(args) < 2:
@@ -57,11 +59,14 @@ def run(argv):
         name = args[1]
         hook = ClickHook.open(db, name)
         getattr(hook, per_hook_subcommands[subcommand])()
+    elif subcommand == "install-system":
+        db = ClickDB(options.root)
+        run_system_hooks(db)
     elif subcommand == "install-user":
         db = ClickDB(options.root)
         run_user_hooks(db, user=options.user)
     else:
         parser.error(
-            "unknown subcommand '%s' (known: install, remove, install-all)" %
-            subcommand)
+            "unknown subcommand '%s' (known: install, remove, install-system,"
+            "install-user)" % subcommand)
     return 0

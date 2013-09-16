@@ -1,3 +1,5 @@
+systemdir = $(sysconfdir)/init
 sessionsdir = $(prefix)/share/upstart/sessions
 
-sessions_DATA = click-hook.conf
+system_DATA = click-system-hooks.conf
+sessions_DATA = click-user-hooks.conf

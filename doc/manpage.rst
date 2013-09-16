@@ -36,6 +36,7 @@ COMMAND OVERVIEW
     click contents PATH
     click hook install HOOK
     click hook remove HOOK
+    click hook install-system
     click hook install-user
     click info PATH
     click install PACKAGE-FILE
@@ -112,6 +113,17 @@ Remove files associated with HOOK for any Click packages that attach to it.
 
 This is normally only called by maintainer scripts of system packages, by
 way of dh_click(1).
+
+Options:
+
+--root=PATH                 Look for additional packages in PATH.
+
+click hook install-system
+-------------------------
+
+Run all system-level hooks for all installed Click packages.  This is useful
+when starting up from images with preinstalled packages which may not have
+had their system-level hooks run properly when building the image.
 
 Options:
 

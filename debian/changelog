@@ -5,6 +5,8 @@ click (0.4.5) UNRELEASED; urgency=low
   * Make "click pkgdir" exit 1 if a directory for the given package name or
     path is not found, rather than letting the exception propagate
     (LP: #1225923).
+  * Run system hooks at boot time, in particular so that AppArmor profiles
+    for packages in /custom are generated and loaded (LP: #1223085).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Sat, 14 Sep 2013 16:02:18 +0100
 

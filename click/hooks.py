@@ -24,6 +24,7 @@ __metaclass__ = type
 __all__ = [
     "ClickHook",
     "package_install_hooks",
+    "run_system_hooks",
     "run_user_hooks",
     ]
 
@@ -356,6 +357,18 @@ def package_remove_hooks(db, package, old_version, user=None):
                 if hook.single_version:
                     hook.remove_package(
                         package, old_version, app_name, user=user)
+
+
+def run_system_hooks(db):
+    """Run system-level hooks for all installed packages.
+
+    This is useful when starting up from images with preinstalled packages
+    which may not have had their system-level hooks run properly when
+    building the image.  It is suitable for running at system startup.
+    """
+    for hook in ClickHook.open_all(db):
+        if not hook.user_level:
+            hook.install()
 
 
 def run_user_hooks(db, user=None):

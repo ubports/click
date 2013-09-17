@@ -158,3 +158,10 @@ be used for metadata.  This directory must not be present at the top level
 of package filesystem tarballs; the package manager should silently filter
 it out if present.  (Rationale: scanning the filesystem tarball in advance
 is likely to impose a performance cost, especially for large packages.)
+
+The package manager should ensure that all unpacked files and directories
+are group- and world-readable, and (if owner-executable) also group- and
+world-executable.  (Rationale: since packages are unpacked as a dedicated
+user not used when running applications, and since packages cannot write to
+their own unpack directories, any files that aren't world-readable are
+unusable.)

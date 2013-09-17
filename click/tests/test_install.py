@@ -26,6 +26,7 @@ __all__ = [
 from contextlib import contextmanager
 import json
 import os
+import shutil
 import stat
 import subprocess
 
@@ -73,7 +74,7 @@ class TestClickInstaller(TestCase):
         """Build a fake package with given contents."""
         control_fields = {} if control_fields is None else control_fields
         control_scripts = {} if control_scripts is None else control_scripts
-        data_files = [] if data_files is None else data_files
+        data_files = {} if data_files is None else data_files
 
         data_dir = os.path.join(self.temp_dir, "fake-package")
         control_dir = os.path.join(self.temp_dir, "DEBIAN")
@@ -88,8 +89,13 @@ class TestClickInstaller(TestCase):
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
         osextras.ensuredir(data_dir)
-        for name in data_files:
-            touch(os.path.join(data_dir, name))
+        for name, path in data_files.items():
+            if path is None:
+                touch(os.path.join(data_dir, name))
+            elif os.path.isdir(path):
+                shutil.copytree(path, os.path.join(data_dir, name))
+            else:
+                shutil.copy2(path, os.path.join(data_dir, name))
         package_path = '%s.click' % data_dir
         ClickBuilder()._pack(
             self.temp_dir, control_dir, data_dir, package_path)
@@ -295,7 +301,7 @@ class TestClickInstaller(TestCase):
                 "framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst},
-            data_files=["foo"])
+            data_files={"foo": None})
         root = os.path.join(self.temp_dir, "root")
         db = ClickDB(root)
         installer = ClickInstaller(db)
@@ -359,7 +365,7 @@ class TestClickInstaller(TestCase):
                 "framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst},
-            data_files=["foo"])
+            data_files={"foo": None})
         root = os.path.join(self.temp_dir, "root")
         installer = ClickInstaller(ClickDB(root))
         with self.make_framework("ubuntu-sdk-13.10"), \
@@ -390,7 +396,7 @@ class TestClickInstaller(TestCase):
                 "framework": "ubuntu-sdk-13.10",
             },
             control_scripts={"preinst": static_preinst},
-            data_files=["foo"])
+            data_files={"foo": None})
         root = os.path.join(self.temp_dir, "root")
         package_dir = os.path.join(root, "test-package")
         inst_dir = os.path.join(package_dir, "current")
@@ -423,3 +429,50 @@ class TestClickInstaller(TestCase):
         }, status[0])
         mock_package_install_hooks.assert_called_once_with(
             db, "test-package", "1.0", "1.1")
+
+    def _get_mode(self, path):
+        return stat.S_IMODE(os.stat(path).st_mode)
+
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
+    @mock.patch("click.install.package_install_hooks")
+    def test_world_readable(self, mock_package_install_hooks):
+        owner_only_file = os.path.join(self.temp_dir, "owner-only-file")
+        touch(owner_only_file)
+        os.chmod(owner_only_file, stat.S_IRUSR | stat.S_IWUSR)
+        owner_only_dir = os.path.join(self.temp_dir, "owner-only-dir")
+        os.mkdir(owner_only_dir, stat.S_IRWXU)
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.1",
+                "Architecture": "all",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.2",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.1",
+                "framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst},
+            data_files={
+                "world-readable-file": owner_only_file,
+                "world-readable-dir": owner_only_dir,
+            })
+        root = os.path.join(self.temp_dir, "root")
+        db = ClickDB(root)
+        installer = ClickInstaller(db)
+        with self.make_framework("ubuntu-sdk-13.10"), \
+             mock_quiet_subprocess_call():
+            installer.install(path)
+        inst_dir = os.path.join(root, "test-package", "current")
+        self.assertEqual(
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH,
+            self._get_mode(os.path.join(inst_dir, "world-readable-file")))
+        self.assertEqual(
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
+            stat.S_IROTH | stat.S_IXOTH,
+            self._get_mode(os.path.join(inst_dir, "world-readable-dir")))

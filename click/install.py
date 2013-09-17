@@ -29,6 +29,7 @@ import inspect
 import json
 import os
 import pwd
+import stat
 import subprocess
 import sys
 
@@ -264,6 +265,18 @@ class ClickInstaller:
             subprocess.check_call(
                 command, preexec_fn=partial(self._install_preexec, inst_dir),
                 env=env, **kwargs)
+        for dirpath, dirnames, filenames in os.walk(inst_dir):
+            for entry in dirnames + filenames:
+                entry_path = os.path.join(dirpath, entry)
+                entry_mode = os.stat(entry_path).st_mode
+                new_entry_mode = entry_mode | stat.S_IRGRP | stat.S_IROTH
+                if entry_mode & stat.S_IXUSR:
+                    new_entry_mode |= stat.S_IXGRP | stat.S_IXOTH
+                if new_entry_mode != entry_mode:
+                    try:
+                        os.chmod(entry_path, new_entry_mode)
+                    except OSError:
+                        pass
 
         current_path = os.path.join(package_dir, "current")
 

@@ -22,6 +22,8 @@ __all__ = [
     "TestClickHookSystemLevel",
     "TestClickHookUserLevel",
     "TestClickPatternFormatter",
+    "TestPackageInstallHooks",
+    "TestPackageRemoveHooks",
     ]
 
 

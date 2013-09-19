@@ -354,9 +354,7 @@ def package_remove_hooks(db, package, old_version, user=None):
             for hook in ClickHook.open_all(db, hook_name):
                 if hook.user_level != (user is not None):
                     continue
-                if hook.single_version:
-                    hook.remove_package(
-                        package, old_version, app_name, user=user)
+                hook.remove_package(package, old_version, app_name, user=user)
 
 
 def run_system_hooks(db):

@@ -1,3 +1,10 @@
+click (0.4.7) UNRELEASED; urgency=low
+
+  * Run system hooks when removing a package from the file system
+    (LP: #1227681).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 19 Sep 2013 17:14:41 +0100
+
 click (0.4.6) saucy; urgency=low
 
   * Make sure all unpacked files and directories are group- and

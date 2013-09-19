@@ -106,6 +106,7 @@ class ClickSingleDB:
 
     def _remove_unless_running(self, package, version, verbose=False):
         # Circular imports.
+        from click.hooks import package_remove_hooks
         from click.user import ClickUser, GC_IN_USE_USER
 
         if self._any_app_running(package, version):
@@ -116,6 +117,7 @@ class ClickSingleDB:
         version_path = self.path(package, version)
         if verbose:
             print("Removing %s" % version_path)
+        package_remove_hooks(self, package, version)
         shutil.rmtree(version_path, ignore_errors=True)
 
         package_path = os.path.join(self.root, package)

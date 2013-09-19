@@ -626,14 +626,11 @@ class TestPackageRemoveHooks(TestClickHookBase):
         hooks_dir = os.path.join(self.temp_dir, "hooks")
         with mkfile(os.path.join(hooks_dir, "unity.hook")) as f:
             print("Pattern: %s/unity/${id}.scope" % self.temp_dir, file=f)
-            print("Single-Version: yes", file=f)
         with mkfile(os.path.join(hooks_dir, "yelp-docs.hook")) as f:
             print("Pattern: %s/yelp/docs-${id}.txt" % self.temp_dir, file=f)
-            print("Single-Version: yes", file=f)
             print("Hook-Name: yelp", file=f)
         with mkfile(os.path.join(hooks_dir, "yelp-other.hook")) as f:
             print("Pattern: %s/yelp/other-${id}.txt" % self.temp_dir, file=f)
-            print("Single-Version: yes", file=f)
             print("Hook-Name: yelp", file=f)
         os.mkdir(os.path.join(self.temp_dir, "unity"))
         unity_path = os.path.join(self.temp_dir, "unity", "test_app_1.0.scope")

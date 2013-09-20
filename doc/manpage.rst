@@ -36,8 +36,8 @@ COMMAND OVERVIEW
     click contents PATH
     click hook install HOOK
     click hook remove HOOK
-    click hook install-system
-    click hook install-user
+    click hook run-system
+    click hook run-user
     click info PATH
     click install PACKAGE-FILE
     click list
@@ -118,7 +118,7 @@ Options:
 
 --root=PATH                 Look for additional packages in PATH.
 
-click hook install-system
+click hook run-system
 -------------------------
 
 Run all system-level hooks for all installed Click packages.  This is useful
@@ -129,7 +129,7 @@ Options:
 
 --root=PATH                 Look for additional packages in PATH.
 
-click hook install-user
+click hook run-user
 -----------------------
 
 Run all user-level hooks for all Click packages registered for a given user.

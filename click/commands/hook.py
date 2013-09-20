@@ -38,19 +38,18 @@ def run(argv):
 
           install HOOK
           remove HOOK
-          install-system
-          install-user [--user=USER]"""))
+          run-system
+          run-user [--user=USER]"""))
     parser.add_option(
         "--root", metavar="PATH", help="look for additional packages in PATH")
     parser.add_option(
         "--user", metavar="USER",
         help=(
             "run user-level hooks for USER (default: current user; only "
-            "applicable to install-user)"))
+            "applicable to run-user)"))
     options, args = parser.parse_args(argv)
     if len(args) < 1:
-        parser.error(
-            "need subcommand (install, remove, install-system, install-user)")
+        parser.error("need subcommand (install, remove, run-system, run-user)")
     subcommand = args[0]
     if subcommand in per_hook_subcommands:
         if len(args) < 2:
@@ -59,14 +58,14 @@ def run(argv):
         name = args[1]
         hook = ClickHook.open(db, name)
         getattr(hook, per_hook_subcommands[subcommand])()
-    elif subcommand == "install-system":
+    elif subcommand == "run-system":
         db = ClickDB(options.root)
         run_system_hooks(db)
-    elif subcommand == "install-user":
+    elif subcommand == "run-user":
         db = ClickDB(options.root)
         run_user_hooks(db, user=options.user)
     else:
         parser.error(
-            "unknown subcommand '%s' (known: install, remove, install-system,"
-            "install-user)" % subcommand)
+            "unknown subcommand '%s' (known: install, remove, run-system,"
+            "run-user)" % subcommand)
     return 0

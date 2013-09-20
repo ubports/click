@@ -3,12 +3,11 @@ click (0.4.7) UNRELEASED; urgency=low
   * Run system hooks when removing a package from the file system
     (LP: #1227681).
   * If a hook symlink is already correct, don't unnecessarily remove and
-    recreate it, and don't run its associated Exec command.  This
-    significantly speeds up system and session startup when lots of
-    applications are installed (LP: #1227604).
+    recreate it.  This significantly speeds up system and session startup
+    when lots of applications are installed.
   * Improve "click hook install-system" and "click hook install-user" to
     remove any stale symlinks they find, and to run Exec commands only once
-    per hook.
+    per hook (LP: #1227604).
   * Rename "click hook install-system" and "click hook install-user" to
     "click hook run-system" and "click hook run-user" respectively, to
     better fit their semantics.  (I expect these commands only to have been

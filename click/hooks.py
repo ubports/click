@@ -210,6 +210,27 @@ class ClickHook(Deb822):
         if self.get("trigger", "no") == "yes":
             raise NotImplementedError("'Trigger: yes' not yet implemented")
 
+    def _previous_entries(self, link_dir, user=None):
+        """Find entries in link_dir that match the structure of our links."""
+        # TODO: This only works if the app ID only appears, at most, in the
+        # last component of the pattern path.
+        for previous_entry in osextras.listdir_force(link_dir):
+            previous_path = os.path.join(link_dir, previous_entry)
+            previous_exp = self._formatter.possible_expansion(
+                previous_path, self["pattern"], user=user,
+                home=self._user_home(user))
+            if previous_exp is None or "id" not in previous_exp:
+                continue
+            previous_id = previous_exp["id"]
+            try:
+                previous_package, previous_app_name, previous_version = (
+                    previous_id.split("_", 2))
+                yield (
+                    previous_path,
+                    previous_package, previous_version, previous_app_name)
+            except ValueError:
+                continue
+
     def install_package(self, package, version, app_name, relative_path,
                         user=None):
         # Prepare paths.
@@ -224,26 +245,12 @@ class ClickHook(Deb822):
         link_dir = os.path.dirname(link)
 
         # Remove previous versions if necessary.
-        # TODO: This only works if the app ID only appears, at most, in the
-        # last component of the pattern path.
         if self.single_version:
-            for previous_entry in osextras.listdir_force(link_dir):
-                previous_exp = self._formatter.possible_expansion(
-                    os.path.join(link_dir, previous_entry),
-                    self["pattern"], user=user, home=self._user_home(user))
-                if previous_exp is None or "id" not in previous_exp:
-                    continue
-                previous_id = previous_exp["id"]
-                try:
-                    previous_package, previous_app_name, previous_version = \
-                        previous_id.split("_", 2)
-                except ValueError:
-                    continue
-                if (previous_package == package and
-                        previous_app_name == app_name and
-                        previous_version != version):
-                    osextras.unlink_force(
-                        os.path.join(link_dir, previous_entry))
+            for path, p_package, p_version, p_app_name in \
+                    self._previous_entries(link_dir, user=user):
+                if (p_package == package and p_app_name == app_name and
+                        p_version != version):
+                    osextras.unlink_force(path)
 
         if not os.path.islink(link) or os.readlink(link) != target:
             # Install new links and run commands.

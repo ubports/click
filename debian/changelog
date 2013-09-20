@@ -1,4 +1,4 @@
-click (0.4.7) UNRELEASED; urgency=low
+click (0.4.7) saucy; urgency=low
 
   * Run system hooks when removing a package from the file system
     (LP: #1227681).
@@ -15,7 +15,7 @@ click (0.4.7) UNRELEASED; urgency=low
   * Filter version control metadata and editor backup files out of binary
     packages in "click build" (LP: #1223640).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 19 Sep 2013 17:14:41 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 20 Sep 2013 18:07:13 +0100
 
 click (0.4.6) saucy; urgency=low
 

@@ -2,6 +2,10 @@ click (0.4.7) UNRELEASED; urgency=low
 
   * Run system hooks when removing a package from the file system
     (LP: #1227681).
+  * If a hook symlink is already correct, don't unnecessarily remove and
+    recreate it, and don't run its associated Exec command.  This
+    significantly speeds up system and session startup when lots of
+    applications are installed (LP: #1227604).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 19 Sep 2013 17:14:41 +0100
 

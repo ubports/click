@@ -235,23 +235,25 @@ class ClickHook(Deb822):
                     continue
                 previous_id = previous_exp["id"]
                 try:
-                    previous_package, previous_app_name, _ = previous_id.split(
-                        "_", 2)
+                    previous_package, previous_app_name, previous_version = \
+                        previous_id.split("_", 2)
                 except ValueError:
                     continue
                 if (previous_package == package and
-                        previous_app_name == app_name):
+                        previous_app_name == app_name and
+                        previous_version != version):
                     osextras.unlink_force(
                         os.path.join(link_dir, previous_entry))
 
-        # Install new links and run commands.
-        if self.user_level:
-            with user_db._dropped_privileges():
-                osextras.ensuredir(link_dir)
+        if not os.path.islink(link) or os.readlink(link) != target:
+            # Install new links and run commands.
+            if self.user_level:
+                with user_db._dropped_privileges():
+                    osextras.ensuredir(link_dir)
+                    osextras.symlink_force(target, link)
+            else:
                 osextras.symlink_force(target, link)
-        else:
-            osextras.symlink_force(target, link)
-        self._run_commands(user=user)
+            self._run_commands(user=user)
 
     def remove_package(self, package, version, app_name, user=None):
         osextras.unlink_force(

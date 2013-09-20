@@ -107,6 +107,39 @@ class ClickBuilderBase:
 
 
 class ClickBuilder(ClickBuilderBase):
+    # TODO: This should be configurable, or at least extensible.
+    _ignore_patterns = [
+        ".*.sw?",
+        "*~",
+        ",,*",
+        ".[#~]*",
+        ".arch-ids",
+        ".arch-inventory",
+        ".be",
+        ".bzr",
+        ".bzr-builddeb",
+        ".bzr.backup",
+        ".bzr.tags",
+        ".bzrignore",
+        ".cvsignore",
+        ".git",
+        ".gitattributes",
+        ".gitignore",
+        ".gitmodules",
+        ".hg",
+        ".hgignore",
+        ".hgsigs",
+        ".hgtags",
+        ".shelf",
+        ".svn",
+        "CVS",
+        "DEADJOE",
+        "RCS",
+        "_MTN",
+        "_darcs",
+        "{arch}",
+        ]
+
     def list_files(self, root_path):
         for dirpath, _, filenames in os.walk(root_path):
             rel_dirpath = os.path.relpath(dirpath, root_path)
@@ -151,7 +184,9 @@ class ClickBuilder(ClickBuilderBase):
                 if dest_path.startswith("/"):
                     dest_path = dest_path[1:]
                 real_dest_path = os.path.join(root_path, dest_path)
-                shutil.copytree(source_path, real_dest_path, symlinks=True)
+                shutil.copytree(
+                    source_path, real_dest_path, symlinks=True,
+                    ignore=shutil.ignore_patterns(*self._ignore_patterns))
 
             # Prepare control area.
             control_dir = os.path.join(temp_dir, "DEBIAN")

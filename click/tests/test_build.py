@@ -112,6 +112,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         with mkfile(os.path.join(scratch, "bin", "foo")) as f:
             f.write("test /bin/foo\n")
         os.symlink("foo", os.path.join(scratch, "bin", "bar"))
+        touch(os.path.join(scratch, ".git", "config"))
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:

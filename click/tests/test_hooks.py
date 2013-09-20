@@ -150,6 +150,23 @@ class TestClickHookSystemLevel(TestClickHookBase):
         mock_check_call.assert_called_once_with(
             "test-update", preexec_fn=mock.ANY, shell=True)
 
+    def test_previous_entries(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        link_one = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.0.test")
+        link_two = os.path.join(
+            self.temp_dir, "org.example.package_test-app_2.0.test")
+        os.symlink("dummy", link_one)
+        os.symlink("dummy", link_two)
+        os.symlink("dummy", os.path.join(self.temp_dir, "malformed"))
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        self.assertCountEqual([
+            (link_one, "org.example.package", "1.0", "test-app"),
+            (link_two, "org.example.package", "2.0", "test-app"),
+        ], list(hook._previous_entries()))
+
     def test_install_package(self):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -252,6 +269,39 @@ class TestClickHookSystemLevel(TestClickHookBase):
         self.assertFalse(os.path.exists(path_1))
         self.assertFalse(os.path.exists(path_2))
 
+    def test_sync(self):
+        with mkfile(os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        with mkfile(os.path.join(
+                self.temp_dir, "test-1", "1.0", ".click", "info",
+                "test-1.manifest")) as f:
+            json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
+        os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+        with mkfile(os.path.join(
+                self.temp_dir, "test-2", "1.1", ".click", "info",
+                "test-2.manifest")) as f:
+            json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
+        os.symlink("1.1", os.path.join(self.temp_dir, "test-2", "current"))
+        path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.test")
+        os.symlink(
+            os.path.join(self.temp_dir, "test-1", "1.0", "target-1"), path_1)
+        path_2 = os.path.join(self.temp_dir, "test-2_test2-app_1.1.test")
+        path_3 = os.path.join(self.temp_dir, "test-3_test3-app_1.0.test")
+        os.symlink(
+            os.path.join(self.temp_dir, "test-3", "1.0", "target-3"), path_3)
+        with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
+            hook = ClickHook.open(self.db, "test")
+        hook.sync()
+        self.assertTrue(os.path.lexists(path_1))
+        self.assertEqual(
+            os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
+            os.readlink(path_1))
+        self.assertTrue(os.path.lexists(path_2))
+        self.assertEqual(
+            os.path.join(self.temp_dir, "test-2", "1.1", "target-2"),
+            os.readlink(path_2))
+        self.assertFalse(os.path.lexists(path_3))
+
 
 class TestClickHookUserLevel(TestClickHookBase):
     def test_open(self):
@@ -314,6 +364,25 @@ class TestClickHookUserLevel(TestClickHookBase):
         hook._run_commands(user="test-user")
         mock_check_call.assert_called_once_with(
             "test-update", preexec_fn=mock.ANY, shell=True)
+
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_previous_entries(self, mock_user_home):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        link_one = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.0.test")
+        link_two = os.path.join(
+            self.temp_dir, "org.example.package_test-app_2.0.test")
+        os.symlink("dummy", link_one)
+        os.symlink("dummy", link_two)
+        os.symlink("dummy", os.path.join(self.temp_dir, "malformed"))
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        self.assertCountEqual([
+            (link_one, "org.example.package", "1.0", "test-app"),
+            (link_two, "org.example.package", "2.0", "test-app"),
+        ], list(hook._previous_entries(user="test-user")))
 
     @mock.patch("click.hooks.ClickHook._user_home")
     def test_install_package(self, mock_user_home):
@@ -498,6 +567,53 @@ class TestClickHookUserLevel(TestClickHookBase):
         hook.remove()
         self.assertFalse(os.path.exists(path_1))
         self.assertFalse(os.path.exists(path_2))
+
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_sync(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
+        with mkfile(os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        user_db = ClickUser(self.db, user="test-user")
+        with mkfile(os.path.join(
+                self.temp_dir, "test-1", "1.0", ".click", "info",
+                "test-1.manifest")) as f:
+            json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
+        user_db["test-1"] = "1.0"
+        with mkfile(os.path.join(
+                self.temp_dir, "test-2", "1.1", ".click", "info",
+                "test-2.manifest")) as f:
+            json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
+        user_db["test-2"] = "1.1"
+        path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.test")
+        os.symlink(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-1",
+                "target-1"),
+            path_1)
+        path_2 = os.path.join(self.temp_dir, "test-2_test2-app_1.1.test")
+        path_3 = os.path.join(self.temp_dir, "test-3_test3-app_1.0.test")
+        os.symlink(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-3",
+                "target-3"),
+            path_3)
+        with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
+            hook = ClickHook.open(self.db, "test")
+        hook.sync(user="test-user")
+        self.assertTrue(os.path.lexists(path_1))
+        self.assertEqual(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-1",
+                "target-1"),
+            os.readlink(path_1))
+        self.assertTrue(os.path.lexists(path_2))
+        self.assertEqual(
+            os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "test-2",
+                "target-2"),
+            os.readlink(path_2))
+        self.assertFalse(os.path.lexists(path_3))
 
 
 class TestPackageInstallHooks(TestClickHookBase):

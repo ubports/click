@@ -6,6 +6,9 @@ click (0.4.7) UNRELEASED; urgency=low
     recreate it, and don't run its associated Exec command.  This
     significantly speeds up system and session startup when lots of
     applications are installed (LP: #1227604).
+  * Improve "click hook install-system" and "click hook install-user" to
+    remove any stale symlinks they find, and to run Exec commands only once
+    per hook.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 19 Sep 2013 17:14:41 +0100
 

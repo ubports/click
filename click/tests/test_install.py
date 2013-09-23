@@ -30,13 +30,9 @@ import shutil
 import stat
 import subprocess
 
-from contextlib import closing
 from unittest import skipUnless
 
 from debian.deb822 import Deb822
-# BAW 2013-04-16: Get the DebFile class from here because of compatibility
-# issues.  See the comments in that module for details.
-from click.install import DebFile
 
 from click import install, osextras
 from click.build import ClickBuilder
@@ -115,114 +111,98 @@ class TestClickInstaller(TestCase):
                 os.path.join(install.frameworks_dir, "%s.framework" % name))
             install.frameworks_dir = old_dir
 
-    def test_audit_control_no_click_version(self):
+    def test_audit_no_click_version(self):
         path = self.make_fake_package()
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError, "No Click-Version field",
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError, "No Click-Version field",
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_bad_click_version(self):
+    def test_audit_bad_click_version(self):
         path = self.make_fake_package(control_fields={"Click-Version": "|"})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaises(
-                ValueError,
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaises(ValueError, ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_new_click_version(self):
+    def test_audit_new_click_version(self):
         path = self.make_fake_package(control_fields={"Click-Version": "999"})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError,
-                "Click-Version: 999 newer than maximum supported version .*",
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError,
+            "Click-Version: 999 newer than maximum supported version .*",
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_forbids_depends(self):
+    def test_audit_forbids_depends(self):
         path = self.make_fake_package(
             control_fields={
                 "Click-Version": "0.2",
                 "Depends": "libc6",
             })
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("ubuntu-sdk-13.10"):
+        with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
                 ValueError, "Depends field is forbidden in Click packages",
-                ClickInstaller(self.db).audit_control, package.control)
+                ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_forbids_maintscript(self):
+    def test_audit_forbids_maintscript(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             control_scripts={
                 "preinst": "#! /bin/sh\n",
                 "postinst": "#! /bin/sh\n",
             })
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("ubuntu-sdk-13.10"):
+        with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
                 ValueError,
                 r"Maintainer scripts are forbidden in Click packages "
                 r"\(found: postinst preinst\)",
-                ClickInstaller(self.db).audit_control, package.control)
+                ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_requires_manifest(self):
+    def test_audit_requires_manifest(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             control_scripts={"preinst": static_preinst})
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("ubuntu-sdk-13.10"):
+        with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
                 ValueError, "Package has no manifest",
-                ClickInstaller(self.db).audit_control, package.control)
+                ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_invalid_manifest_json(self):
+    def test_audit_invalid_manifest_json(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             control_scripts={"manifest": "{", "preinst": static_preinst})
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("ubuntu-sdk-13.10"):
-            self.assertRaises(
-                ValueError,
-                ClickInstaller(self.db).audit_control, package.control)
+        with self.make_framework("ubuntu-sdk-13.10"):
+            self.assertRaises(ValueError, ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_no_name(self):
+    def test_audit_no_name(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError, 'No "name" entry in manifest',
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError, 'No "name" entry in manifest',
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_name_bad_character(self):
+    def test_audit_name_bad_character(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={"name": "../evil"})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError,
-                'Invalid character "/" in "name" entry: ../evil',
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError, 'Invalid character "/" in "name" entry: ../evil',
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_no_version(self):
+    def test_audit_no_version(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={"name": "test-package"})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError, 'No "version" entry in manifest',
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError, 'No "version" entry in manifest',
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_no_framework(self):
+    def test_audit_no_framework(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst})
-        with closing(DebFile(filename=path)) as package:
-            self.assertRaisesRegex(
-                ValueError, 'No "framework" entry in manifest',
-                ClickInstaller(self.db).audit_control, package.control)
+        self.assertRaisesRegex(
+            ValueError, 'No "framework" entry in manifest',
+            ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_missing_framework(self):
+    def test_audit_missing_framework(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={
@@ -231,13 +211,12 @@ class TestClickInstaller(TestCase):
                 "framework": "missing",
             },
             control_scripts={"preinst": static_preinst})
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("present"):
+        with self.make_framework("present"):
             self.assertRaisesRegex(
                 ValueError, 'Framework "missing" not present on system.*',
-                ClickInstaller(self.db).audit_control, package.control)
+                ClickInstaller(self.db).audit, path)
 
-    def test_audit_control_missing_framework_force(self):
+    def test_audit_missing_framework_force(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},
             manifest={
@@ -245,9 +224,8 @@ class TestClickInstaller(TestCase):
                 "version": "1.0",
                 "framework": "missing",
             })
-        with closing(DebFile(filename=path)) as package, \
-             self.make_framework("present"):
-            ClickInstaller(self.db, True).audit_control(package.control)
+        with self.make_framework("present"):
+            ClickInstaller(self.db, True).audit(path)
 
     def test_audit_passes_correct_package(self):
         path = self.make_fake_package(

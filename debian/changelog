@@ -20,6 +20,7 @@ click (0.4.8) UNRELEASED; urgency=low
     cannot in general actually be removed from disk, but unregistering it
     for a user records it as being hidden from that user's list of
     registered packages.  Reinstalling the same version unhides it.
+  * Consolidate ClickInstaller.audit_control into ClickInstaller.audit.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

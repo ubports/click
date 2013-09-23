@@ -111,7 +111,7 @@ class ClickSingleDB:
 
         if self._any_app_running(package, version):
             gc_in_use_user_db = ClickUser(self.master_db, user=GC_IN_USE_USER)
-            gc_in_use_user_db[package] = version
+            gc_in_use_user_db.set_version(package, version)
             return
 
         version_path = self.path(package, version)
@@ -151,7 +151,7 @@ class ClickSingleDB:
             if user_db.get(package) == version:
                 if user_name == GC_IN_USE_USER:
                     # Previously running; we'll check this again shortly.
-                    del user_db[package]
+                    user_db.remove(package)
                 else:
                     # In use.
                     return
@@ -198,7 +198,7 @@ class ClickSingleDB:
                             "Not removing %s (never registered)." %
                             version_path)
                     continue
-                del gc_in_use_user_db[package]
+                gc_in_use_user_db.remove(package)
                 self._remove_unless_running(package, version, verbose=verbose)
 
 

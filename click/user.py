@@ -38,7 +38,7 @@ __all__ = [
     'ClickUsers',
     ]
 
-from collections import Mapping, MutableMapping
+from collections import Mapping
 from contextlib import contextmanager
 import os
 import pwd
@@ -114,7 +114,7 @@ class ClickUsers(Mapping):
             raise KeyError("User %s does not exist in any database" % user)
 
 
-class ClickUser(MutableMapping):
+class ClickUser(Mapping):
     """Database of package versions registered for a single user."""
 
     def __init__(self, db, user=None, all_users=False):
@@ -236,7 +236,7 @@ class ClickUser(MutableMapping):
                 "%s does not exist in any database for user %s" %
                 (package, self.user))
 
-    def __setitem__(self, package, version):
+    def set_version(self, package, version):
         # Circular import.
         from click.hooks import package_install_hooks
 
@@ -257,16 +257,11 @@ class ClickUser(MutableMapping):
             package_install_hooks(
                 self.db, package, old_version, version, user=self.user)
 
-    def __delitem__(self, package):
+    def remove(self, package):
         # Circular import.
         from click.hooks import package_remove_hooks
 
         # Only modify the last database.
-        # TODO: In the multiple-root case, this cannot fulfil the contract
-        # for __delitem__, because deleting an item from an overlay may
-        # simply expose an item in an underlay.  To fix this, we probably
-        # need to switch to normal method names at least for setting and
-        # deleting, and make this class no longer a MutableMapping.
         user_db = self.overlay_db
         path = os.path.join(user_db, package)
         with self._dropped_privileges():

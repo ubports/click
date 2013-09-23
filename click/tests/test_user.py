@@ -115,35 +115,35 @@ class TestClickUser(TestCase):
         self.assertEqual("2.0", registry["b"])
         self.assertEqual("0.1", registry["c"])
 
-    def test_setitem_missing_target(self):
+    def test_set_version_missing_target(self):
         registry = ClickUser(self.db, "user")
-        self.assertRaises(ValueError, registry.__setitem__, "a", "1.0")
+        self.assertRaises(ValueError, registry.set_version, "a", "1.0")
 
-    def test_setitem_missing(self):
+    def test_set_version_missing(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
-        registry["a"] = "1.0"
+        registry.set_version("a", "1.0")
         path = os.path.join(registry.overlay_db, "a")
         self.assertTrue(os.path.islink(path))
         self.assertEqual(
             os.path.join(self.temp_dir, "a", "1.0"), os.readlink(path))
 
-    def test_setitem_changed(self):
+    def test_set_version_changed(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(registry.overlay_db)
         path = os.path.join(registry.overlay_db, "a")
         os.symlink("/1.0", path)
         os.makedirs(os.path.join(self.temp_dir, "a", "1.1"))
-        registry["a"] = "1.1"
+        registry.set_version("a", "1.1")
         self.assertTrue(os.path.islink(path))
         self.assertEqual(
             os.path.join(self.temp_dir, "a", "1.1"), os.readlink(path))
 
-    def test_setitem_multiple_root(self):
+    def test_set_version_multiple_root(self):
         user_dbs, registry = self._setUpMultiDB()
 
         os.makedirs(os.path.join(self.multi_db[1].root, "a", "1.2"))
-        registry["a"] = "1.2"
+        registry.set_version("a", "1.2")
         a_underlay = os.path.join(user_dbs[0], "a")
         a_overlay = os.path.join(user_dbs[1], "a")
         self.assertTrue(os.path.islink(a_underlay))
@@ -156,7 +156,7 @@ class TestClickUser(TestCase):
             os.readlink(a_overlay))
 
         os.makedirs(os.path.join(self.multi_db[1].root, "b", "2.1"))
-        registry["b"] = "2.1"
+        registry.set_version("b", "2.1")
         b_underlay = os.path.join(user_dbs[0], "b")
         b_overlay = os.path.join(user_dbs[1], "b")
         self.assertTrue(os.path.islink(b_underlay))
@@ -169,7 +169,7 @@ class TestClickUser(TestCase):
             os.readlink(b_overlay))
 
         os.makedirs(os.path.join(self.multi_db[1].root, "c", "0.2"))
-        registry["c"] = "0.2"
+        registry.set_version("c", "0.2")
         c_underlay = os.path.join(user_dbs[0], "c")
         c_overlay = os.path.join(user_dbs[1], "c")
         self.assertFalse(os.path.islink(c_underlay))
@@ -179,7 +179,7 @@ class TestClickUser(TestCase):
             os.readlink(c_overlay))
 
         os.makedirs(os.path.join(self.multi_db[1].root, "d", "3.0"))
-        registry["d"] = "3.0"
+        registry.set_version("d", "3.0")
         d_underlay = os.path.join(user_dbs[0], "d")
         d_overlay = os.path.join(user_dbs[1], "d")
         self.assertFalse(os.path.islink(d_underlay))
@@ -188,34 +188,34 @@ class TestClickUser(TestCase):
             os.path.join(self.multi_db[1].root, "d", "3.0"),
             os.readlink(d_overlay))
 
-    def test_delitem_missing(self):
+    def test_remove_missing(self):
         registry = ClickUser(self.db, "user")
-        self.assertRaises(KeyError, registry.__delitem__, "a")
+        self.assertRaises(KeyError, registry.remove, "a")
 
-    def test_delitem(self):
+    def test_remove(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(registry.overlay_db)
         path = os.path.join(registry.overlay_db, "a")
         os.symlink("/1.0", path)
-        del registry["a"]
+        registry.remove("a")
         self.assertFalse(os.path.exists(path))
 
-    def test_delitem_multiple_root(self):
+    def test_remove_multiple_root(self):
         user_dbs, registry = self._setUpMultiDB()
-        del registry["a"]
+        registry.remove("a")
         self.assertFalse(os.path.exists(os.path.join(user_dbs[1], "a")))
-        # Strange behaviour; see TODO comment in ClickUser.__delitem__.
+        # Exposed underlay.
         self.assertEqual("1.0", registry["a"])
-        self.assertRaises(KeyError, registry.__delitem__, "b")
-        del registry["c"]
+        self.assertRaises(KeyError, registry.remove, "b")
+        registry.remove("c")
         self.assertFalse(os.path.exists(os.path.join(user_dbs[1], "c")))
         self.assertNotIn("c", registry)
-        self.assertRaises(KeyError, registry.__delitem__, "d")
+        self.assertRaises(KeyError, registry.remove, "d")
 
     def test_path(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
-        registry["a"] = "1.0"
+        registry.set_version("a", "1.0")
         self.assertEqual(
             os.path.join(registry.overlay_db, "a"), registry.path("a"))
 
@@ -229,7 +229,7 @@ class TestClickUser(TestCase):
     def test_writeable(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
-        registry["a"] = "1.0"
+        registry.set_version("a", "1.0")
         self.assertTrue(registry.writeable("a"))
 
     def test_writeable_multiple_root(self):

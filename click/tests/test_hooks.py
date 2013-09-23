@@ -391,7 +391,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
             user_db = ClickUser(self.db, user="test-user")
-            user_db["org.example.package"] = "1.0"
+            user_db.set_version("org.example.package", "1.0")
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -416,7 +416,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.1"))
             user_db = ClickUser(self.db, user="test-user")
-            user_db["org.example.package"] = "1.0"
+            user_db.set_version("org.example.package", "1.0")
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -448,7 +448,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
             user_db = ClickUser(self.db, user="test-user")
-            user_db["org.example.package"] = "1.0"
+            user_db.set_version("org.example.package", "1.0")
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -492,7 +492,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-1"}},
             }, f)
-        user_db["test-1"] = "1.0"
+        user_db.set_version("test-1", "1.0")
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
@@ -501,7 +501,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-2"}},
             }, f)
-        user_db["test-2"] = "2.0"
+        user_db.set_version("test-2", "2.0")
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open(self.db, "new")
         hook.install()
@@ -551,7 +551,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
             json.dump({"hooks": {"test1-app": {"old": "target-1"}}}, f)
-        user_db["test-1"] = "1.0"
+        user_db.set_version("test-1", "1.0")
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.old")
         os.symlink(os.path.join(user_db.path("test-1"), "target-1"), path_1)
@@ -559,7 +559,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
             json.dump({"hooks": {"test2-app": {"old": "target-2"}}}, f)
-        user_db["test-2"] = "2.0"
+        user_db.set_version("test-2", "2.0")
         path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
         os.symlink(os.path.join(user_db.path("test-2"), "target-2"), path_2)
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
@@ -579,12 +579,12 @@ class TestClickHookUserLevel(TestClickHookBase):
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
             json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
-        user_db["test-1"] = "1.0"
+        user_db.set_version("test-1", "1.0")
         with mkfile(os.path.join(
                 self.temp_dir, "test-2", "1.1", ".click", "info",
                 "test-2.manifest")) as f:
             json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
-        user_db["test-2"] = "1.1"
+        user_db.set_version("test-2", "1.1")
         path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.test")
         os.symlink(
             os.path.join(

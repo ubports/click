@@ -54,6 +54,6 @@ def run(argv):
             (package, old_version, args[1]),
             file=sys.stderr)
         sys.exit(1)
-    del registry[package]
+    registry.remove(package)
     db.maybe_remove(package, old_version)
     # TODO: remove data

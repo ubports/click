@@ -43,6 +43,6 @@ def run(argv):
     version = args[1]
     registry = ClickUser(db, user=options.user, all_users=options.all_users)
     old_version = registry.get(package)
-    registry[package] = version
+    registry.set_version(package, version)
     if old_version is not None:
         db.maybe_remove(package, old_version)

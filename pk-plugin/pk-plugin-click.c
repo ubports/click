@@ -114,6 +114,20 @@ out:
 	return click_files;
 }
 
+static gboolean
+click_pkid_data_is_click (const gchar *data)
+{
+	gchar **tokens;
+	gboolean ret;
+
+	tokens = g_strsplit (data, ",", 2);
+	ret = g_strcmp0 (tokens[0], "local:click") == 0 ||
+	      g_strcmp0 (tokens[0], "installed:click") == 0;
+	g_strfreev (tokens);
+
+	return ret;
+}
+
 /**
  * click_is_click_package:
  *
@@ -128,8 +142,7 @@ click_is_click_package (const gchar *package_id)
 	parts = pk_package_id_split (package_id);
 	if (!parts)
 		goto out;
-	ret = g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") == 0 ||
-	      g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "installed:click") == 0;
+	ret = click_pkid_data_is_click (parts[PK_PACKAGE_ID_DATA]);
 
 out:
 	g_strfreev (parts);
@@ -302,15 +315,26 @@ out:
 }
 
 static gchar *
-click_get_field (JsonParser *parser, const gchar *field)
+click_get_field_string (JsonObject *manifest, const gchar *field)
 {
-	JsonNode *node = NULL;
+	JsonNode *node;
 
-	node = json_parser_get_root (parser);
-	node = json_object_get_member (json_node_get_object (node), field);
+	node = json_object_get_member (manifest, field);
 	if (!node)
 		return NULL;
 	return json_node_dup_string (node);
+}
+
+static JsonObject *
+click_get_field_object (JsonObject *manifest, const gchar *field)
+{
+	JsonNode *node;
+
+	node = json_object_get_member (manifest, field);
+	if (!node)
+		return NULL;
+	/* Note that this does not take a reference. */
+	return json_node_get_object (node);
 }
 
 static JsonParser *
@@ -369,27 +393,84 @@ out:
 }
 
 static gchar *
-click_build_pkid (PkPlugin *plugin, const gchar *filename, const gchar *data)
+click_build_pkid_data (const gchar *data_prefix, JsonObject *manifest)
 {
-	JsonParser *parser = NULL;
+	gint n_elements = 0;
+	gchar **elements = NULL;
+	gint i;
+	JsonObject *hooks;
+	GList *hooks_members = NULL, *hooks_iter;
+	gchar *removable = NULL;
+	gchar *data = NULL;
+
+	hooks = click_get_field_object (manifest, "hooks");
+	removable = click_get_field_string (manifest, "_removable");
+
+	n_elements = 3;  /* data_prefix, removable, terminator */
+	if (hooks)
+		n_elements += json_object_get_size (hooks);
+	elements = g_new0 (gchar *, n_elements);
+	if (!elements)
+		goto out;
+
+	i = 0;
+	elements[i++] = g_strdup (data_prefix);
+	/* A missing "_removable" entry in the manifest means that we just
+	 * installed the package, so it must be removable.
+	 */
+	if (g_strcmp0 (removable, "0") == 0)
+		elements[i++] = g_strdup ("removable=0");
+	else
+		elements[i++] = g_strdup ("removable=1");
+	if (hooks) {
+		hooks_members = json_object_get_members (hooks);
+		for (hooks_iter = hooks_members; hooks_iter;
+		     hooks_iter = hooks_iter->next) {
+			g_assert (i < n_elements - 1);
+			elements[i++] = g_strdup_printf
+				("app_name=%s", (gchar *) hooks_iter->data);
+		}
+	}
+	elements[i] = NULL;
+	data = g_strjoinv (",", elements);
+
+out:
+	g_strfreev (elements);
+	if (hooks_members)
+		g_list_free (hooks_members);
+	g_free (removable);
+	return data;
+}
+
+static gchar *
+click_build_pkid (PkPlugin *plugin, JsonObject *manifest,
+		  const gchar *data_prefix)
+{
 	gchar *name = NULL;
 	gchar *version = NULL;
 	gchar *architecture = NULL;
+	gchar *data = NULL;
 	gchar *pkid = NULL;
 
-	parser = click_get_manifest (plugin, filename);
-	if (!parser)
+	if (!manifest)
 		goto out;
-	name = click_get_field (parser, "name");
-	version = click_get_field (parser, "version");
-	architecture = click_get_field (parser, "architecture");
+	name = click_get_field_string (manifest, "name");
+	if (!name)
+		goto out;
+	version = click_get_field_string (manifest, "version");
+	if (!version)
+		goto out;
+	architecture = click_get_field_string (manifest, "architecture");
+	if (!architecture)
+		architecture = g_strdup ("");
+	data = click_build_pkid_data (data_prefix, manifest);
 	pkid = pk_package_id_build (name, version, architecture, data);
 
 out:
-	g_clear_object (&parser);
 	g_free (name);
 	g_free (version);
 	g_free (architecture);
+	g_free (data);
 	return pkid;
 }
 
@@ -403,8 +484,7 @@ click_split_pkid (const gchar *package_id, gchar **name, gchar **version,
 	parts = pk_package_id_split (package_id);
 	if (!parts)
 		goto out;
-	if (g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") != 0 &&
-	    g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "installed:click") != 0)
+	if (!click_pkid_data_is_click (parts[PK_PACKAGE_ID_DATA]))
 		goto out;
 	if (name)
 		*name = g_strdup (parts[PK_PACKAGE_ID_NAME]);
@@ -430,6 +510,8 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	gchar **envp = NULL;
 	gchar *click_stderr = NULL;
 	gint click_status;
+	JsonParser *parser = NULL;
+	JsonObject *manifest;
 	gchar *pkid = NULL;
 
 	argv = g_malloc0_n (6, sizeof (*argv));
@@ -465,7 +547,12 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 		goto out;
 	}
 
-	pkid = click_build_pkid (plugin, filename, "installed:click");
+	parser = click_get_manifest (plugin, filename);
+	if (parser) {
+		manifest = json_node_get_object
+			(json_parser_get_root (parser));
+		pkid = click_build_pkid (plugin, manifest, "installed:click");
+	}
 	if (!pk_backend_job_get_is_error_set (plugin->job)) {
 		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 					pkid, "summary goes here");
@@ -477,6 +564,7 @@ out:
 	g_free (username);
 	g_strfreev (envp);
 	g_free (click_stderr);
+	g_clear_object (&parser);
 	g_free (pkid);
 
 	return ret;
@@ -503,9 +591,6 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 {
 	PkPlugin *plugin;
 	JsonObject *manifest;
-	const gchar *name;
-	const gchar *version;
-	const gchar *architecture = NULL;
 	const gchar *title = NULL;
 	gchar *pkid = NULL;
 
@@ -513,26 +598,17 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 	manifest = json_node_get_object (element_node);
 	if (!manifest)
 		return;
-	name = json_object_get_string_member (manifest, "name");
-	if (!name)
-		return;
-	version = json_object_get_string_member (manifest, "version");
-	if (!version)
-		return;
-	if (json_object_has_member (manifest, "architecture"))
-		architecture = json_object_get_string_member (manifest,
-							      "architecture");
-	if (!architecture)
-		architecture = "";
 	if (json_object_has_member (manifest, "title"))
 		title = json_object_get_string_member (manifest, "title");
 	if (!title)
 		title = "";
 
-	pkid = pk_package_id_build (name, version, architecture,
-				    "installed:click");
-	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED, pkid,
-				title);
+	pkid = click_build_pkid (plugin, manifest, "installed:click");
+	if (pkid)
+		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
+					pkid, title);
+
+	g_free (pkid);
 }
 
 static void
@@ -642,13 +718,13 @@ struct click_search_data {
 };
 
 static void
-click_search_emit (PkPlugin *plugin, const gchar *name, const gchar *version,
-		   const gchar *architecture, const gchar *title)
+click_search_emit (PkPlugin *plugin, JsonObject *manifest, const gchar *title)
 {
 	gchar *package_id;
 
-	package_id = pk_package_id_build (name, version, architecture,
-					  "installed:click");
+	package_id = click_build_pkid (plugin, manifest, "installed:click");
+	if (!package_id)
+		return;
 	g_debug ("Found package: %s", package_id);
 	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 				package_id, title);
@@ -662,9 +738,7 @@ click_search_one (JsonArray *array, guint index, JsonNode *element_node,
 {
 	struct click_search_data *data;
 	JsonObject *manifest;
-	const gchar *name;
-	const gchar *version;
-	const gchar *architecture = NULL;
+	const gchar *name = NULL;
 	const gchar *title = NULL;
 	const gchar *description = NULL;
 	gchar **value;
@@ -676,14 +750,6 @@ click_search_one (JsonArray *array, guint index, JsonNode *element_node,
 	name = json_object_get_string_member (manifest, "name");
 	if (!name)
 		return;
-	version = json_object_get_string_member (manifest, "version");
-	if (!version)
-		return;
-	if (json_object_has_member (manifest, "architecture"))
-		architecture = json_object_get_string_member (manifest,
-							      "architecture");
-	if (!architecture)
-		architecture = "";
 	if (data->search_details && json_object_has_member (manifest, "title"))
 		title = json_object_get_string_member (manifest, "title");
 	if (!title)
@@ -697,15 +763,13 @@ click_search_one (JsonArray *array, guint index, JsonNode *element_node,
 
 	for (value = data->values; *value; ++value) {
 		if (strcasestr (name, *value)) {
-			click_search_emit (data->plugin, name, version,
-					   architecture, title);
+			click_search_emit (data->plugin, manifest, title);
 			break;
 		}
 		if (data->search_details &&
 		    (strcasestr (title, *value) ||
 		     strcasestr (description, *value))) {
-			click_search_emit (data->plugin, name, version,
-					   architecture, title);
+			click_search_emit (data->plugin, manifest, title);
 			break;
 		}
 	}

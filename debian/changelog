@@ -7,6 +7,10 @@ click (0.4.8) UNRELEASED; urgency=low
     list --manifest".
   * Tidy up use of PackageKit IDs; local:click should refer to uninstalled
     packages, while installed:click refers to installed packages.
+  * Expose application names and whether a package is removable via the
+    PackageKit API: the IDs of installed applications are now formed as
+    comma-separated key/value pairs, e.g.
+    "installed:click,removable=1,app_name=foo,app_name=bar" (LP: #1209329).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

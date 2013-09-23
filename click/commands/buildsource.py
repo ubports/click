@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+import os
 
 from click.build import ClickSourceBuilder
 
@@ -31,6 +32,12 @@ def run(argv):
     if len(args) < 1:
         parser.error("need directory")
     directory = args[0]
+    if not os.path.isdir(directory):
+        parser.error('directory "%s" does not exist' % directory)
+    if not os.path.exists(os.path.join(directory, options.manifest)):
+        parser.error(
+            'directory "%s" does not contain manifest file "%s"' %
+            (directory, options.manifest))
     builder = ClickSourceBuilder()
     builder.add_file(directory, "./")
     path = builder.build(".", manifest_path=options.manifest)

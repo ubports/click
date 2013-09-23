@@ -24,6 +24,7 @@ __all__ = [
 
 
 from contextlib import contextmanager
+import hashlib
 import json
 import os
 import shutil
@@ -239,6 +240,50 @@ class TestClickInstaller(TestCase):
         with self.make_framework("ubuntu-sdk-13.10"):
             installer = ClickInstaller(self.db)
             self.assertEqual(("test-package", "1.0"), installer.audit(path))
+
+    def test_audit_broken_md5sums(self):
+        path = self.make_fake_package(
+            control_fields={"Click-Version": "0.2"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={
+                "preinst": static_preinst,
+                "md5sums": "%s  foo" % ("0" * 32),
+            },
+            data_files={"foo": None})
+        with self.make_framework("ubuntu-sdk-13.10"), \
+             mock_quiet_subprocess_call():
+            installer = ClickInstaller(self.db)
+            self.assertRaises(
+                subprocess.CalledProcessError, installer.audit,
+                path, slow=True)
+
+    def test_audit_matching_md5sums(self):
+        data_path = os.path.join(self.temp_dir, "foo")
+        with mkfile(data_path) as data:
+            print("test", file=data)
+        with open(data_path, "rb") as data:
+            data_md5sum = hashlib.md5(data.read()).hexdigest()
+        path = self.make_fake_package(
+            control_fields={"Click-Version": "0.2"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={
+                "preinst": static_preinst,
+                "md5sums": "%s  foo" % data_md5sum,
+            },
+            data_files={"foo": data_path})
+        with self.make_framework("ubuntu-sdk-13.10"), \
+             mock_quiet_subprocess_call():
+            installer = ClickInstaller(self.db)
+            self.assertEqual(
+                ("test-package", "1.0"), installer.audit(path, slow=True))
 
     def test_no_write_permission(self):
         path = self.make_fake_package(

@@ -34,5 +34,5 @@ def run(argv):
         parser.error("need package file name")
     package_path = args[0]
     installer = ClickInstaller(None, options.force_missing_framework)
-    installer.audit(package_path)
+    installer.audit(package_path, slow=True)
     return 0

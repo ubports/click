@@ -29,9 +29,11 @@ import inspect
 import json
 import os
 import pwd
+import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 
 from contextlib import closing
 
@@ -86,7 +88,24 @@ class ClickInstaller:
         return os.path.exists(os.path.join(
             frameworks_dir, "%s.framework" % name))
 
-    def audit(self, path):
+    def extract(self, path, target):
+        command = ["dpkg-deb", "-R", path, target]
+        with open(path, "rb") as fd:
+            env = dict(os.environ)
+            preloads = [self._preload_path()]
+            if "LD_PRELOAD" in env:
+                preloads.append(env["LD_PRELOAD"])
+            env["LD_PRELOAD"] = " ".join(preloads)
+            env["CLICK_BASE_DIR"] = target
+            env["CLICK_PACKAGE_PATH"] = path
+            env["CLICK_PACKAGE_FD"] = str(fd.fileno())
+            env.pop("HOME", None)
+            kwargs = {}
+            if sys.version >= "3.2":
+                kwargs["pass_fds"] = (fd.fileno(),)
+            subprocess.check_call(command, env=env, **kwargs)
+
+    def audit(self, path, slow=False):
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 
@@ -159,6 +178,18 @@ class ClickInstaller:
                     'Framework "%s" not present on system (use '
                     '--force-missing-framework option to override)' %
                     framework)
+
+            if slow:
+                temp_dir = tempfile.mkdtemp(prefix="click")
+                try:
+                    self.extract(path, temp_dir)
+                    command = [
+                        "md5sum", "-c", "--quiet",
+                        os.path.join("DEBIAN", "md5sums"),
+                    ]
+                    subprocess.check_call(command, cwd=temp_dir)
+                finally:
+                    shutil.rmtree(temp_dir)
 
             return package_name, package_version
 

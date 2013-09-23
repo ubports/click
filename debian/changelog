@@ -21,6 +21,7 @@ click (0.4.8) UNRELEASED; urgency=low
     for a user records it as being hidden from that user's list of
     registered packages.  Reinstalling the same version unhides it.
   * Consolidate ClickInstaller.audit_control into ClickInstaller.audit.
+  * Validate the shipped md5sums file in "click verify" (LP: #1217333).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

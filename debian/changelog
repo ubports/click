@@ -5,6 +5,8 @@ click (0.4.8) UNRELEASED; urgency=low
     file, rather than crashing (LP: #1228619).
   * Restore missing newlines after JSON dumps in "click info" and "click
     list --manifest".
+  * Tidy up use of PackageKit IDs; local:click should refer to uninstalled
+    packages, while installed:click refers to installed packages.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

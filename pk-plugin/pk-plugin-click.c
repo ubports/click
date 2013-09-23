@@ -128,7 +128,8 @@ click_is_click_package (const gchar *package_id)
 	parts = pk_package_id_split (package_id);
 	if (!parts)
 		goto out;
-	ret = g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") == 0;
+	ret = g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") == 0 ||
+	      g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "installed:click") == 0;
 
 out:
 	g_strfreev (parts);
@@ -402,7 +403,8 @@ click_split_pkid (const gchar *package_id, gchar **name, gchar **version,
 	parts = pk_package_id_split (package_id);
 	if (!parts)
 		goto out;
-	if (g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") != 0)
+	if (g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "local:click") != 0 &&
+	    g_strcmp0 (parts[PK_PACKAGE_ID_DATA], "installed:click") != 0)
 		goto out;
 	if (name)
 		*name = g_strdup (parts[PK_PACKAGE_ID_NAME]);
@@ -463,7 +465,7 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 		goto out;
 	}
 
-	pkid = click_build_pkid (plugin, filename, "local:click");
+	pkid = click_build_pkid (plugin, filename, "installed:click");
 	if (!pk_backend_job_get_is_error_set (plugin->job)) {
 		pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 					pkid, "summary goes here");
@@ -528,7 +530,7 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 		title = "";
 
 	pkid = pk_package_id_build (name, version, architecture,
-				    "local:click");
+				    "installed:click");
 	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED, pkid,
 				title);
 }
@@ -646,7 +648,7 @@ click_search_emit (PkPlugin *plugin, const gchar *name, const gchar *version,
 	gchar *package_id;
 
 	package_id = pk_package_id_build (name, version, architecture,
-					  "local:click");
+					  "installed:click");
 	g_debug ("Found package: %s", package_id);
 	pk_backend_job_package (plugin->job, PK_INFO_ENUM_INSTALLED,
 				package_id, title);

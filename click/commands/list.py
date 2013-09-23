@@ -38,7 +38,7 @@ def list_packages(options):
         for package, version in sorted(registry.items()):
             yield (
                 package, version, registry.path(package),
-                registry.writeable(package))
+                registry.removable(package))
 
 
 def run(argv):

@@ -16,6 +16,10 @@ click (0.4.8) UNRELEASED; urgency=low
     was impossible for these methods to fulfil the normal contract for
     mutable mappings, since deleting an item might simply expose an item in
     an underlying database.
+  * Allow unregistering preinstalled packages.  A preinstalled package
+    cannot in general actually be removed from disk, but unregistering it
+    for a user records it as being hidden from that user's list of
+    registered packages.  Reinstalling the same version unhides it.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

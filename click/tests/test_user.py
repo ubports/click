@@ -117,7 +117,7 @@ class TestClickUser(TestCase):
 
     def test_set_version_missing_target(self):
         registry = ClickUser(self.db, "user")
-        self.assertRaises(ValueError, registry.set_version, "a", "1.0")
+        self.assertRaises(KeyError, registry.set_version, "a", "1.0")
 
     def test_set_version_missing(self):
         registry = ClickUser(self.db, "user")
@@ -206,7 +206,11 @@ class TestClickUser(TestCase):
         self.assertFalse(os.path.exists(os.path.join(user_dbs[1], "a")))
         # Exposed underlay.
         self.assertEqual("1.0", registry["a"])
-        self.assertRaises(KeyError, registry.remove, "b")
+        registry.remove("b")
+        # Hidden.
+        self.assertEqual(
+            "@hidden", os.readlink(os.path.join(user_dbs[1], "b")))
+        self.assertNotIn("b", registry)
         registry.remove("c")
         self.assertFalse(os.path.exists(os.path.join(user_dbs[1], "c")))
         self.assertNotIn("c", registry)
@@ -226,15 +230,37 @@ class TestClickUser(TestCase):
         self.assertEqual(os.path.join(user_dbs[1], "c"), registry.path("c"))
         self.assertRaises(KeyError, registry.path, "d")
 
-    def test_writeable(self):
+    def test_removable(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
         registry.set_version("a", "1.0")
-        self.assertTrue(registry.writeable("a"))
+        self.assertTrue(registry.removable("a"))
 
-    def test_writeable_multiple_root(self):
+    def test_removable_multiple_root(self):
         user_dbs, registry = self._setUpMultiDB()
-        self.assertTrue(registry.writeable("a"))
-        self.assertFalse(registry.writeable("b"))
-        self.assertTrue(registry.writeable("c"))
-        self.assertFalse(registry.writeable("d"))
+        self.assertTrue(registry.removable("a"))
+        self.assertTrue(registry.removable("b"))
+        self.assertTrue(registry.removable("c"))
+        self.assertFalse(registry.removable("d"))
+
+    def test_hidden(self):
+        user_dbs, registry = self._setUpMultiDB()
+        b_overlay = os.path.join(user_dbs[1], "b")
+
+        registry.remove("b")
+        self.assertNotIn("b", registry)
+        self.assertTrue(os.path.islink(b_overlay))
+        self.assertEqual("@hidden", os.readlink(b_overlay))
+        self.assertRaises(KeyError, registry.__getitem__, "b")
+        self.assertRaises(KeyError, registry.path, "b")
+        self.assertFalse(registry.removable("b"))
+
+        registry.set_version("b", "2.0")
+        self.assertIn("b", registry)
+        self.assertTrue(os.path.islink(b_overlay))
+        self.assertEqual(
+            os.path.join(self.multi_db[0].root, "b", "2.0"),
+            os.readlink(b_overlay))
+        self.assertEqual("2.0", registry["b"])
+        self.assertEqual(b_overlay, registry.path("b"))
+        self.assertTrue(registry.removable("b"))

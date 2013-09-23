@@ -42,4 +42,5 @@ def run(argv):
             json.dump(
                 manifest_json, sys.stdout, ensure_ascii=False, sort_keys=True,
                 indent=4, separators=(",", ": "))
+            print()
     return 0

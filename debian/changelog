@@ -3,6 +3,8 @@ click (0.4.8) UNRELEASED; urgency=low
   * Show a proper error message if "click build" or "click buildsource" is
     called on a directory that does not exist or does not contain a manifest
     file, rather than crashing (LP: #1228619).
+  * Restore missing newlines after JSON dumps in "click info" and "click
+    list --manifest".
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Sep 2013 11:55:07 +0100
 

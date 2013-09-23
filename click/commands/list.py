@@ -78,3 +78,4 @@ def run(argv):
         json.dump(
             json_output, sys.stdout, ensure_ascii=False, sort_keys=True,
             indent=4, separators=(",", ": "))
+        print()

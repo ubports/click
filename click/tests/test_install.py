@@ -85,6 +85,7 @@ class TestClickInstaller(TestCase):
         if manifest is not None:
             with mkfile(os.path.join(control_dir, "manifest")) as f:
                 json.dump(manifest, f)
+                print(file=f)
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)

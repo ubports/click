@@ -29,7 +29,7 @@ Currently, this package should remain compatible with Python 2.7, 3.2, and
 Dependencies
 ------------
 
-For Ubuntu 13.04, make sure you have the *python2.7* and *python3.3*
+For Ubuntu 13.10, make sure you have the *python2.7* and *python3.3*
 packages installed.  Unless you upgraded from a previous version of Ubuntu
 and haven't removed it yet, you won't have Python 3.2 available.  Build it
 from source if necessary, install them say into ``/usr/local``, and make
@@ -50,7 +50,7 @@ subset of Python versions.  You shouldn't have to install anything manually
 into the virtual environments that tox creates, but you might have to if you
 don't have all the dependencies installed in your system Pythons.
 
-You'll need the *mock* and *python-debian* libraries.  For Ubuntu 13.04,
+You'll need the *mock* and *python-debian* libraries.  For Ubuntu 13.10,
 apt-get install the following packages::
 
  * python-mock

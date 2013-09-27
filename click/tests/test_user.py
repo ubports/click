@@ -216,6 +216,25 @@ class TestClickUser(TestCase):
         self.assertNotIn("c", registry)
         self.assertRaises(KeyError, registry.remove, "d")
 
+    def test_remove_multiple_root_creates_overlay_directory(self):
+        multi_db = ClickDB(use_system=False)
+        multi_db.add(os.path.join(self.temp_dir, "preinstalled"))
+        multi_db.add(os.path.join(self.temp_dir, "click"))
+        user_dbs = [
+            os.path.join(d.root, ".click", "users", "user") for d in multi_db
+        ]
+        a_1_0 = os.path.join(self.temp_dir, "preinstalled", "a", "1.0")
+        os.makedirs(a_1_0)
+        os.makedirs(user_dbs[0])
+        os.symlink(a_1_0, os.path.join(user_dbs[0], "a"))
+        self.assertFalse(os.path.exists(user_dbs[1]))
+        registry = ClickUser(multi_db, "user")
+        self.assertEqual("1.0", registry["a"])
+        registry.remove("a")
+        self.assertNotIn("a", registry)
+        self.assertEqual(
+            "@hidden", os.readlink(os.path.join(user_dbs[1], "a")))
+
     def test_path(self):
         registry = ClickUser(self.db, "user")
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))

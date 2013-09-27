@@ -3,6 +3,8 @@ click (0.4.9) UNRELEASED; urgency=low
   * Explicitly build-depend on pkg-config, since it's needed even if the
     PackageKit/GLib-related build-dependencies are removed for backporting.
   * Remove some stray documentation references to Ubuntu 13.04.
+  * Ensure that the user's overlay database directory exists when
+    unregistering a preinstalled package (LP: #1232066).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 25 Sep 2013 13:43:33 +0100
 

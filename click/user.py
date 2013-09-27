@@ -292,6 +292,7 @@ class ClickUser(Mapping):
             else:
                 try:
                     old_version = self[package]
+                    self._ensure_db()
                     osextras.symlink_force(HIDDEN_VERSION, path)
                 except KeyError:
                     raise KeyError(

@@ -205,6 +205,33 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual([], os.listdir(extract_path))
 
+    def test_build_multiple_architectures(self):
+        self.use_temp_dir()
+        scratch = os.path.join(self.temp_dir, "scratch")
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
+            json.dump({
+                "name": "com.ubuntu.test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "title": "test title",
+                "architecture": ["armhf", "i386"],
+                "framework": "ubuntu-sdk-13.10",
+            }, f)
+        self.builder.add_file(scratch, "/")
+        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_multi.click")
+        self.assertEqual(path, self.builder.build(self.temp_dir))
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual("multi", self.extract_field(path, "Architecture"))
+        control_path = os.path.join(self.temp_dir, "control")
+        subprocess.check_call(["dpkg-deb", "-e", path, control_path])
+        manifest_path = os.path.join(control_path, "manifest")
+        with open(os.path.join(scratch, "manifest.json")) as source, \
+                open(manifest_path) as target:
+            source_json = json.load(source)
+            target_json = json.load(target)
+            del target_json["installed-size"]
+            self.assertEqual(source_json, target_json)
+
 
 class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
     def setUp(self):

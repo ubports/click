@@ -500,3 +500,69 @@ class TestClickInstaller(TestCase):
             stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
             stat.S_IROTH | stat.S_IXOTH,
             self._get_mode(os.path.join(inst_dir, "world-readable-dir")))
+
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
+    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("click.install.ClickInstaller._dpkg_architecture")
+    def test_single_architecture(self, mock_dpkg_architecture,
+                                 mock_package_install_hooks):
+        mock_dpkg_architecture.return_value = "armhf"
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.1",
+                "Architecture": "armhf",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.2",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.1",
+                "framework": "ubuntu-sdk-13.10",
+                "architecture": "armhf",
+            },
+            control_scripts={"preinst": static_preinst})
+        root = os.path.join(self.temp_dir, "root")
+        db = ClickDB(root)
+        installer = ClickInstaller(db)
+        with self.make_framework("ubuntu-sdk-13.10"), \
+             mock_quiet_subprocess_call():
+            installer.install(path)
+        self.assertTrue(
+            os.path.exists(os.path.join(root, "test-package", "current")))
+
+    @skipUnless(
+        os.path.exists(ClickInstaller(None)._preload_path()),
+        "preload bits not built; installing packages will fail")
+    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("click.install.ClickInstaller._dpkg_architecture")
+    def test_multiple_architectures(self, mock_dpkg_architecture,
+                                    mock_package_install_hooks):
+        mock_dpkg_architecture.return_value = "armhf"
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.1",
+                "Architecture": "multi",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.2",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.1",
+                "framework": "ubuntu-sdk-13.10",
+                "architecture": ["armhf", "i386"],
+            },
+            control_scripts={"preinst": static_preinst})
+        root = os.path.join(self.temp_dir, "root")
+        db = ClickDB(root)
+        installer = ClickInstaller(db)
+        with self.make_framework("ubuntu-sdk-13.10"), \
+             mock_quiet_subprocess_call():
+            installer.install(path)
+        self.assertTrue(
+            os.path.exists(os.path.join(root, "test-package", "current")))

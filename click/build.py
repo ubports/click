@@ -103,7 +103,11 @@ class ClickBuilderBase:
 
     @property
     def architecture(self):
-        return self.manifest.get("architecture", "all")
+        manifest_arch = self.manifest.get("architecture", "all")
+        if isinstance(manifest_arch, list):
+            return "multi"
+        else:
+            return manifest_arch
 
 
 class ClickBuilder(ClickBuilderBase):

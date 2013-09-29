@@ -88,6 +88,11 @@ class ClickInstaller:
         return os.path.exists(os.path.join(
             frameworks_dir, "%s.framework" % name))
 
+    def _dpkg_architecture(self):
+        return subprocess.check_output(
+            ["dpkg", "--print-architecture"],
+            universal_newlines=True).rstrip("\n")
+
     def extract(self, path, target):
         command = ["dpkg-deb", "-R", path, target]
         with open(path, "rb") as fd:
@@ -105,7 +110,7 @@ class ClickInstaller:
                 kwargs["pass_fds"] = (fd.fileno(),)
             subprocess.check_call(command, env=env, **kwargs)
 
-    def audit(self, path, slow=False):
+    def audit(self, path, slow=False, check_arch=False):
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 
@@ -179,6 +184,22 @@ class ClickInstaller:
                     '--force-missing-framework option to override)' %
                     framework)
 
+            if check_arch:
+                architecture = manifest.get("architecture", "all")
+                if architecture != "all":
+                    dpkg_architecture = self._dpkg_architecture()
+                    if isinstance(architecture, list):
+                        if dpkg_architecture not in architecture:
+                            raise ValueError(
+                                'Package architectures "%s" not compatible '
+                                'with system architecture "%s"' %
+                                (" ".join(architecture), dpkg_architecture))
+                    elif architecture != dpkg_architecture:
+                        raise ValueError(
+                            'Package architecture "%s" not compatible '
+                            'with system architecture "%s"' %
+                            (architecture, dpkg_architecture))
+
             if slow:
                 temp_dir = tempfile.mkdtemp(prefix="click")
                 try:
@@ -250,7 +271,7 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
     def install(self, path, user=None, all_users=False):
-        package_name, package_version = self.audit(path)
+        package_name, package_version = self.audit(path, check_arch=True)
         package_dir = os.path.join(self.db.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
         assert os.path.dirname(os.path.dirname(inst_dir)) == self.db.overlay
@@ -266,7 +287,13 @@ class ClickInstaller:
         # TODO: sandbox so that this can only write to the unpack directory
         command = [
             "dpkg",
-            "--force-not-root", "--force-bad-path",
+            # We normally run dpkg as non-root.
+            "--force-not-root",
+            # /sbin and /usr/sbin may not necessarily be on $PATH; we don't
+            # use the tools dpkg gets from there.
+            "--force-bad-path",
+            # We check the package architecture ourselves in audit().
+            "--force-architecture",
             "--instdir", inst_dir,
             "--admindir", os.path.join(inst_dir, ".click"),
             "--path-exclude", "*/.click/*",

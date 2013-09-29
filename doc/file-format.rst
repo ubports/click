@@ -71,8 +71,11 @@ to "manifest.json" in source trees), which must be a dictionary represented
 as UTF-8-encoded JSON.  It must include the following keys:
 
  * name: unique name for the application
+
  * version: version number of the application
+
  * framework: the system framework for which the package was built
+
  * installed-size: the size of the unpacked package in KiB; this should not
    be set directly in the source tree, but will be generated automatically
    by "click build" using "du -k -s --apparent-size"
@@ -105,10 +108,24 @@ keys may be defined without changing the version number of this
 specification.  The following are currently recognised:
 
  * title: short (one-line) synopsis of the application
+
  * description: extended description of the application; may be
    multi-paragraph
+
  * maintainer: name and email address of maintainer of the application
+
+ * architecture: one of the following:
+
+   * "all", indicating a package containing no compiled code
+
+   * a dpkg architecture name (e.g. "armhf") as a string, indicating a
+     package that will only run on that architecture
+
+   * a list of dpkg architecture names, indicating a package that will run
+     on any of those architectures
+
  * hooks: see :doc:`hooks`
+
  * icon: icon to display in interfaces listing click packages; if the name
    refers to an existing file when resolved relative to the base directory
    of the package, the given file will be used; if not, the algorithm
@@ -126,6 +143,7 @@ manifest files, and attempts to set them there will be ignored.  The
 following dynamic keys are currently defined:
 
  * _directory: the directory where a package is unpacked
+
  * _removable: 1 if a package is unpacked in a location from which it can be
    removed, otherwise 0
 

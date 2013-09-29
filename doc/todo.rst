@@ -20,6 +20,9 @@ To do
 
  * command to generate manifest template, like ``dh_make``
 
+ * check whether a package contains compiled code for an architecture not
+   listed in the "architecture" manifest field
+
 Delta updates
 =============
 

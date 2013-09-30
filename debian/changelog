@@ -11,6 +11,7 @@ click (0.4.9) UNRELEASED; urgency=low
     the "click" wrapper.
   * Extend "click info" to take a registered package name as an alternative
     to a path to a Click package file (LP: #1232118).
+  * Force unpacked files to be owner-writeable (LP: #1232128).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 25 Sep 2013 13:43:33 +0100
 

@@ -34,8 +34,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+static int (*libc_chmod) (const char *, mode_t) = (void *) 0;
 static int (*libc_chown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
+static int (*libc_fchmod) (int, mode_t) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 static FILE *(*libc_fopen) (const char *, const char *) = (void *) 0;
 static FILE *(*libc_fopen64) (const char *, const char *) = (void *) 0;
@@ -74,8 +76,10 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     /* Clear any old error conditions, albeit unlikely, as per dlsym(2) */
     dlerror ();
 
+    GET_NEXT_SYMBOL (chmod);
     GET_NEXT_SYMBOL (chown);
     GET_NEXT_SYMBOL (execvp);
+    GET_NEXT_SYMBOL (fchmod);
     GET_NEXT_SYMBOL (fchown);
     GET_NEXT_SYMBOL (fopen);
     GET_NEXT_SYMBOL (fopen64);
@@ -409,4 +413,32 @@ int __xstat64 (int ver, const char *pathname, struct stat64 *buf)
         return __fxstat64 (ver, package_fd, buf);
 
     return (*libc___xstat64) (ver, pathname, buf);
+}
+
+/* As well as write sandboxing, our versions of chmod and fchmod also
+ * prevent the 0200 (u+w) permission bit from being removed from unpacked
+ * files.  dpkg normally expects to be run as root which can override DAC
+ * write permissions, so a mode 04xx file is not normally a problem for it,
+ * but it is a problem when running dpkg as non-root.  Since unpacked
+ * packages are non-writeable from the point of view of the package's code,
+ * forcing u+w is safe.
+ */
+
+int chmod (const char *path, mode_t mode)
+{
+    if (!libc_chmod)
+        clickpreload_init ();  /* also needed for package_path */
+
+    clickpreload_assert_path_in_instdir ("chmod", path);
+    mode |= S_IWUSR;
+    return (*libc_chmod) (path, mode);
+}
+
+int fchmod (int fd, mode_t mode)
+{
+    if (!libc_fchmod)
+        clickpreload_init ();
+
+    mode |= S_IWUSR;
+    return (*libc_fchmod) (fd, mode);
 }

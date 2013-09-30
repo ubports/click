@@ -13,34 +13,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Show manifest information on a Click package file."""
+"""Show manifest information for a Click package."""
 
 from __future__ import print_function
 
 from contextlib import closing
+import io
 import json
 from optparse import OptionParser
+import os
 import sys
 
+from click.database import ClickDB
 from click.install import DebFile
+from click.user import ClickUser
+
+
+def get_manifest(options, arg):
+    if "/" not in arg:
+        db = ClickDB(options.root)
+        registry = ClickUser(db, user=options.user)
+        if arg in registry:
+            manifest_path = os.path.join(
+                registry.path(arg), ".click", "info", "%s.manifest" % arg)
+            with io.open(manifest_path, encoding="UTF-8") as manifest:
+                return json.load(manifest)
+
+    with closing(DebFile(filename=arg)) as package:
+        with package.control.get_file(
+                "manifest", encoding="UTF-8") as manifest_file:
+            return json.load(manifest_file)
 
 
 def run(argv):
     parser = OptionParser("%prog info [options] PATH")
-    _, args = parser.parse_args(argv)
+    parser.add_option(
+        "--root", metavar="PATH", help="look for additional packages in PATH")
+    parser.add_option(
+        "--user", metavar="USER",
+        help="look up PACKAGE-NAME for USER (if you have permission; "
+             "default: current user)")
+    options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need file name")
-    path = args[0]
-    with closing(DebFile(filename=path)) as package:
-        with package.control.get_file(
-                "manifest", encoding="UTF-8") as manifest:
-            manifest_json = json.load(manifest)
-            keys = list(manifest_json)
-            for key in keys:
-                if key.startswith("_"):
-                    del manifest_json[key]
-            json.dump(
-                manifest_json, sys.stdout, ensure_ascii=False, sort_keys=True,
-                indent=4, separators=(",", ": "))
-            print()
+    try:
+        manifest = get_manifest(options, args[0])
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return 1
+    keys = list(manifest)
+    for key in keys:
+        if key.startswith("_"):
+            del manifest[key]
+    json.dump(
+        manifest, sys.stdout, ensure_ascii=False, sort_keys=True, indent=4,
+        separators=(",", ": "))
+    print()
     return 0

@@ -142,10 +142,23 @@ Options:
 --user=USER                 Run user-level hooks for USER (default: current
                             user).
 
-click info PATH
----------------
+click info {PACKAGE-NAME|PACKAGE-FILE}
+--------------------------------------
 
-Display the manifest for the Click package in PATH.
+When given a package name (that is, a string containing no ``/``
+characters), display the manifest for that package, if it is registered for
+the current user.
+
+When given a path (that is, a string containing at least one ``/``
+character, or a string containing no ``/`` characters that is not a
+registered package name), attempt to treat that as a path to a file
+containing a Click package and display the manifest for that package.
+
+Options:
+
+--root=PATH                 Look for additional packages in PATH.
+--user=USER                 List packages registered by USER (if you have
+                            permission).
 
 click install PACKAGE-FILE
 --------------------------

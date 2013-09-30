@@ -9,6 +9,8 @@ click (0.4.9) UNRELEASED; urgency=low
     document the "architecture" manifest field (LP: #1214380, #1214864).
   * Correctly pass through return values of commands as the exit status of
     the "click" wrapper.
+  * Extend "click info" to take a registered package name as an alternative
+    to a path to a Click package file (LP: #1232118).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 25 Sep 2013 13:43:33 +0100
 

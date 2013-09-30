@@ -285,19 +285,20 @@ class ClickUser(Mapping):
         # Only modify the last database.
         user_db = self.overlay_db
         path = os.path.join(user_db, package)
-        with self._dropped_privileges():
-            if self._is_valid_link(path):
-                old_version = os.path.basename(os.readlink(path))
+        if self._is_valid_link(path):
+            old_version = os.path.basename(os.readlink(path))
+            with self._dropped_privileges():
                 osextras.unlink_force(path)
-            else:
-                try:
-                    old_version = self[package]
-                    self._ensure_db()
+        else:
+            try:
+                old_version = self[package]
+                self._ensure_db()
+                with self._dropped_privileges():
                     osextras.symlink_force(HIDDEN_VERSION, path)
-                except KeyError:
-                    raise KeyError(
-                        "%s does not exist in any database for user %s" %
-                        (package, self.user))
+            except KeyError:
+                raise KeyError(
+                    "%s does not exist in any database for user %s" %
+                    (package, self.user))
         if not self.pseudo_user:
             package_remove_hooks(self.db, package, old_version, user=self.user)
 

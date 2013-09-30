@@ -1,3 +1,10 @@
+click (0.4.10) UNRELEASED; urgency=low
+
+  * When removing packages, only drop privileges after ensuring the
+    existence of the database directory (LP: #1233280).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 30 Sep 2013 18:03:03 +0100
+
 click (0.4.9) saucy; urgency=low
 
   * Explicitly build-depend on pkg-config, since it's needed even if the

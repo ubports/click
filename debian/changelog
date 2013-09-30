@@ -1,4 +1,4 @@
-click (0.4.9) UNRELEASED; urgency=low
+click (0.4.9) saucy; urgency=low
 
   * Explicitly build-depend on pkg-config, since it's needed even if the
     PackageKit/GLib-related build-dependencies are removed for backporting.
@@ -13,7 +13,7 @@ click (0.4.9) UNRELEASED; urgency=low
     to a path to a Click package file (LP: #1232118).
   * Force unpacked files to be owner-writeable (LP: #1232128).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 25 Sep 2013 13:43:33 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 30 Sep 2013 15:24:49 +0100
 
 click (0.4.8) saucy; urgency=low
 

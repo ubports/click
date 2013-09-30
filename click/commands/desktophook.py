@@ -174,3 +174,5 @@ def run(argv):
 
     for remove_entry in target_entries - source_entries:
         os.unlink(os.path.join(target_dir, remove_entry))
+
+    return 0

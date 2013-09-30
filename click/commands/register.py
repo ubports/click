@@ -46,3 +46,4 @@ def run(argv):
     registry.set_version(package, version)
     if old_version is not None:
         db.maybe_remove(package, old_version)
+    return 0

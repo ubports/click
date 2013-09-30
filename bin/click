@@ -76,8 +76,7 @@ def main():
     if command not in commands.all_commands:
         parser.error("unknown command: %s" % command)
     mod = commands.load_command(command)
-    mod.run(args)
-    return 0
+    return mod.run(args)
 
 
 if __name__ == "__main__":

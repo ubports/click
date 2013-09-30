@@ -7,6 +7,8 @@ click (0.4.9) UNRELEASED; urgency=low
     unregistering a preinstalled package (LP: #1232066).
   * Support packages containing code for multiple architectures, and
     document the "architecture" manifest field (LP: #1214380, #1214864).
+  * Correctly pass through return values of commands as the exit status of
+    the "click" wrapper.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 25 Sep 2013 13:43:33 +0100
 

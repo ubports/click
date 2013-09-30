@@ -79,3 +79,4 @@ def run(argv):
             json_output, sys.stdout, ensure_ascii=False, sort_keys=True,
             indent=4, separators=(",", ": "))
         print()
+    return 0

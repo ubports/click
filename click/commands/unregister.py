@@ -57,3 +57,4 @@ def run(argv):
     registry.remove(package)
     db.maybe_remove(package, old_version)
     # TODO: remove data
+    return 0

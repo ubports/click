@@ -60,7 +60,8 @@ class ClickChroot:
         self.framework = framework
         self.name = name
         self.native_arch = subprocess.check_output(
-            ["dpkg", "--print-architecture"]).decode('utf-8').strip()
+            ["dpkg", "--print-architecture"],
+            universal_newlines=True).strip()
         self.chroots_dir = "/var/lib/schroot/chroots"
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
@@ -111,13 +112,13 @@ class ClickChroot:
             proxy = os.environ["http_proxy"]
         if not proxy:
             proxy = subprocess.check_output(
-                ["apt-config", "shell", "x", "Acquire::HTTP::Proxy"]
-                ).decode('utf-8').replace('x=', '').strip()
+                ["apt-config", "shell", "x", "Acquire::HTTP::Proxy"],
+                universal_newlines=True).replace('x=', '').strip()
         with open("/dev/null", "w") as devnull:
             target_tuple = subprocess.check_output(
                 ["dpkg-architecture", "-a%s" % self.target_arch,
-                 "-qDEB_HOST_GNU_TYPE"], stderr=devnull
-                ).decode('utf-8').strip()
+                 "-qDEB_HOST_GNU_TYPE"], stderr=devnull,
+                universal_newlines=True).strip()
         build_pkgs = [
             "build-essential", "fakeroot",
             "apt-utils", "pkg-create-dbgsym",

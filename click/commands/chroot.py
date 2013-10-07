@@ -19,8 +19,7 @@
 
 from __future__ import print_function
 
-from argparse import ArgumentParser
-from argparse import REMAINDER
+from argparse import ArgumentParser, REMAINDER
 
 from click.chroot import ClickChroot
 

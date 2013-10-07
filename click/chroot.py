@@ -67,7 +67,7 @@ class ClickChroot:
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
             self.archive = os.environ['DEBOOTSTRAP_MIRROR']
         else:
-            self.archive = "http://archive.ubuntu.com"
+            self.archive = "http://archive.ubuntu.com/ubuntu"
 
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -121,8 +121,7 @@ class ClickChroot:
                 universal_newlines=True).strip()
         build_pkgs = [
             "build-essential", "fakeroot",
-            "apt-utils", "pkg-create-dbgsym",
-            "pkgbinarymangler", "g++-%s" % target_tuple,
+            "apt-utils", "g++-%s" % target_tuple,
             "pkg-config-%s" % target_tuple,
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
@@ -145,11 +144,11 @@ class ClickChroot:
         with open("%s/etc/apt/sources.list" % mount, "w") as sources_list:
             for line in sources:
                 print(line, file=sources_list)
-        shutil.copy("/etc/localtime", "%s/etc/" % mount)
-        shutil.copy("/etc/timezone", "%s/etc/" % mount)
+        shutil.copy2("/etc/localtime", "%s/etc/" % mount)
+        shutil.copy2("/etc/timezone", "%s/etc/" % mount)
         chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
         with open(chroot_config, "w") as target:
-            admin_groups = "sbuild,root"
+            admin_groups = "root"
             print("[%s]" % self.full_name, file=target)
             print("description=Build chroot for click packages on %s" %
                   self.target_arch, file=target)
@@ -157,10 +156,26 @@ class ClickChroot:
                           "source-root-groups"]:
                 print("%s=%s" % (group, admin_groups), file=target)
             print("type=directory", file=target)
-            print("profile=sbuild", file=target)
+            print("profile=default", file=target)
+            print("# Not protocols or services see ", file=target)
+            print("# debian bug 557730", file=target)
+            print("setup.nssdatabases=sbuild/nssdatabases",
+                file=target)
             print("union-type=overlayfs", file=target)
             print("directory=%s" % mount, file=target)
-        # disable daemons?
+        daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
+        with open(daemon_policy, "w") as policy:
+            print("#!/bin/sh", file=policy)
+            print("while true; do", file=policy)
+            print('    case "$1" in', file=policy)
+            print("      -*) shift ;;", file=policy)
+            print("      makedev) exit 0;;", file=policy)
+            print("      x11-common) exit 0;;", file=policy)
+            print("      *) exit 101;;", file=policy)
+            print("    esac", file=policy)
+            print("done", file=policy)
+        os.remove("%s/sbin/initctl" % mount)
+        os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
         finish_script = "%s/finish.sh" % mount
         with open(finish_script, 'w') as finish:
             print("#!/bin/bash", file=finish)

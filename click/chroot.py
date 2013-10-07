@@ -112,8 +112,8 @@ class ClickChroot:
             proxy = os.environ["http_proxy"]
         if not proxy:
             proxy = subprocess.check_output(
-                ["apt-config", "shell", "x", "Acquire::HTTP::Proxy"],
-                universal_newlines=True).replace('x=', '').strip()
+                'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
+                shell=True, universal_newlines=True).strip()
         with open("/dev/null", "w") as devnull:
             target_tuple = subprocess.check_output(
                 ["dpkg-architecture", "-a%s" % self.target_arch,

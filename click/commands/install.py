@@ -18,10 +18,11 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+import sys
 from textwrap import dedent
 
 from click.database import ClickDB
-from click.install import ClickInstaller
+from click.install import ClickInstaller, ClickInstallerAuditError
 
 
 def run(argv):
@@ -47,6 +48,10 @@ def run(argv):
     db = ClickDB(options.root)
     package_path = args[0]
     installer = ClickInstaller(db, options.force_missing_framework)
-    installer.install(
-        package_path, user=options.user, all_users=options.all_users)
+    try:
+        installer.install(
+            package_path, user=options.user, all_users=options.all_users)
+    except ClickInstallerAuditError as e:
+        print("Cannot install %s: %s" % (package_path, e), file=sys.stderr)
+        return 1
     return 0

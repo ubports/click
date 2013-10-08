@@ -22,7 +22,7 @@ import sys
 from textwrap import dedent
 
 from click.database import ClickDB
-from click.install import ClickInstaller, ClickInstallerAuditError
+from click.install import ClickInstaller, ClickInstallerError
 
 
 def run(argv):
@@ -51,7 +51,7 @@ def run(argv):
     try:
         installer.install(
             package_path, user=options.user, all_users=options.all_users)
-    except ClickInstallerAuditError as e:
+    except ClickInstallerError as e:
         print("Cannot install %s: %s" % (package_path, e), file=sys.stderr)
         return 1
     return 0

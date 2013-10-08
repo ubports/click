@@ -21,6 +21,7 @@ __metaclass__ = type
 __all__ = [
     'ClickInstaller',
     'ClickInstallerAuditError',
+    'ClickInstallerError',
     'ClickInstallerPermissionDenied',
     ]
 
@@ -66,11 +67,15 @@ except AttributeError:
             self.data._DebPart__member.close()
 
 
-class ClickInstallerPermissionDenied(Exception):
+class ClickInstallerError(Exception):
     pass
 
 
-class ClickInstallerAuditError(Exception):
+class ClickInstallerPermissionDenied(ClickInstallerError):
+    pass
+
+
+class ClickInstallerAuditError(ClickInstallerError):
     pass
 
 
@@ -262,7 +267,8 @@ class ClickInstaller:
                 break
         if not self._euid_access("clickpkg", path, os.W_OK):
             raise ClickInstallerPermissionDenied(
-                "No permission to write to %s as clickpkg user" % path)
+                'Cannot acquire permission to write to %s; either run as root '
+                'with --user, or use "pkcon install-local" instead' % path)
 
     def _install_preexec(self, inst_dir):
         self._drop_privileges("clickpkg")

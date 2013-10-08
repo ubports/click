@@ -5,6 +5,8 @@ click (0.4.11) UNRELEASED; urgency=low
     ubuntu-sdk-libs.
   * Show a neater error message when a package's framework is not installed
     (LP: #1236671).
+  * Show a neater error message when building a package whose manifest file
+    cannot be parsed (LP: #1236669).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Oct 2013 14:00:03 +0100
 

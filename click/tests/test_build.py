@@ -31,7 +31,7 @@ import subprocess
 import tarfile
 from textwrap import dedent
 
-from click.build import ClickBuilder, ClickSourceBuilder
+from click.build import ClickBuildError, ClickBuilder, ClickSourceBuilder
 from click.preinst import static_preinst
 from click.tests.helpers import TestCase, mkfile, touch
 
@@ -93,6 +93,19 @@ class TestClickBuilderBaseMixin:
                     }""") % version, file=manifest)
             self.builder.read_manifest(manifest_path)
             self.assertEqual(epochless_version, self.builder.epochless_version)
+
+    def test_manifest_syntax_error(self):
+        self.use_temp_dir()
+        manifest_path = os.path.join(self.temp_dir, "manifest.json")
+        with mkfile(manifest_path) as manifest:
+            # The comma after the "name" entry is intentionally missing.
+            print(dedent("""\
+                {
+                    "name": "com.ubuntu.test"
+                    "version": "1.0"
+                }"""), file=manifest)
+        self.assertRaises(
+            ClickBuildError, self.builder.read_manifest, manifest_path)
 
 
 class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):

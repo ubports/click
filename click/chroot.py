@@ -26,6 +26,7 @@ __all__ = [
 
 
 import os
+import pwd
 import shutil
 import stat
 import subprocess
@@ -68,6 +69,10 @@ class ClickChroot:
             self.archive = os.environ['DEBOOTSTRAP_MIRROR']
         else:
             self.archive = "http://archive.ubuntu.com/ubuntu"
+        if "SUDO_USER" in os.environ:
+            self.user = os.environ["SUDO_USER"]
+        else:
+            self.user = pwd.getpwuid(os.getuid()).pw_name
 
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -148,13 +153,12 @@ class ClickChroot:
         shutil.copy2("/etc/timezone", "%s/etc/" % mount)
         chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
         with open(chroot_config, "w") as target:
-            admin_groups = "root"
+            admin_user = "root"
             print("[%s]" % self.full_name, file=target)
             print("description=Build chroot for click packages on %s" %
                   self.target_arch, file=target)
-            for group in ["groups", "root-groups", "source-root-users",
-                          "source-root-groups"]:
-                print("%s=%s" % (group, admin_groups), file=target)
+            for key in ("users", "root-users", "source-root-users"):
+                print("%s=%s,%s" % (key, admin_user, self.user), file=target)
             print("type=directory", file=target)
             print("profile=default", file=target)
             print("# Not protocols or services see ", file=target)

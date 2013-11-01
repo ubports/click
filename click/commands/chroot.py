@@ -25,32 +25,26 @@ from click.chroot import ClickChroot
 
 
 def create(args):
-    ClickChroot("saucy", args.architecture,
-                "ubuntu-sdk-13.10").create()
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").create()
 
 
 def install(args):
     packages = args.packages
-    ClickChroot("saucy", args.architecture,
-                "ubuntu-sdk-13.10").install(*packages)
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").install(*packages)
 
 
 def destroy(args):
     # ask for confirmation?
-    ClickChroot("saucy", args.architecture,
-                "ubuntu-sdk-13.10").destroy()
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").destroy()
 
 
 def execute(args):
-    # not sure what to do wrt setting up the env
     program = args.program
-    ClickChroot("saucy", args.architecture,
-                "ubuntu-sdk-13.10").run(*program)
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").run(*program)
 
 
 def upgrade(args):
-    ClickChroot("saucy", args.architecture,
-                "ubuntu-sdk-13.10").upgrade()
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").upgrade()
 
 
 def run(argv):

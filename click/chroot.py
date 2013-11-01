@@ -32,6 +32,11 @@ import stat
 import subprocess
 
 
+framework_series = {
+    "ubuntu-sdk-13.10": "saucy",
+    }
+
+
 extra_packages = {
     "ubuntu-sdk-13.10": [
         "libqt5opengl5-dev:TARGET",
@@ -53,10 +58,9 @@ class ClickChrootException(Exception):
 
 
 class ClickChroot:
-    def __init__(self, series, target_arch, framework, name=None):
+    def __init__(self, target_arch, framework, name=None):
         if name is None:
             name = "click"
-        self.series = series
         self.target_arch = target_arch
         self.framework = framework
         self.name = name
@@ -111,10 +115,13 @@ class ClickChroot:
         return sources
 
     @property
+    def series(self):
+        return framework_series[self.framework]
+
+    @property
     def full_name(self):
-        return "%s-%s-%s-%s-%s" % (
-            self.name, self.framework, self.series, self.native_arch,
-            self.target_arch)
+        return "%s-%s-%s-%s" % (
+            self.name, self.framework, self.native_arch, self.target_arch)
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]

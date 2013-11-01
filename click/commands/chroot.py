@@ -40,6 +40,8 @@ def destroy(args):
 
 def execute(args):
     program = args.program
+    if not program:
+        program = ["/bin/bash"]
     ClickChroot(args.architecture, "ubuntu-sdk-13.10").run(*program)
 
 

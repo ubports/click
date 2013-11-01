@@ -53,6 +53,9 @@ extra_packages = {
     }
 
 
+primary_arches = ["amd64", "i386"]
+
+
 class ClickChrootException(Exception):
     pass
 
@@ -100,13 +103,13 @@ class ClickChroot:
         for pocket in ['updates', 'security']:
             pockets.append('%s-%s' % (series, pocket))
         sources = []
-        if target_arch in ['armhf']:
+        if target_arch not in primary_arches:
             for pocket in pockets:
                 sources.append("deb [arch=%s] %s %s %s" %
                                (target_arch, ports_mirror, pocket, components))
                 sources.append("deb-src %s %s %s" %
                                (ports_mirror, pocket, components))
-        if native_arch in ['i386', 'amd64']:
+        if native_arch in primary_arches:
             for pocket in pockets:
                 sources.append("deb [arch=%s] %s %s %s" %
                                (native_arch, self.archive, pocket, components))

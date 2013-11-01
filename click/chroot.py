@@ -73,6 +73,22 @@ class ClickChroot:
             self.user = os.environ["SUDO_USER"]
         else:
             self.user = pwd.getpwuid(os.getuid()).pw_name
+        self.dpkg_architecture = self._dpkg_architecture()
+
+    def _dpkg_architecture(self):
+        dpkg_architecture = {}
+        command = ["dpkg-architecture", "-a%s" % self.target_arch]
+        env = dict(os.environ)
+        env["CC"] = "true"
+        lines = subprocess.check_output(
+            command, env=env, universal_newlines=True).splitlines()
+        for line in lines:
+            try:
+                key, value = line.split("=", 1)
+            except ValueError:
+                continue
+            dpkg_architecture[key] = value
+        return dpkg_architecture
 
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -119,11 +135,7 @@ class ClickChroot:
             proxy = subprocess.check_output(
                 'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
                 shell=True, universal_newlines=True).strip()
-        with open("/dev/null", "w") as devnull:
-            target_tuple = subprocess.check_output(
-                ["dpkg-architecture", "-a%s" % self.target_arch,
-                 "-qDEB_HOST_GNU_TYPE"], stderr=devnull,
-                universal_newlines=True).strip()
+        target_tuple = self.dpkg_architecture["DEB_HOST_GNU_TYPE"]
         build_pkgs = [
             "build-essential", "fakeroot",
             "apt-utils", "g++-%s" % target_tuple,
@@ -231,7 +243,10 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        command = ["schroot", "-c", self.full_name, "--"]
+        command = ["schroot", "-c", self.full_name, "--", "env"]
+        for key, value in self.dpkg_architecture.items():
+            if key.startswith("DEB_HOST_"):
+                command.append("%s=%s" % (key, value))
         command.extend(args)
         subprocess.check_call(command)
 

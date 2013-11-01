@@ -120,8 +120,7 @@ class ClickChroot:
 
     @property
     def full_name(self):
-        return "%s-%s-%s-%s" % (
-            self.name, self.framework, self.native_arch, self.target_arch)
+        return "%s-%s-%s" % (self.name, self.framework, self.target_arch)
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]

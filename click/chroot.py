@@ -161,6 +161,7 @@ class ClickChroot:
                 print("%s=%s,%s" % (key, admin_user, self.user), file=target)
             print("type=directory", file=target)
             print("profile=default", file=target)
+            print("setup.fstab=click/fstab", file=target)
             print("# Not protocols or services see ", file=target)
             print("# debian bug 557730", file=target)
             print("setup.nssdatabases=sbuild/nssdatabases",
@@ -230,16 +231,13 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        command = ["schroot", "-c", self.full_name, "--directory=/", "--"]
+        command = ["schroot", "-c", self.full_name, "--"]
         command.extend(args)
         subprocess.check_call(command)
 
     def maint(self, *args):
         command = [
-            # directory is a workaround for the click or user's home directory
-            # not existing
-            "schroot", "-c", "source:%s" % self.full_name,
-            "-u", "root", "--directory=/", "--",
+            "schroot", "-c", "source:%s" % self.full_name, "-u", "root", "--",
             ]
         command.extend(args)
         subprocess.check_call(command)

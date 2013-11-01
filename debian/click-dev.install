@@ -1,3 +1,4 @@
+etc/schroot/click
 usr/bin/dh_click
 usr/share/debhelper
 usr/share/man/man1/dh_click.1

@@ -1,4 +1,5 @@
-etc
+etc/click
+etc/init
 usr/bin/click
 usr/lib/*/click
 usr/share/upstart

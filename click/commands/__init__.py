@@ -21,6 +21,7 @@ import importlib
 all_commands = (
     "build",
     "buildsource",
+    "chroot",
     "contents",
     "desktophook",
     "hook",

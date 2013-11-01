@@ -33,6 +33,7 @@ COMMAND OVERVIEW
 
     click build DIRECTORY
     click buildsource DIRECTORY
+    click chroot
     click contents PATH
     click hook install HOOK
     click hook remove HOOK
@@ -88,6 +89,37 @@ Options:
 
 -m PATH, --manifest=PATH    Read package manifest from PATH
                             (default: ``manifest.json``).
+
+click chroot
+------------
+
+Manage chroot environments for cross-building Click packages.
+
+Options:
+
+-a ARCH, --architecture ARCH    Set the target architecture.
+
+Subcommands:
+
+create
+    Create a chroot.
+
+destroy
+    Destroy a chroot.
+
+install PACKAGES
+    Install packages in the chroot.
+
+maint COMMAND ARGUMENTS
+    Run a maintenance command in the chroot.  Unlike ``run``, this runs its
+    command as root inside the chroot, and its effects on the chroot will
+    persist after ``click chroot maint`` exits.
+
+run COMMAND ARGUMENTS
+    Run a program in the chroot.
+
+upgrade
+    Upgrade the chroot.
 
 click contents PATH
 -------------------

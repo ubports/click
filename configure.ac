@@ -62,6 +62,7 @@ AC_CONFIG_FILES([
 	pk-plugin/Makefile
 	po/Makefile.in
 	preload/Makefile
+	schroot/Makefile
 	upstart/Makefile
 	])
 AC_CONFIG_FILES([setup.py], [chmod +x setup.py])

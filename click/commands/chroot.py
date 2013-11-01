@@ -20,8 +20,10 @@
 from __future__ import print_function
 
 from argparse import ArgumentParser, REMAINDER
+import os
 
 from click.chroot import ClickChroot
+from click import osextras
 
 
 def create(args):
@@ -98,4 +100,9 @@ def run(argv):
         help="program to run with arguments")
     maint_parser.set_defaults(func=maint)
     args = parser.parse_args(argv)
+    if (not osextras.find_on_path("schroot") or
+            not os.path.exists("/etc/schroot/click/fstab")):
+        parser.error(
+            "schroot not installed and configured; install click-dev and "
+            "schroot")
     args.func(args)

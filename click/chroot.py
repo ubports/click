@@ -258,8 +258,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_name, "--", "env"]
         for key, value in self.dpkg_architecture.items():
-            if key.startswith("DEB_HOST_"):
-                command.append("%s=%s" % (key, value))
+            command.append("%s=%s" % (key, value))
         command.extend(args)
         subprocess.check_call(command)
 

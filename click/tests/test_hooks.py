@@ -41,7 +41,7 @@ from click.hooks import (
     package_remove_hooks,
     )
 from click.user import ClickUser
-from click.tests.helpers import TestCase, mkfile, mock
+from click.tests.helpers import TestCase, mkfile, mkfile_utf8, mock
 
 
 @contextlib.contextmanager
@@ -212,23 +212,23 @@ class TestClickHookSystemLevel(TestClickHookBase):
     def test_install(self):
         with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
             print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
-        with mkfile(os.path.join(
+        with mkfile_utf8(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
             json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-1"}},
-            }, f)
+            }, f, ensure_ascii=False)
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
-        with mkfile(os.path.join(
+        with mkfile_utf8(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
             json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-2"}},
-            }, f)
+            }, f, ensure_ascii=False)
         os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open(self.db, "new")
@@ -484,23 +484,23 @@ class TestClickHookUserLevel(TestClickHookBase):
             print("User-Level: yes", file=f)
             print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
         user_db = ClickUser(self.db, user="test-user")
-        with mkfile(os.path.join(
+        with mkfile_utf8(os.path.join(
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
             json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-1"}},
-            }, f)
+            }, f, ensure_ascii=False)
         user_db.set_version("test-1", "1.0")
-        with mkfile(os.path.join(
+        with mkfile_utf8(os.path.join(
                 self.temp_dir, "test-2", "2.0", ".click", "info",
                 "test-2.manifest")) as f:
             json.dump({
                 "maintainer":
                     b"Unic\xc3\xb3de <unicode@example.org>".decode("UTF-8"),
                 "hooks": {"test1-app": {"new": "target-2"}},
-            }, f)
+            }, f, ensure_ascii=False)
         user_db.set_version("test-2", "2.0")
         with temp_hooks_dir(os.path.join(self.temp_dir, "hooks")):
             hook = ClickHook.open(self.db, "new")

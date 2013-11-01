@@ -20,6 +20,9 @@ from __future__ import print_function
 __metaclass__ = type
 __all__ = [
     'ClickInstaller',
+    'ClickInstallerAuditError',
+    'ClickInstallerError',
+    'ClickInstallerPermissionDenied',
     ]
 
 
@@ -64,7 +67,15 @@ except AttributeError:
             self.data._DebPart__member.close()
 
 
-class ClickInstallerPermissionDenied(Exception):
+class ClickInstallerError(Exception):
+    pass
+
+
+class ClickInstallerPermissionDenied(ClickInstallerError):
+    pass
+
+
+class ClickInstallerAuditError(ClickInstallerError):
     pass
 
 
@@ -117,9 +128,9 @@ class ClickInstaller:
             try:
                 click_version = Version(control_fields["Click-Version"])
             except KeyError:
-                raise ValueError("No Click-Version field")
+                raise ClickInstallerAuditError("No Click-Version field")
             if click_version > spec_version:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     "Click-Version: %s newer than maximum supported version "
                     "%s" % (click_version, spec_version))
 
@@ -129,7 +140,7 @@ class ClickInstaller:
                 "Provides",
             ):
                 if field in control_fields:
-                    raise ValueError(
+                    raise ClickInstallerAuditError(
                         "%s field is forbidden in Click packages" % field)
 
             scripts = package.control.scripts()
@@ -137,49 +148,51 @@ class ClickInstaller:
                     static_preinst_matches(scripts["preinst"])):
                 scripts.pop("preinst", None)
             if scripts:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     "Maintainer scripts are forbidden in Click packages "
                     "(found: %s)" %
                     " ".join(sorted(scripts)))
 
             if not package.control.has_file("manifest"):
-                raise ValueError("Package has no manifest")
+                raise ClickInstallerAuditError("Package has no manifest")
             with package.control.get_file("manifest", encoding="UTF-8") as f:
                 manifest = json.load(f)
 
             try:
                 package_name = manifest["name"]
             except KeyError:
-                raise ValueError('No "name" entry in manifest')
+                raise ClickInstallerAuditError('No "name" entry in manifest')
             # TODO: perhaps just do full name validation?
             if "/" in package_name:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     'Invalid character "/" in "name" entry: %s' % package_name)
             if "_" in package_name:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     'Invalid character "_" in "name" entry: %s' % package_name)
 
             try:
                 package_version = manifest["version"]
             except KeyError:
-                raise ValueError('No "version" entry in manifest')
+                raise ClickInstallerAuditError(
+                    'No "version" entry in manifest')
             # TODO: perhaps just do full version validation?
             if "/" in package_version:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     'Invalid character "/" in "version" entry: %s' %
                     package_version)
             if "_" in package_version:
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     'Invalid character "_" in "version" entry: %s' %
                     package_version)
 
             try:
                 framework = manifest["framework"]
             except KeyError:
-                raise ValueError('No "framework" entry in manifest')
+                raise ClickInstallerAuditError(
+                    'No "framework" entry in manifest')
             if (not self.force_missing_framework and
                     not self._has_framework(framework)):
-                raise ValueError(
+                raise ClickInstallerAuditError(
                     'Framework "%s" not present on system (use '
                     '--force-missing-framework option to override)' %
                     framework)
@@ -190,12 +203,12 @@ class ClickInstaller:
                     dpkg_architecture = self._dpkg_architecture()
                     if isinstance(architecture, list):
                         if dpkg_architecture not in architecture:
-                            raise ValueError(
+                            raise ClickInstallerAuditError(
                                 'Package architectures "%s" not compatible '
                                 'with system architecture "%s"' %
                                 (" ".join(architecture), dpkg_architecture))
                     elif architecture != dpkg_architecture:
-                        raise ValueError(
+                        raise ClickInstallerAuditError(
                             'Package architecture "%s" not compatible '
                             'with system architecture "%s"' %
                             (architecture, dpkg_architecture))
@@ -254,7 +267,8 @@ class ClickInstaller:
                 break
         if not self._euid_access("clickpkg", path, os.W_OK):
             raise ClickInstallerPermissionDenied(
-                "No permission to write to %s as clickpkg user" % path)
+                'Cannot acquire permission to write to %s; either run as root '
+                'with --user, or use "pkcon install-local" instead' % path)
 
     def _install_preexec(self, inst_dir):
         self._drop_privileges("clickpkg")

@@ -19,8 +19,9 @@ from __future__ import print_function
 
 from optparse import OptionParser
 import os
+import sys
 
-from click.build import ClickSourceBuilder
+from click.build import ClickBuildError, ClickSourceBuilder
 
 
 def run(argv):
@@ -40,6 +41,10 @@ def run(argv):
             (directory, options.manifest))
     builder = ClickSourceBuilder()
     builder.add_file(directory, "./")
-    path = builder.build(".", manifest_path=options.manifest)
+    try:
+        path = builder.build(".", manifest_path=options.manifest)
+    except ClickBuildError as e:
+        print(e, file=sys.stderr)
+        return 1
     print("Successfully built source package in '%s'." % path)
     return 0

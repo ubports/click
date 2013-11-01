@@ -13,15 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Install a Click package."""
+"""Install a Click package (low-level; consider pkcon instead)."""
 
 from __future__ import print_function
 
 from optparse import OptionParser
+import sys
 from textwrap import dedent
 
 from click.database import ClickDB
-from click.install import ClickInstaller
+from click.install import ClickInstaller, ClickInstallerError
 
 
 def run(argv):
@@ -47,6 +48,10 @@ def run(argv):
     db = ClickDB(options.root)
     package_path = args[0]
     installer = ClickInstaller(db, options.force_missing_framework)
-    installer.install(
-        package_path, user=options.user, all_users=options.all_users)
+    try:
+        installer.install(
+            package_path, user=options.user, all_users=options.all_users)
+    except ClickInstallerError as e:
+        print("Cannot install %s: %s" % (package_path, e), file=sys.stderr)
+        return 1
     return 0

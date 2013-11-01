@@ -31,6 +31,7 @@ __all__ = [
 import contextlib
 import os
 import shutil
+import sys
 import tempfile
 try:
     import unittest2 as unittest
@@ -233,6 +234,21 @@ def mkfile(path, mode="w"):
     osextras.ensuredir(os.path.dirname(path))
     with open(path, mode) as f:
         yield f
+
+
+@contextlib.contextmanager
+def mkfile_utf8(path, mode="w"):
+    osextras.ensuredir(os.path.dirname(path))
+    if sys.version < "3":
+        import codecs
+        with codecs.open(path, mode, "UTF-8") as f:
+            yield f
+    else:
+        # io.open is available from Python 2.6, but we only use it with
+        # Python 3 because it raises exceptions when passed bytes.
+        import io
+        with io.open(path, mode, encoding="UTF-8") as f:
+            yield f
 
 
 def touch(path):

@@ -23,6 +23,7 @@ Description: Click packages
 
 Package: click-dev
 Architecture: any
+Multi-Arch: foreign
 Depends: ${misc:Depends}, ${python3:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of

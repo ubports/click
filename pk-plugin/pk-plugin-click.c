@@ -522,8 +522,7 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 		(pk_transaction_get_uid (transaction));
 	if (username)
 		argv[i++] = g_strdup_printf ("--user=%s", username);
-	/* TODO: make configurable */
-	argv[i++] = g_strdup ("--force-missing-framework");
+	/* TODO: make --force-missing-framework configurable */
 	argv[i++] = g_strdup (filename);
 	envp = click_get_envp ();
 	ret = g_spawn_sync (NULL, argv, envp,

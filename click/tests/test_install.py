@@ -38,7 +38,11 @@ from debian.deb822 import Deb822
 from click import install, osextras
 from click.build import ClickBuilder
 from click.database import ClickDB
-from click.install import ClickInstaller, ClickInstallerPermissionDenied
+from click.install import (
+    ClickInstaller,
+    ClickInstallerAuditError,
+    ClickInstallerPermissionDenied,
+)
 from click.preinst import static_preinst
 from click.tests.helpers import TestCase, mkfile, mock, touch
 
@@ -115,7 +119,7 @@ class TestClickInstaller(TestCase):
     def test_audit_no_click_version(self):
         path = self.make_fake_package()
         self.assertRaisesRegex(
-            ValueError, "No Click-Version field",
+            ClickInstallerAuditError, "No Click-Version field",
             ClickInstaller(self.db).audit, path)
 
     def test_audit_bad_click_version(self):
@@ -125,7 +129,7 @@ class TestClickInstaller(TestCase):
     def test_audit_new_click_version(self):
         path = self.make_fake_package(control_fields={"Click-Version": "999"})
         self.assertRaisesRegex(
-            ValueError,
+            ClickInstallerAuditError,
             "Click-Version: 999 newer than maximum supported version .*",
             ClickInstaller(self.db).audit, path)
 
@@ -137,7 +141,8 @@ class TestClickInstaller(TestCase):
             })
         with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
-                ValueError, "Depends field is forbidden in Click packages",
+                ClickInstallerAuditError,
+                "Depends field is forbidden in Click packages",
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_forbids_maintscript(self):
@@ -149,7 +154,7 @@ class TestClickInstaller(TestCase):
             })
         with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
-                ValueError,
+                ClickInstallerAuditError,
                 r"Maintainer scripts are forbidden in Click packages "
                 r"\(found: postinst preinst\)",
                 ClickInstaller(self.db).audit, path)
@@ -160,7 +165,7 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst})
         with self.make_framework("ubuntu-sdk-13.10"):
             self.assertRaisesRegex(
-                ValueError, "Package has no manifest",
+                ClickInstallerAuditError, "Package has no manifest",
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_invalid_manifest_json(self):
@@ -175,7 +180,7 @@ class TestClickInstaller(TestCase):
             control_fields={"Click-Version": "0.2"},
             manifest={})
         self.assertRaisesRegex(
-            ValueError, 'No "name" entry in manifest',
+            ClickInstallerAuditError, 'No "name" entry in manifest',
             ClickInstaller(self.db).audit, path)
 
     def test_audit_name_bad_character(self):
@@ -183,7 +188,8 @@ class TestClickInstaller(TestCase):
             control_fields={"Click-Version": "0.2"},
             manifest={"name": "../evil"})
         self.assertRaisesRegex(
-            ValueError, 'Invalid character "/" in "name" entry: ../evil',
+            ClickInstallerAuditError,
+            'Invalid character "/" in "name" entry: ../evil',
             ClickInstaller(self.db).audit, path)
 
     def test_audit_no_version(self):
@@ -191,7 +197,7 @@ class TestClickInstaller(TestCase):
             control_fields={"Click-Version": "0.2"},
             manifest={"name": "test-package"})
         self.assertRaisesRegex(
-            ValueError, 'No "version" entry in manifest',
+            ClickInstallerAuditError, 'No "version" entry in manifest',
             ClickInstaller(self.db).audit, path)
 
     def test_audit_no_framework(self):
@@ -200,7 +206,7 @@ class TestClickInstaller(TestCase):
             manifest={"name": "test-package", "version": "1.0"},
             control_scripts={"preinst": static_preinst})
         self.assertRaisesRegex(
-            ValueError, 'No "framework" entry in manifest',
+            ClickInstallerAuditError, 'No "framework" entry in manifest',
             ClickInstaller(self.db).audit, path)
 
     def test_audit_missing_framework(self):
@@ -214,7 +220,8 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst})
         with self.make_framework("present"):
             self.assertRaisesRegex(
-                ValueError, 'Framework "missing" not present on system.*',
+                ClickInstallerAuditError,
+                'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_missing_framework_force(self):

@@ -1,3 +1,26 @@
+click (0.4.12) UNRELEASED; urgency=low
+
+  * Adjust top-level "click help" entry for "install" to point to pkcon.
+  * Fix hook installation tests to test Unicode manifests properly.
+  * Read version and date from debian/changelog when building documentation.
+  * Declare click-dev Multi-Arch: foreign (LP: #1238796).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 22 Oct 2013 11:44:22 +0100
+
+click (0.4.11) saucy; urgency=low
+
+  * Drop --force-missing-framework from PackageKit plugin now that
+    /usr/share/click/frameworks/ubuntu-sdk-13.10.framework is in
+    ubuntu-sdk-libs.
+  * Show a neater error message when a package's framework is not installed
+    (LP: #1236671).
+  * Show a neater error message when building a package whose manifest file
+    cannot be parsed (LP: #1236669).
+  * Show a neater error message when running "click install" with
+    insufficient privileges (LP: #1236673).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 11 Oct 2013 12:07:06 +0100
+
 click (0.4.10) saucy; urgency=low
 
   * When removing packages, only drop privileges after ensuring the

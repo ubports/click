@@ -19,6 +19,7 @@ from __future__ import print_function
 
 __metaclass__ = type
 __all__ = [
+    'ClickBuildError',
     'ClickBuilder',
     'ClickSourceBuilder',
     ]
@@ -63,6 +64,10 @@ class FakerootTarFile(tarfile.TarFile):
         return tarinfo
 
 
+class ClickBuildError(Exception):
+    pass
+
+
 class ClickBuilderBase:
     def __init__(self):
         self.file_map = {}
@@ -72,7 +77,11 @@ class ClickBuilderBase:
 
     def read_manifest(self, manifest_path):
         with io.open(manifest_path, encoding="UTF-8") as manifest:
-            self.manifest = json.load(manifest)
+            try:
+                self.manifest = json.load(manifest)
+            except Exception as e:
+                raise ClickBuildError(
+                    "Error reading manifest from %s: %s" % (manifest_path, e))
             keys = sorted(self.manifest)
             for key in keys:
                 if key.startswith("_"):

@@ -12,6 +12,7 @@
 # serve to show the default.
 
 from datetime import datetime
+import io
 import os
 import re
 import sys
@@ -51,7 +52,7 @@ changelog_trailer = re.compile(
     r'^ \-\- .* <.*>  ?((\w+\,\s*)?\d{1,2}\s+\w+\s+\d{4}\s+\d{1,2}:\d\d:\d\d)'
     r'\s+[-+]\d{4}(\s+\([^\\\(\)]\))?\s*$')
 
-with open('../debian/changelog') as changelog:
+with io.open('../debian/changelog', encoding="UTF-8") as changelog:
     line = changelog.readline()
     match = changelog_header.match(line)
     if match is None:

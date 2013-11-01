@@ -1,9 +1,13 @@
 click (0.4.12) UNRELEASED; urgency=low
 
+  [ Colin Watson ]
   * Adjust top-level "click help" entry for "install" to point to pkcon.
   * Fix hook installation tests to test Unicode manifests properly.
   * Read version and date from debian/changelog when building documentation.
   * Declare click-dev Multi-Arch: foreign (LP: #1238796).
+
+  [ Brian Murray, Colin Watson ]
+  * Add chroot management support.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 22 Oct 2013 11:44:22 +0100
 

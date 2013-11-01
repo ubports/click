@@ -210,7 +210,7 @@ class ClickChroot:
                 print("mkdir -p /etc/apt/apt.conf.d", file=finish)
                 print("cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF",
                       file=finish)
-                print("// proxy settings copied by click-chroot", file=finish)
+                print("// proxy settings copied by click chroot", file=finish)
                 print('Acquire { HTTP { Proxy "%s"; }; };' % proxy,
                       file=finish)
                 print("EOF", file=finish)

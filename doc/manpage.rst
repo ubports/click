@@ -110,6 +110,11 @@ destroy
 install PACKAGES
     Install packages in the chroot.
 
+maint COMMAND ARGUMENTS
+    Run a maintenance command in the chroot.  Unlike ``run``, this runs its
+    command as root inside the chroot, and its effects on the chroot will
+    persist after ``click chroot maint`` exits.
+
 run COMMAND ARGUMENTS
     Run a program in the chroot.
 

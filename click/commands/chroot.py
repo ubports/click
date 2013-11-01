@@ -45,6 +45,13 @@ def execute(args):
     ClickChroot(args.architecture, "ubuntu-sdk-13.10").run(*program)
 
 
+def maint(args):
+    program = args.program
+    if not program:
+        program = ["/bin/bash"]
+    ClickChroot(args.architecture, "ubuntu-sdk-13.10").maint(*program)
+
+
 def upgrade(args):
     ClickChroot(args.architecture, "ubuntu-sdk-13.10").upgrade()
 
@@ -83,5 +90,12 @@ def run(argv):
         "program", nargs=REMAINDER,
         help="program to run with arguments")
     execute_parser.set_defaults(func=execute)
+    maint_parser = subparsers.add_parser(
+        "maint",
+        help="run a maintenance command in the chroot")
+    maint_parser.add_argument(
+        "program", nargs=REMAINDER,
+        help="program to run with arguments")
+    maint_parser.set_defaults(func=maint)
     args = parser.parse_args(argv)
     args.func(args)

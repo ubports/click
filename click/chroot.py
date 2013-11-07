@@ -65,12 +65,15 @@ class ClickChrootException(Exception):
 
 
 class ClickChroot:
-    def __init__(self, target_arch, framework, name=None):
+    def __init__(self, target_arch, framework, name=None, series=None):
         if name is None:
             name = "click"
+        if series is None:
+            series = framework_series[self.framework]
         self.target_arch = target_arch
         self.framework = framework
         self.name = name
+        self.series = series
         self.native_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
@@ -120,10 +123,6 @@ class ClickChroot:
                 sources.append("deb-src %s %s %s" %
                                (self.archive, pocket, components))
         return sources
-
-    @property
-    def series(self):
-        return framework_series[self.framework]
 
     @property
     def full_name(self):

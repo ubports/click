@@ -27,7 +27,8 @@ from click import osextras
 
 
 def create(args):
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").create()
+    ClickChroot(
+        args.architecture, "ubuntu-sdk-13.10", series=args.series).create()
 
 
 def install(args):
@@ -66,6 +67,10 @@ def run(argv):
     parser.add_argument(
         "-a", "--architecture", required=True,
         help="architecture for the chroot")
+    parser.add_argument(
+        "-s", "--series",
+        help="series to use for a newly-created chroot (defaults to a series "
+             "appropriate for the framework)")
     create_parser = subparsers.add_parser(
         "create",
         help="create a chroot of the provided architecture")

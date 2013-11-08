@@ -69,7 +69,7 @@ class ClickChroot:
         if name is None:
             name = "click"
         if series is None:
-            series = framework_series[self.framework]
+            series = framework_series[framework]
         self.target_arch = target_arch
         self.framework = framework
         self.name = name

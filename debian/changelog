@@ -5,6 +5,8 @@ click (0.4.12) UNRELEASED; urgency=low
   * Fix hook installation tests to test Unicode manifests properly.
   * Read version and date from debian/changelog when building documentation.
   * Declare click-dev Multi-Arch: foreign (LP: #1238796).
+  * Build-depend on python3:any/python3-all:any rather than
+    python3/python3-all.
 
   [ Brian Murray, Colin Watson ]
   * Add chroot management support.

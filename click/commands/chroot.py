@@ -27,36 +27,35 @@ from click import osextras
 
 
 def create(args):
-    ClickChroot(
-        args.architecture, "ubuntu-sdk-13.10", series=args.series).create()
+    ClickChroot(args.architecture, args.framework, series=args.series).create()
 
 
 def install(args):
     packages = args.packages
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").install(*packages)
+    ClickChroot(args.architecture, args.framework).install(*packages)
 
 
 def destroy(args):
     # ask for confirmation?
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").destroy()
+    ClickChroot(args.architecture, args.framework).destroy()
 
 
 def execute(args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").run(*program)
+    ClickChroot(args.architecture, args.framework).run(*program)
 
 
 def maint(args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").maint(*program)
+    ClickChroot(args.architecture, args.framework).maint(*program)
 
 
 def upgrade(args):
-    ClickChroot(args.architecture, "ubuntu-sdk-13.10").upgrade()
+    ClickChroot(args.architecture, args.framework).upgrade()
 
 
 def run(argv):
@@ -67,6 +66,9 @@ def run(argv):
     parser.add_argument(
         "-a", "--architecture", required=True,
         help="architecture for the chroot")
+    parser.add_argument(
+        "-f", "--framework", default="ubuntu-sdk-13.10",
+        help="framework for the chroot (default: ubuntu-sdk-13.10)")
     parser.add_argument(
         "-s", "--series",
         help="series to use for a newly-created chroot (defaults to a series "

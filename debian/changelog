@@ -1,3 +1,10 @@
+click (0.4.13) UNRELEASED; urgency=low
+
+  [ Robert Bruce Park ]
+  * Ignore click packages when building click packages.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 26 Nov 2013 09:42:38 +0000
+
 click (0.4.12) trusty; urgency=low
 
   [ Colin Watson ]

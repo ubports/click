@@ -275,8 +275,8 @@ class ClickSourceBuilder(ClickBuilderBase):
     # From @Dpkg::Source::Package::tar_ignore_default_pattern.
     # TODO: This should be configurable, or at least extensible.
     _ignore_patterns = [
-        "*.click",
         "*.a",
+        "*.click",
         "*.la",
         "*.o",
         "*.so",

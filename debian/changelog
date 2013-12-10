@@ -1,4 +1,4 @@
-click (0.4.13) UNRELEASED; urgency=low
+click (0.4.13) trusty; urgency=low
 
   [ Robert Bruce Park ]
   * Ignore click packages when building click packages.
@@ -10,7 +10,7 @@ click (0.4.13) UNRELEASED; urgency=low
   * Ensure correct permissions on /opt/click.ubuntu.com at boot, since a
     system image update may have changed clickpkg's UID/GID (LP: #1259253).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 26 Nov 2013 09:42:38 +0000
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 10 Dec 2013 14:33:42 +0000
 
 click (0.4.12) trusty; urgency=low
 

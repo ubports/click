@@ -28,7 +28,27 @@ import json
 import os
 
 from click.database import ClickDB
-from click.tests.helpers import TestCase, mkfile, mock
+from click.tests.helpers import TestCase, mkfile, mock, touch
+
+
+class MockPasswd:
+    def __init__(self, pw_uid, pw_gid):
+        self.pw_uid = pw_uid
+        self.pw_gid = pw_gid
+
+
+class MockStatResult:
+    original_stat = os.stat
+
+    def __init__(self, path, **override):
+        self.st = self.original_stat(path)
+        self.override = override
+
+    def __getattr__(self, name):
+        if name in self.override:
+            return self.override[name]
+        else:
+            return getattr(self.st, name)
 
 
 class TestClickSingleDB(TestCase):
@@ -184,6 +204,66 @@ class TestClickSingleDB(TestCase):
         self.assertTrue(os.path.exists(a_path))
         self.assertFalse(os.path.exists(b_path))
         self.assertTrue(os.path.exists(c_path))
+
+    def _make_ownership_test(self):
+        path = os.path.join(self.temp_dir, "a", "1.0")
+        manifest_path = os.path.join(path, ".click", "info", "a.manifest")
+        touch(manifest_path)
+        user_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user", "a")
+        os.makedirs(os.path.dirname(user_path))
+        os.symlink(path, user_path)
+
+    def test_clickpkg_paths(self):
+        self._make_ownership_test()
+        self.assertCountEqual([
+            self.temp_dir,
+            os.path.join(self.temp_dir, ".click"),
+            os.path.join(self.temp_dir, ".click", "users"),
+            os.path.join(self.temp_dir, "a"),
+            os.path.join(self.temp_dir, "a", "1.0"),
+            os.path.join(self.temp_dir, "a", "1.0", ".click"),
+            os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
+            os.path.join(
+                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
+        ], list(self.db._clickpkg_paths()))
+
+    @mock.patch("pwd.getpwnam")
+    @mock.patch("os.chown")
+    def test_ensure_ownership_quick_if_correct(self, mock_chown,
+                                               mock_getpwnam):
+        mock_getpwnam.return_value = MockPasswd(pw_uid=1, pw_gid=1)
+        self._make_ownership_test()
+        with mock.patch("os.stat") as mock_stat:
+            mock_stat.side_effect = (
+                lambda path, *args, **kwargs: MockStatResult(
+                    path, st_uid=1, st_gid=1))
+            self.db.ensure_ownership()
+        self.assertFalse(mock_chown.called)
+
+    @mock.patch("pwd.getpwnam")
+    @mock.patch("os.chown")
+    def test_ensure_ownership(self, mock_chown, mock_getpwnam):
+        mock_getpwnam.return_value = MockPasswd(pw_uid=1, pw_gid=1)
+        self._make_ownership_test()
+        with mock.patch("os.stat") as mock_stat:
+            mock_stat.side_effect = (
+                lambda path, *args, **kwargs: MockStatResult(
+                    path, st_uid=2, st_gid=2))
+            self.db.ensure_ownership()
+        self.assertCountEqual([
+            self.temp_dir,
+            os.path.join(self.temp_dir, ".click"),
+            os.path.join(self.temp_dir, ".click", "users"),
+            os.path.join(self.temp_dir, "a"),
+            os.path.join(self.temp_dir, "a", "1.0"),
+            os.path.join(self.temp_dir, "a", "1.0", ".click"),
+            os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
+            os.path.join(
+                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
+        ], [args[0][0] for args in mock_chown.call_args_list])
+        self.assertCountEqual(
+            [(1, 1)], set(args[0][1:] for args in mock_chown.call_args_list))
 
 
 class TestClickDB(TestCase):

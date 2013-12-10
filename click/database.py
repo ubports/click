@@ -27,6 +27,7 @@ from collections import Sequence, defaultdict
 import io
 import json
 import os
+import pwd
 import shutil
 import subprocess
 import sys
@@ -201,6 +202,45 @@ class ClickSingleDB:
                 gc_in_use_user_db.remove(package)
                 self._remove_unless_running(package, version, verbose=verbose)
 
+    def _clickpkg_paths(self):
+        """Yield all paths which should be owned by clickpkg."""
+        if os.path.exists(self.root):
+            yield self.root
+        for package in osextras.listdir_force(self.root):
+            if package == ".click":
+                path = os.path.join(self.root, ".click")
+                yield path
+                path = os.path.join(path, "users")
+                if os.path.exists(path):
+                    yield path
+            else:
+                path = os.path.join(self.root, package)
+                for dirpath, _, filenames in os.walk(path):
+                    yield dirpath
+                    for filename in filenames:
+                        yield os.path.join(dirpath, filename)
+
+    def ensure_ownership(self):
+        """Ensure correct ownership of files in the database.
+
+        On a system that is upgraded by delivering a new system image rather
+        than by package upgrades, it is possible for the clickpkg UID to
+        change.  The overlay database must then be adjusted to account for
+        this.
+        """
+        pw = pwd.getpwnam("clickpkg")
+        try:
+            st = os.stat(self.root)
+            if st.st_uid == pw.pw_uid and st.st_gid == pw.pw_gid:
+                return
+        except OSError:
+            return
+        chown_kwargs = {}
+        if sys.version >= "3.3" and os.chown in os.supports_follow_symlinks:
+            chown_kwargs["follow_symlinks"] = False
+        for path in self._clickpkg_paths():
+            os.chown(path, pw.pw_uid, pw.pw_gid, **chown_kwargs)
+
 
 class ClickDB(Sequence):
     def __init__(self, extra_root=None, use_system=True, override_db_dir=None):
@@ -271,3 +311,6 @@ class ClickDB(Sequence):
 
     def gc(self, verbose=True):
         self._db[-1].gc(verbose=verbose)
+
+    def ensure_ownership(self):
+        self._db[-1].ensure_ownership()

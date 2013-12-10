@@ -406,6 +406,7 @@ def run_system_hooks(db):
     which may not have had their system-level hooks run properly when
     building the image.  It is suitable for running at system startup.
     """
+    db.ensure_ownership()
     for hook in ClickHook.open_all(db):
         if not hook.user_level:
             hook.sync()

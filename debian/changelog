@@ -7,6 +7,8 @@ click (0.4.13) UNRELEASED; urgency=low
   * If "click build" or "click buildsource" is given a directory as the
     value of its -m/--manifest option, interpret that as indicating the
     "manifest.json" file in that directory (LP: #1251604).
+  * Ensure correct permissions on /opt/click.ubuntu.com at boot, since a
+    system image update may have changed clickpkg's UID/GID (LP: #1259253).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 26 Nov 2013 09:42:38 +0000
 

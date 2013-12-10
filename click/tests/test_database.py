@@ -208,6 +208,7 @@ class TestClickSingleDB(TestCase):
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
         touch(os.path.join(path, ".click", "info", "a.manifest"))
+        os.symlink("1.0", os.path.join(self.temp_dir, "a", "current"))
         user_path = os.path.join(
             self.temp_dir, ".click", "users", "test-user", "a")
         os.makedirs(os.path.dirname(user_path))
@@ -227,6 +228,7 @@ class TestClickSingleDB(TestCase):
             os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
             os.path.join(
                 self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
+            os.path.join(self.temp_dir, "a", "current"),
         ], list(self.db._clickpkg_paths()))
 
     @mock.patch("pwd.getpwnam")
@@ -263,6 +265,7 @@ class TestClickSingleDB(TestCase):
             os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
             os.path.join(
                 self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
+            os.path.join(self.temp_dir, "a", "current"),
         ], [args[0][0] for args in mock_chown.call_args_list])
         self.assertCountEqual(
             [(1, 1)], set(args[0][1:] for args in mock_chown.call_args_list))

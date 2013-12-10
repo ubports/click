@@ -218,8 +218,12 @@ class ClickSingleDB:
                     yield users_path
             else:
                 path = os.path.join(self.root, package)
-                for dirpath, _, filenames in os.walk(path):
+                for dirpath, dirnames, filenames in os.walk(path):
                     yield dirpath
+                    for dirname in dirnames:
+                        dirname_path = os.path.join(dirpath, dirname)
+                        if os.path.islink(dirname_path):
+                            yield dirname_path
                     for filename in filenames:
                         yield os.path.join(dirpath, filename)
 

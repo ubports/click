@@ -207,18 +207,19 @@ class TestClickSingleDB(TestCase):
 
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
-        manifest_path = os.path.join(path, ".click", "info", "a.manifest")
-        touch(manifest_path)
+        touch(os.path.join(path, ".click", "info", "a.manifest"))
         user_path = os.path.join(
             self.temp_dir, ".click", "users", "test-user", "a")
         os.makedirs(os.path.dirname(user_path))
         os.symlink(path, user_path)
+        touch(os.path.join(self.temp_dir, ".click", "log"))
 
     def test_clickpkg_paths(self):
         self._make_ownership_test()
         self.assertCountEqual([
             self.temp_dir,
             os.path.join(self.temp_dir, ".click"),
+            os.path.join(self.temp_dir, ".click", "log"),
             os.path.join(self.temp_dir, ".click", "users"),
             os.path.join(self.temp_dir, "a"),
             os.path.join(self.temp_dir, "a", "1.0"),
@@ -254,6 +255,7 @@ class TestClickSingleDB(TestCase):
         self.assertCountEqual([
             self.temp_dir,
             os.path.join(self.temp_dir, ".click"),
+            os.path.join(self.temp_dir, ".click", "log"),
             os.path.join(self.temp_dir, ".click", "users"),
             os.path.join(self.temp_dir, "a"),
             os.path.join(self.temp_dir, "a", "1.0"),

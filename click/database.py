@@ -210,9 +210,12 @@ class ClickSingleDB:
             if package == ".click":
                 path = os.path.join(self.root, ".click")
                 yield path
-                path = os.path.join(path, "users")
-                if os.path.exists(path):
-                    yield path
+                log_path = os.path.join(path, "log")
+                if os.path.exists(log_path):
+                    yield log_path
+                users_path = os.path.join(path, "users")
+                if os.path.exists(users_path):
+                    yield users_path
             else:
                 path = os.path.join(self.root, package)
                 for dirpath, _, filenames in os.walk(path):

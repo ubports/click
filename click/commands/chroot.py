@@ -26,11 +26,17 @@ from click.chroot import ClickChroot
 from click import osextras
 
 
+def requires_root(parser):
+    if os.getuid() != 0:
+        parser.error("must be run as root; try sudo")
+
+
 def create(parser, args):
     if not osextras.find_on_path("debootstrap"):
         parser.error(
             "debootstrap not installed and configured; install click-dev and "
             "debootstrap")
+    requires_root(parser)
     ClickChroot(args.architecture, args.framework, series=args.series).create()
 
 
@@ -40,6 +46,7 @@ def install(parser, args):
 
 
 def destroy(parser, args):
+    requires_root(parser)
     # ask for confirmation?
     ClickChroot(args.architecture, args.framework).destroy()
 

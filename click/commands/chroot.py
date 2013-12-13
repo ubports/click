@@ -107,9 +107,13 @@ def run(argv):
         help="program to run with arguments")
     maint_parser.set_defaults(func=maint)
     args = parser.parse_args(argv)
+    if not hasattr(args, "func"):
+        parser.print_help()
+        return 1
     if (not osextras.find_on_path("schroot") or
             not os.path.exists("/etc/schroot/click/fstab")):
         parser.error(
             "schroot not installed and configured; install click-dev and "
             "schroot")
     args.func(args)
+    return 0

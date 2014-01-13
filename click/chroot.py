@@ -53,6 +53,7 @@ extra_packages = {
         "qtscript5-dev:TARGET",
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
+        "qtmultimedia5-dev:TARGET",
         ],
     }
 

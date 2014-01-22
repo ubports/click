@@ -37,6 +37,7 @@ framework_series = {
     }
 
 
+# Please keep the lists of package names sorted.
 extra_packages = {
     "ubuntu-sdk-13.10": [
         "libqt5opengl5-dev:TARGET",
@@ -49,11 +50,11 @@ extra_packages = {
         "qt5-qmake:TARGET",
         "qtbase5-dev:TARGET",
         "qtdeclarative5-dev:TARGET",
+        "qtmultimedia5-dev:TARGET",
         "qtquick1-5-dev:TARGET",
         "qtscript5-dev:TARGET",
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
-        "qtmultimedia5-dev:TARGET",
         ],
     }
 

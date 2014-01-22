@@ -138,6 +138,27 @@ class TestClickHookSystemLevel(TestClickHookBase):
         self.assertRaises(
             ValueError, hook.app_id, "package", "0.1", "app/name")
 
+    def test_short_id_invalid(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: /usr/share/test/${short-id}.test", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        # It would perhaps be better if unrecognised $-expansions raised
+        # KeyError, but they don't right now.
+        self.assertEqual(
+            "/usr/share/test/.test",
+            hook.pattern("package", "0.1", "app-name"))
+
+    def test_short_id_valid_with_single_version(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: /usr/share/test/${short-id}.test", file=f)
+            print("Single-Version: yes", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        self.assertEqual(
+            "/usr/share/test/package_app-name.test",
+            hook.pattern("package", "0.1", "app-name"))
+
     @mock.patch("subprocess.check_call")
     def test_run_commands(self, mock_check_call):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
@@ -351,6 +372,23 @@ class TestClickHookUserLevel(TestClickHookBase):
             ValueError, hook.app_id, "package", "0.1", "app_name")
         self.assertRaises(
             ValueError, hook.app_id, "package", "0.1", "app/name")
+
+    @mock.patch("pwd.getpwnam")
+    def test_short_id_valid(self, mock_getpwnam):
+        class MockPasswd:
+            def __init__(self, pw_dir):
+                self.pw_dir = pw_dir
+
+        mock_getpwnam.return_value = MockPasswd(pw_dir="/mock")
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print(
+                "Pattern: ${home}/.local/share/test/${short-id}.test", file=f)
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        self.assertEqual(
+            "/mock/.local/share/test/package_app-name.test",
+            hook.pattern("package", "0.1", "app-name", user="mock"))
 
     @mock.patch("subprocess.check_call")
     def test_run_commands(self, mock_check_call):

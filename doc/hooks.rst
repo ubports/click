@@ -82,6 +82,13 @@ Specification
    [A-Z]), and the Click package version joined by underscores, e.g.
    ``com.ubuntu.clock_alarm_0.1``.
 
+ * A "short application ID" is a string unique to each application, but not
+   necessarily to each instance of it: it is made up of the Click package
+   name and the application name (must consist only of characters for a Debian
+   source package name, Debian version and [A-Z]) joined by an underscore,
+   e.g. ``com.ubuntu.clock_alarm``.  It is only valid in user-level hooks,
+   or in system-level hooks with ``Single-Version: yes``.
+
  * An integrated-with system package may add ``*.hook`` files to
    ``/usr/share/click/hooks/``.  These are standard Debian-style control
    files with the following keys:
@@ -97,6 +104,9 @@ Specification
      ``${id}``
        The application ID.
 
+     ``${short-id}``
+       The short application ID (user-level or single-version hooks only).
+
      ``${user}``
        The user name (user-level hooks only).
 
@@ -106,8 +116,9 @@ Specification
      ``$$``
        The character '``$``'.
 
-     At least one ``${id}`` substitution is required.  For user-level hooks,
-     at least one of ``${user}`` and ``${home}`` must be present.
+     At least one ``${id}`` or ``${short-id}`` substitution is required.
+     For user-level hooks, at least one of ``${user}`` and ``${home}`` must
+     be present.
 
      On install, the package manager creates the target path as a symlink to
      a path provided by the Click package; on upgrade, it changes the target

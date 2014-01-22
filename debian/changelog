@@ -4,6 +4,9 @@ click (0.4.14) UNRELEASED; urgency=low
   * chroot: Recommend debootstrap from click-dev, and explicitly check for
     it in "click chroot create" (LP: #1260487).
   * chroot: Check for root in "create" and "destroy" (LP: #1260671).
+  * hooks: Add a ${short-id} expansion to hook patterns; this is valid only
+    in user-level or single-version hooks, and expands to a new "short
+    application ID" without the version (LP: #1251635).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 13 Dec 2013 12:05:23 +0000
 

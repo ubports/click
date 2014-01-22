@@ -158,13 +158,16 @@ class ClickHook(Deb822):
     def hook_name(self):
         return self.get("hook-name", self.name)
 
-    def app_id(self, package, version, app_name):
+    def short_app_id(self, package, app_name):
         # TODO: perhaps this check belongs further up the stack somewhere?
         if "_" in app_name or "/" in app_name:
             raise ValueError(
                 "Application name '%s' may not contain _ or / characters" %
                 app_name)
-        return "%s_%s_%s" % (package, app_name, version)
+        return "%s_%s" % (package, app_name)
+
+    def app_id(self, package, version, app_name):
+        return "%s_%s" % (self.short_app_id(package, app_name), version)
 
     def _user_home(self, user):
         if user is None:
@@ -175,8 +178,14 @@ class ClickHook(Deb822):
 
     def pattern(self, package, version, app_name, user=None):
         app_id = self.app_id(package, version, app_name)
-        return self._formatter.format(
-            self["pattern"], id=app_id, user=user, home=self._user_home(user))
+        kwargs = {
+            "id": app_id,
+            "user": user,
+            "home": self._user_home(user),
+            }
+        if self.single_version:
+            kwargs["short-id"] = self.short_app_id(package, app_name)
+        return self._formatter.format(self["pattern"], **kwargs)
 
     def _drop_privileges(self, username):
         if os.geteuid() != 0:

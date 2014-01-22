@@ -151,7 +151,7 @@ class ClickChroot:
         build_pkgs = [
             "build-essential", "fakeroot",
             "apt-utils", "g++-%s" % target_tuple,
-            "pkg-config-%s" % target_tuple,
+            "pkg-config-%s" % target_tuple, "cmake",
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
         for package in extra_packages.get(self.framework, []):

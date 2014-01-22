@@ -203,6 +203,20 @@ class TestClickHookSystemLevel(TestClickHookBase):
         self.assertTrue(os.path.islink(symlink_path))
         self.assertEqual(target_path, os.readlink(symlink_path))
 
+    def test_install_package_trailing_slash(self):
+        with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+            print("Pattern: %s/${id}/" % self.temp_dir, file=f)
+        os.makedirs(os.path.join(self.temp_dir, "org.example.package", "1.0"))
+        with temp_hooks_dir(self.temp_dir):
+            hook = ClickHook.open(self.db, "test")
+        hook.install_package("org.example.package", "1.0", "test-app", "foo")
+        symlink_path = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.0")
+        target_path = os.path.join(
+            self.temp_dir, "org.example.package", "1.0", "foo")
+        self.assertTrue(os.path.islink(symlink_path))
+        self.assertEqual(target_path, os.readlink(symlink_path))
+
     def test_upgrade(self):
         with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
             print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -442,6 +456,28 @@ class TestClickHookUserLevel(TestClickHookBase):
         target_path = os.path.join(
             self.temp_dir, ".click", "users", "test-user",
             "org.example.package", "foo", "bar")
+        self.assertTrue(os.path.islink(symlink_path))
+        self.assertEqual(target_path, os.readlink(symlink_path))
+
+    @mock.patch("click.hooks.ClickHook._user_home")
+    def test_install_package_trailing_slash(self, mock_user_home):
+        mock_user_home.return_value = "/home/test-user"
+        with temp_hooks_dir(self.temp_dir):
+            os.makedirs(os.path.join(
+                self.temp_dir, "org.example.package", "1.0"))
+            user_db = ClickUser(self.db, user="test-user")
+            user_db.set_version("org.example.package", "1.0")
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("User-Level: yes", file=f)
+                print("Pattern: %s/${id}/" % self.temp_dir, file=f)
+            hook = ClickHook.open(self.db, "test")
+        hook.install_package(
+            "org.example.package", "1.0", "test-app", "foo", user="test-user")
+        symlink_path = os.path.join(
+            self.temp_dir, "org.example.package_test-app_1.0")
+        target_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user",
+            "org.example.package", "foo")
         self.assertTrue(os.path.islink(symlink_path))
         self.assertEqual(target_path, os.readlink(symlink_path))
 

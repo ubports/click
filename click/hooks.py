@@ -185,7 +185,7 @@ class ClickHook(Deb822):
             }
         if self.single_version:
             kwargs["short-id"] = self.short_app_id(package, app_name)
-        return self._formatter.format(self["pattern"], **kwargs)
+        return self._formatter.format(self["pattern"], **kwargs).rstrip(os.sep)
 
     def _drop_privileges(self, username):
         if os.geteuid() != 0:

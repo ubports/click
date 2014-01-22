@@ -19,6 +19,10 @@ click (0.4.14) UNRELEASED; urgency=low
   [ Zoltan Balogh ]
   * Add qtmultimedia5-dev to the SDK framework list.
 
+  [ Dimitri John Ledkov ]
+  * chroot: Add "cmake" to build_pkgs, as it is expected for cmake to be
+    available on any (ubuntu) framework.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 13 Dec 2013 12:05:23 +0000
 
 click (0.4.13) trusty; urgency=low

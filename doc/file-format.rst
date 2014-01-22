@@ -74,7 +74,7 @@ as UTF-8-encoded JSON.  It must include the following keys:
 
  * version: version number of the application
 
- * framework: the system framework for which the package was built
+ * framework: the system framework(s) for which the package was built
 
  * installed-size: the size of the unpacked package in KiB; this should not
    be set directly in the source tree, but will be generated automatically
@@ -98,10 +98,12 @@ The value of "version" provides a unique version for the application,
 following Debian version numbering rules. See deb-version(5) for full
 details.
 
-For future expansion (e.g. applications that require multiple frameworks),
-the syntax of "framework" is formally that of a Debian dependency
+The syntax of "framework" is formally that of a Debian dependency
 relationship field.  Currently, only a simple name is permitted, e.g.
-"framework": "ubuntu-sdk-13.10".
+"framework": "ubuntu-sdk-13.10", or a list of simple names all of which must
+be satisfied, e.g. "framework": "ubuntu-sdk-14.04-qml,
+ubuntu-sdk-14.04-webapps"; version relationships and alternative
+dependencies are not currently allowed.
 
 The manifest may contain arbitrary additional optional keys; new optional
 keys may be defined without changing the version number of this

@@ -245,6 +245,33 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             del target_json["installed-size"]
             self.assertEqual(source_json, target_json)
 
+    def test_build_multiple_frameworks(self):
+        self.use_temp_dir()
+        scratch = os.path.join(self.temp_dir, "scratch")
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
+            json.dump({
+                "name": "com.ubuntu.test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "title": "test title",
+                "architecture": "all",
+                "framework":
+                    "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
+            }, f)
+        self.builder.add_file(scratch, "/")
+        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_all.click")
+        self.assertEqual(path, self.builder.build(self.temp_dir))
+        self.assertTrue(os.path.exists(path))
+        control_path = os.path.join(self.temp_dir, "control")
+        subprocess.check_call(["dpkg-deb", "-e", path, control_path])
+        manifest_path = os.path.join(control_path, "manifest")
+        with open(os.path.join(scratch, "manifest.json")) as source, \
+                open(manifest_path) as target:
+            source_json = json.load(source)
+            target_json = json.load(target)
+            del target_json["installed-size"]
+            self.assertEqual(source_json, target_json)
+
 
 class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
     def setUp(self):

@@ -10,6 +10,10 @@ click (0.4.14) UNRELEASED; urgency=low
   * hooks: Strip any trailing slashes from the end of patterns, as they
     cause confusion with symlink-to-directory semantics and can never be
     useful (LP: #1253855).
+  * install: Extend the interpretation of "framework" a little bit to allow
+    a Click package to declare that it requires multiple frameworks.  This
+    will allow splitting up the SDK framework declarations into more
+    fine-grained elements.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 13 Dec 2013 12:05:23 +0000
 

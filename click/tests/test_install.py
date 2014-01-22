@@ -248,6 +248,33 @@ class TestClickInstaller(TestCase):
             installer = ClickInstaller(self.db)
             self.assertEqual(("test-package", "1.0"), installer.audit(path))
 
+    def test_audit_multiple_frameworks(self):
+        path = self.make_fake_package(
+            control_fields={"Click-Version": "0.4"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework":
+                    "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
+            },
+            control_scripts={"preinst": static_preinst})
+        installer = ClickInstaller(self.db)
+        with self.make_framework("dummy"):
+            self.assertRaisesRegex(
+                ClickInstallerAuditError,
+                'Frameworks "ubuntu-sdk-14.04-basic", '
+                '"ubuntu-sdk-14.04-webapps" not present on system.*',
+                installer.audit, path)
+            with self.make_framework("ubuntu-sdk-14.04-basic"):
+                self.assertRaisesRegex(
+                    ClickInstallerAuditError,
+                    'Framework "ubuntu-sdk-14.04-webapps" not present on '
+                    'system.*',
+                    installer.audit, path)
+                with self.make_framework("ubuntu-sdk-14.04-webapps"):
+                    self.assertEqual(
+                        ("test-package", "1.0"), installer.audit(path))
+
     def test_audit_broken_md5sums(self):
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.2"},

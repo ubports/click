@@ -40,6 +40,7 @@ import tempfile
 
 from contextlib import closing
 
+import apt_pkg
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 
@@ -65,6 +66,9 @@ except AttributeError:
         def close(self):
             self.control._DebPart__member.close()
             self.data._DebPart__member.close()
+
+
+apt_pkg.init_system()
 
 
 class ClickInstallerError(Exception):
@@ -190,12 +194,35 @@ class ClickInstaller:
             except KeyError:
                 raise ClickInstallerAuditError(
                     'No "framework" entry in manifest')
-            if (not self.force_missing_framework and
-                    not self._has_framework(framework)):
+            try:
+                parsed_framework = apt_pkg.parse_depends(framework)
+            except ValueError:
                 raise ClickInstallerAuditError(
-                    'Framework "%s" not present on system (use '
-                    '--force-missing-framework option to override)' %
-                    framework)
+                    'Could not parse framework "%s"' % framework)
+            for or_dep in parsed_framework:
+                if len(or_dep) > 1:
+                    raise ClickInstallerAuditError(
+                        'Alternative dependencies in framework "%s" not yet '
+                        'allowed' % framework)
+                if or_dep[0][1] or or_dep[0][2]:
+                    raise ClickInstallerAuditError(
+                        'Version relationship in framework "%s" not yet '
+                        'allowed' % framework)
+            if not self.force_missing_framework:
+                missing_frameworks = []
+                for or_dep in parsed_framework:
+                    if not self._has_framework(or_dep[0][0]):
+                        missing_frameworks.append(or_dep[0][0])
+                if len(missing_frameworks) > 1:
+                    raise ClickInstallerAuditError(
+                        'Frameworks %s not present on system (use '
+                        '--force-missing-framework option to override)' %
+                        ", ".join('"%s"' % f for f in missing_frameworks))
+                elif missing_frameworks:
+                    raise ClickInstallerAuditError(
+                        'Framework "%s" not present on system (use '
+                        '--force-missing-framework option to override)' %
+                        missing_frameworks[0])
 
             if check_arch:
                 architecture = manifest.get("architecture", "all")

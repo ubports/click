@@ -1,5 +1,6 @@
 click (0.4.14) UNRELEASED; urgency=low
 
+  [ Colin Watson ]
   * chroot: Print help if no subcommand given (LP: #1260669).
   * chroot: Recommend debootstrap from click-dev, and explicitly check for
     it in "click chroot create" (LP: #1260487).
@@ -14,6 +15,9 @@ click (0.4.14) UNRELEASED; urgency=low
     a Click package to declare that it requires multiple frameworks.  This
     will allow splitting up the SDK framework declarations into more
     fine-grained elements.
+
+  [ Zoltan Balogh ]
+  * Add qtmultimedia5-dev to the SDK framework list.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 13 Dec 2013 12:05:23 +0000
 

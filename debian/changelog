@@ -1,4 +1,4 @@
-click (0.4.14) UNRELEASED; urgency=low
+click (0.4.14) trusty; urgency=low
 
   [ Colin Watson ]
   * chroot: Print help if no subcommand given (LP: #1260669).
@@ -25,7 +25,7 @@ click (0.4.14) UNRELEASED; urgency=low
   * chroot: Add "cmake" to build_pkgs, as it is expected for cmake to be
     available on any (Ubuntu) framework.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Fri, 13 Dec 2013 12:05:23 +0000
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 23 Jan 2014 17:30:54 +0000
 
 click (0.4.13) trusty; urgency=low
 

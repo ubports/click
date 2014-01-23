@@ -38,6 +38,13 @@ import tarfile
 import tempfile
 from textwrap import dedent
 
+try:
+    import apt_pkg
+    apt_pkg.init_system()
+except ImportError:
+    # "click build" is required to work with only the Python standard library.
+    pass
+
 from click import osextras
 from click.arfile import ArFile
 from click.preinst import static_preinst
@@ -189,6 +196,31 @@ class ClickBuilder(ClickBuilderBase):
             package.add_file("control.tar.gz", control_tar_path)
             package.add_file("data.tar.gz", data_tar_path)
 
+    def _validate_framework(self, framework):
+        """Apply policy checks to framework declarations."""
+        try:
+            apt_pkg
+        except NameError:
+            return
+
+        try:
+            parsed_framework = apt_pkg.parse_depends(framework)
+        except ValueError:
+            raise ClickBuildError('Could not parse framework "%s"' % framework)
+        if len(parsed_framework) > 1:
+            raise ClickBuildError(
+                'Multiple dependencies in framework "%s" not yet allowed' %
+                framework)
+        for or_dep in parsed_framework:
+            if len(or_dep) > 1:
+                raise ClickBuildError(
+                    'Alternative dependencies in framework "%s" not yet '
+                    'allowed' % framework)
+            if or_dep[0][1] or or_dep[0][2]:
+                raise ClickBuildError(
+                    'Version relationship in framework "%s" not yet allowed' %
+                    framework)
+
     def build(self, dest_dir, manifest_path="manifest.json"):
         with make_temp_dir() as temp_dir:
             # Prepare data area.
@@ -211,6 +243,8 @@ class ClickBuilder(ClickBuilderBase):
             else:
                 full_manifest_path = os.path.join(root_path, manifest_path)
             self.read_manifest(full_manifest_path)
+            if "framework" in self.manifest:
+                self._validate_framework(self.manifest["framework"])
 
             du_output = subprocess.check_output(
                 ["du", "-k", "-s", "--apparent-size", "."],

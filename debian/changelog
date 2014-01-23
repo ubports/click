@@ -16,6 +16,7 @@ click (0.4.14) UNRELEASED; urgency=low
     will allow splitting up the SDK framework declarations into more
     fine-grained elements.
   * Policy version 3.9.5: no changes required.
+  * build: Enforce only a single framework declaration for now, by request.
 
   [ Zoltan Balogh ]
   * Add qtmultimedia5-dev to the SDK framework list.

@@ -1,9 +1,10 @@
-click (0.4.15) UNRELEASED; urgency=medium
+click (0.4.15) trusty; urgency=medium
 
+  [ Stéphane Graber ]
   * Set X-Auto-Uploader to no-rewrite-version
   * Set Vcs-Bzr to the new target branch
 
- -- Stéphane Graber <stgraber@ubuntu.com>  Wed, 29 Jan 2014 14:10:46 +0000
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 30 Jan 2014 16:12:17 +0000
 
 click (0.4.14) trusty; urgency=low
 

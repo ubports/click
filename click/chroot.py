@@ -67,7 +67,7 @@ class ClickChrootException(Exception):
 
 
 class ClickChroot:
-    def __init__(self, target_arch, framework, name=None, series=None):
+    def __init__(self, target_arch, framework, name=None, series=None, session=None):
         if name is None:
             name = "click"
         if series is None:
@@ -76,6 +76,7 @@ class ClickChroot:
         self.framework = framework
         self.name = name
         self.series = series
+        self.session = session
         self.native_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
@@ -129,6 +130,10 @@ class ClickChroot:
     @property
     def full_name(self):
         return "%s-%s-%s" % (self.name, self.framework, self.target_arch)
+
+    @property
+    def full_session_name(self):
+        return "%s-%s" % (self.full_name, self.session)
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]
@@ -257,16 +262,24 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        command = ["schroot", "-c", self.full_name, "--", "env"]
+        command = ["schroot", "-c"]
+        if self.session:
+            command.extend([self.full_session_name, "--run-session"])
+        else:
+            command.append(self.full_name)
+        command.extend(["--", "env"])
         for key, value in self.dpkg_architecture.items():
             command.append("%s=%s" % (key, value))
         command.extend(args)
         subprocess.check_call(command)
 
     def maint(self, *args):
-        command = [
-            "schroot", "-c", "source:%s" % self.full_name, "-u", "root", "--",
-            ]
+        command = [ "schroot", "-u", "root", "-c" ]
+        if self.session:
+            command.extend([self.full_session_name, "--run-session"])
+        else:
+            command.append("source:%s" % self.full_name)
+        command.append("--")
         command.extend(args)
         subprocess.check_call(command)
 
@@ -305,3 +318,18 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         os.remove(chroot_config)
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
         shutil.rmtree(mount)
+
+    def begin_session(self):
+        if not self.exists():
+            raise ClickChrootException(
+                "Chroot %s does not exist" % self.full_name)
+        command = ["schroot", "-c", self.full_name, "--begin-session",
+                   "--session-name", self.full_session_name]
+        subprocess.check_call(command)
+
+    def end_session(self):
+        if not self.exists():
+            raise ClickChrootException(
+                "Chroot %s does not exist" % self.full_name)
+        command = ["schroot", "-c", self.full_session_name, "--end-session"]
+        subprocess.check_call(command)

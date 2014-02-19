@@ -1,3 +1,10 @@
+click (0.4.16) UNRELEASED; urgency=medium
+
+  * hooks: Fix expansion of "$$" in hook patterns to conform to the
+    documented behaviour of expanding to the single character "$".
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
+
 click (0.4.15) trusty; urgency=medium
 
   [ Stéphane Graber ]

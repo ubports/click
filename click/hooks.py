@@ -62,10 +62,10 @@ class ClickPatternFormatter(Formatter):
     """A Formatter that handles simple $-expansions.
 
     `${key}` is replaced by the value of the `key` argument; `$$` is
-    replaced by `$`.  Any `$` character not followed by `{...}` is preserved
-    intact.
+    replaced by `$`.  Any `$` character not followed by `{...}` or `$` is
+    preserved intact.
     """
-    _expansion_re = re.compile(r"\${(.*?)}")
+    _expansion_re = re.compile(r"\$(?:\$|{(.*?)})")
 
     def parse(self, format_string):
         while True:
@@ -75,7 +75,10 @@ class ClickPatternFormatter(Formatter):
                     yield format_string, None, None, None
                 return
             start, end = match.span()
-            yield format_string[:match.start()], match.group(1), "", None
+            if format_string[match.start():match.end()] == "$$":
+                yield format_string[:match.start() + 1], None, None, None
+            else:
+                yield format_string[:match.start()], match.group(1), "", None
             format_string = format_string[match.end():]
 
     def get_field(self, field_name, args, kwargs):

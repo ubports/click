@@ -269,7 +269,7 @@ class ClickUser(Mapping):
             done = False
             if self._is_valid_link(path):
                 osextras.unlink_force(path)
-                if self.get(path) == version:
+                if self.get(package) == version:
                     done = True
             if not done:
                 osextras.symlink_force(target, new_path)

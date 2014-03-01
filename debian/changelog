@@ -7,6 +7,11 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Stop using unittest2 if available; the relevant improvements were
     integrated into the standard library's unittest in Python 2.7, and we no
     longer support 2.6.
+  * user: When setting the registered version of a package to the version in
+    an underlay database (e.g. a preinstalled version vs. one in the
+    user-installed area), remove the overlay link rather than setting a new
+    one equal to the underlay; this was always the intended behaviour but
+    didn't work that way due to a typo.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

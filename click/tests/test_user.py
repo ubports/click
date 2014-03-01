@@ -188,6 +188,29 @@ class TestClickUser(TestCase):
             os.path.join(self.multi_db[1].root, "d", "3.0"),
             os.readlink(d_overlay))
 
+    def test_set_version_restore_to_underlay(self):
+        user_dbs, registry = self._setUpMultiDB()
+        a_underlay = os.path.join(user_dbs[0], "a")
+        a_overlay = os.path.join(user_dbs[1], "a")
+
+        # Initial state: 1.0 in underlay, 1.1 in overlay.
+        self.assertTrue(os.path.islink(a_underlay))
+        self.assertEqual(
+            os.path.join(self.multi_db[0].root, "a", "1.0"),
+            os.readlink(a_underlay))
+        self.assertTrue(os.path.islink(a_overlay))
+        self.assertEqual(
+            os.path.join(self.multi_db[1].root, "a", "1.1"),
+            os.readlink(a_overlay))
+
+        # Setting to 1.0 (version in underlay) removes overlay link.
+        registry.set_version("a", "1.0")
+        self.assertTrue(os.path.islink(a_underlay))
+        self.assertEqual(
+            os.path.join(self.multi_db[0].root, "a", "1.0"),
+            os.readlink(a_underlay))
+        self.assertFalse(os.path.islink(a_overlay))
+
     def test_remove_missing(self):
         registry = ClickUser(self.db, "user")
         self.assertRaises(KeyError, registry.remove, "a")

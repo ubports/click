@@ -1,0 +1,2 @@
+#! /bin/sh
+perl -e '$_ = <>; chomp; s/.*\((.*)\).*/\1/; print; exit' <debian/changelog

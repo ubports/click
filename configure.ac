@@ -1,6 +1,4 @@
-AC_INIT([click],
-	m4_esyscmd_s([head -n1 debian/changelog | sed -n 's/.*(\(.*\)).*/\1/p']),
-	[https://launchpad.net/click])
+AC_INIT([click],m4_esyscmd([./get-version]),[https://launchpad.net/click])
 AC_CONFIG_SRCDIR([preload/clickpreload.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])

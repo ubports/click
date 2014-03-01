@@ -2,6 +2,8 @@ click (0.4.16) UNRELEASED; urgency=medium
 
   * hooks: Fix expansion of "$$" in hook patterns to conform to the
     documented behaviour of expanding to the single character "$".
+  * Move version detection out of configure.ac into a separate get-version
+    script, since intltool-update has trouble with the previous approach.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

@@ -14,6 +14,13 @@ IT_PROG_INTLTOOL
 AC_PROG_CC
 CFLAGS="$CFLAGS -Wall"
 
+AC_ARG_WITH([python-interpreters],
+	[AS_HELP_STRING([--with-python-interpreters],
+		[install for these Python interpreters (space-separated, default: python3)])],
+	[PYTHON_INTERPRETERS="$withval"],
+	[PYTHON_INTERPRETERS=python3])
+AC_SUBST([PYTHON_INTERPRETERS])
+
 AC_ARG_WITH([default-root],
 	[AS_HELP_STRING([--with-default-root],
 		[set default root path for installed packages (default: /opt/click.ubuntu.com)])],

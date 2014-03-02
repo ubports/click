@@ -13,6 +13,8 @@ click (0.4.16) UNRELEASED; urgency=medium
     one equal to the underlay; this was always the intended behaviour but
     didn't work that way due to a typo.
   * Add Python 3.4 to list of tested versions.
+  * Call setup.py from the top-level Makefile.am rather than from
+    debian/rules, to make the build system a bit more unified.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

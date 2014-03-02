@@ -15,6 +15,9 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Add Python 3.4 to list of tested versions.
   * Call setup.py from the top-level Makefile.am rather than from
     debian/rules, to make the build system a bit more unified.
+  * Drop AM_GNU_GETTEXT and call intltoolize before autoreconf in
+    autogen.sh; this fixes a bug whereby "make" after "./configure" always
+    immediately needed to run aclocal.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

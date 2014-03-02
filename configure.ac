@@ -6,8 +6,6 @@ AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER([config.h])
 LT_INIT([disable-static])
 
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
 AC_SUBST([GETTEXT_PACKAGE], [click])
 IT_PROG_INTLTOOL
 

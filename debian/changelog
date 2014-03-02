@@ -18,6 +18,9 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Drop AM_GNU_GETTEXT and call intltoolize before autoreconf in
     autogen.sh; this fixes a bug whereby "make" after "./configure" always
     immediately needed to run aclocal.
+  * Build-depend on python3-pep8 so that test_pep8_clean doesn't need to be
+    skipped when running under Python 3.  This can safely be removed for
+    backports to precise.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

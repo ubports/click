@@ -628,7 +628,7 @@ public class Hook : Object {
 				("Cannot get password file entry for user " +
 				 "'%s': %s", user_name, strerror (errno));
 		Posix.gid_t[] supp = {};
-		PosixExtra.setgrent ();
+		Posix.setgrent ();
 		unowned PosixExtra.Group? gr;
 		while ((gr = PosixExtra.getgrent ()) != null) {
 			foreach (unowned string member in gr.gr_mem) {
@@ -638,7 +638,7 @@ public class Hook : Object {
 				}
 			}
 		}
-		PosixExtra.endgrent ();
+		Posix.endgrent ();
 		if (PosixExtra.setgroups (supp.length, supp) < 0)
 			priv_drop_failure ("setgroups");
 		/* Portability note: this assumes that we have

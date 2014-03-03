@@ -29,9 +29,7 @@ namespace PosixExtra {
 		public string[] gr_mem;
 	}
 	[CCode (cheader_filename = "grp.h")]
-	public void endgrent ();
 	public unowned Group? getgrent ();
-	public void setgrent ();
 
 	[CCode (cheader_filename = "unistd.h")]
 	public int getresgid (out Posix.gid_t rgid, out Posix.gid_t egid, out Posix.gid_t sgid);

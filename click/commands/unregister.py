@@ -21,8 +21,7 @@ from optparse import OptionParser
 import os
 import sys
 
-from click.database import ClickDB
-from click.user import ClickUser
+from gi.repository import Click
 
 
 def run(argv):
@@ -44,10 +43,16 @@ def run(argv):
             "remove packages from disk")
     if options.user is None and "SUDO_USER" in os.environ:
         options.user = os.environ["SUDO_USER"]
-    db = ClickDB(options.root)
+    db = Click.DB()
+    db.read()
+    if options.root is not None:
+        db.add(options.root)
     package = args[0]
-    registry = ClickUser(db, user=options.user, all_users=options.all_users)
-    old_version = registry[package]
+    if options.all_users:
+        registry = Click.User.for_all_users(db)
+    else:
+        registry = Click.User.for_user(db, name=options.user)
+    old_version = registry.get_version(package)
     if len(args) >= 2 and old_version != args[1]:
         print(
             "Not removing %s %s; expected version %s" %

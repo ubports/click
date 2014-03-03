@@ -29,6 +29,10 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Sync up substvar use with what debhelper actually generates for us: add
     ${misc:Pre-Depends} to click and packagekit-plugin-click, and remove
     ${python3:Depends} from click-dev.
+  * Move an initial core of functionality (database, hooks, osextras, query,
+    user) from Python into a new "libclick" library, allowing
+    performance-critical clients to avoid the cost of starting a new Python
+    interpreter (LP: #1282311).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

@@ -1,0 +1,39 @@
+#! /bin/sh
+set -e
+
+# Wrapper for valac, working around the fact that the .gir files it
+# generates are missing the shared-library attribute in the namespace tag.
+#
+#   https://bugzilla.gnome.org/show_bug.cgi?id=642576
+#
+# Passing --shared-library to g-ir-compiler isn't enough for us, because
+# dh_girepository then fails to generate a shared library dependency.
+
+VALAC="@VALAC@"
+
+"$VALAC" "$@"
+
+gir=
+library=
+
+# Keep this in sync with any options used in lib/click/Makefile.am.  -C is
+# emitted by automake.
+eval set -- "$(getopt -o CH: -l gir:,library:,pkg:,target-glib: -- "$@")" || \
+	{ echo "$0: failed to parse valac options" >&2; exit 2; }
+while :; do
+	case $1 in
+		-C) shift ;;
+		-H|--pkg|--target-glib) shift 2 ;;
+		--gir) gir="$2"; shift 2 ;;
+		--library) library="$2"; shift 2 ;;
+		--) shift; break ;;
+		*) echo "$0: failed to parse valac options" >&2; exit 2 ;;
+	esac
+done
+
+[ "$gir" ] || { echo "$0: failed to find --gir in valac options" >&2; exit 2; }
+[ "$library" ] || \
+	{ echo "$0: failed to find --library in valac options" >&2; exit 2; }
+
+sed -i 's/\(<namespace .*version="[^"]*"\)/\1 shared-library="lib'"${library}"'.so.0"/' \
+	"$gir"

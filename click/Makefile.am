@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 noinst_SCRIPTS = paths.py
 CLEANFILES = $(noinst_SCRIPTS)
 

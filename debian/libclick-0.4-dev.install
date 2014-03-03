@@ -1,0 +1,4 @@
+usr/include
+usr/lib/*/libclick*.so
+usr/lib/*/pkgconfig/click-*.pc
+usr/share/gir-1.0

@@ -25,6 +25,7 @@ click (0.4.16) UNRELEASED; urgency=medium
     Architecture: any.
   * Tighten packagekit-plugin-click -> click dependency to require a
     matching version.
+  * Use dh_install --fail-missing to avoid future mistakes.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

@@ -44,7 +44,7 @@ override_dh_auto_install:
 	rm -f debian/tmp/usr/lib/*/click/*.la
 
 override_dh_install:
-	dh_install
+	dh_install -X .la --fail-missing
 	DH_AUTOSCRIPTDIR=debhelper debhelper/dh_click --name=click-desktop
 
 # Sphinx documentation is architecture-independent.

@@ -659,12 +659,7 @@ public class User : Object {
 		else if (is_symlink (path))
 			/* Already hidden. */
 			return false;
-		string? version = null;
-		try {
-			version = get_version (package);
-		} catch (UserError e) {
-		}
-		if (version != null)
+		if (has_package_name (package))
 			/* Not in overlay database, but can be hidden. */
 			return true;
 		else

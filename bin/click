@@ -21,6 +21,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 import os
+import signal
 import sys
 from textwrap import dedent
 
@@ -49,6 +50,8 @@ def fix_stdout():
 
 def main():
     fix_stdout()
+    # Python's default handling of SIGPIPE is not helpful to us.
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     parser = OptionParser(dedent("""\
         %%prog COMMAND [options]

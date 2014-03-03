@@ -226,10 +226,10 @@ public class SingleDB : Object {
 			message ("Removing %s", version_path);
 		package_remove_hooks (master_db, package, version);
 		/* In Python, we used shutil.rmtree(version_path,
-		 * ignore_errors=True), but GLib doesn't have an obvious equivalent.
-		 * I could write a recursive version with GLib, but this isn't
-		 * performance-critical and it isn't worth the hassle for now, so
-		 * just call out to "rm -rf" instead.
+		 * ignore_errors=True), but GLib doesn't have an obvious
+		 * equivalent.  I could write a recursive version with GLib,
+		 * but this isn't performance-critical and it isn't worth
+		 * the hassle for now, so just call out to "rm -rf" instead.
 		 */
 		string[] argv = { "rm", "-rf", version_path };
 		int exit_status;

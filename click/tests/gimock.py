@@ -378,9 +378,10 @@ class GIMockTestCase(unittest.TestCase):
         return lib_path, rpreloads
 
     # Use as:
-    #   with self.run_in_subprocess("func", ...) as enter:
+    #   with self.run_in_subprocess("func", ...) as (enter, preloads):
     #       enter()
-    #       # test case body
+    #       # test case body; preloads["func"] will be a mock.MagicMock
+    #       # instance
     @contextlib.contextmanager
     def run_in_subprocess(self, *patches):
         preloads = {}

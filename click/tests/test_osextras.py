@@ -60,6 +60,12 @@ class TestOSExtrasBaseMixin:
         os.environ["PATH"] = bin_dir
         self.assertFalse(self.mod.find_on_path("program"))
 
+    def test_find_on_path_requires_regular_file(self):
+        bin_dir = os.path.join(self.temp_dir, "bin")
+        self.mod.ensuredir(os.path.join(bin_dir, "subdir"))
+        os.environ["PATH"] = bin_dir
+        self.assertFalse(self.mod.find_on_path("subdir"))
+
     def test_unlink_file_present(self):
         path = os.path.join(self.temp_dir, "file")
         touch(path)

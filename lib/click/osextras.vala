@@ -37,7 +37,8 @@ find_on_path (string command)
 		if (element == "")
 			continue;
 		var filename = Path.build_filename (element, command);
-		if (FileUtils.test (filename, FileTest.IS_EXECUTABLE))
+		if (FileUtils.test (filename, FileTest.IS_REGULAR) &&
+		    FileUtils.test (filename, FileTest.IS_EXECUTABLE))
 			return true;
 	}
 

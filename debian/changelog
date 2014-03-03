@@ -26,6 +26,9 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Tighten packagekit-plugin-click -> click dependency to require a
     matching version.
   * Use dh_install --fail-missing to avoid future mistakes.
+  * Sync up substvar use with what debhelper actually generates for us: add
+    ${misc:Pre-Depends} to click and packagekit-plugin-click, and remove
+    ${python3:Depends} from click-dev.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

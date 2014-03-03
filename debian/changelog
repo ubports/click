@@ -23,6 +23,8 @@ click (0.4.16) UNRELEASED; urgency=medium
     backports to precise.
   * Simplify click -> python3-click dependency given that both are
     Architecture: any.
+  * Tighten packagekit-plugin-click -> click dependency to require a
+    matching version.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

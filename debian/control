@@ -63,7 +63,7 @@ Description: Click packages (documentation)
 
 Package: packagekit-plugin-click
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, click
+Depends: ${shlibs:Depends}, ${misc:Depends}, click (= ${binary:Version})
 Description: Click packages (PackageKit plugin)
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

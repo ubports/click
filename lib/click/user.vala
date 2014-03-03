@@ -155,7 +155,7 @@ public class Users : Object {
 
 		/* Only modify the last database. */
 		var try_path = db_top (db.overlay);
-		while (! FileUtils.test (try_path, FileTest.EXISTS)) {
+		while (! exists (try_path)) {
 			create.prepend (try_path);
 			try_path = Path.get_dirname (try_path);
 		}
@@ -301,7 +301,7 @@ public class User : Object {
 			users = new Users (db);
 		users.ensure_db ();
 		var path = get_overlay_db ();
-		if (! FileUtils.test (path, FileTest.EXISTS)) {
+		if (! exists (path)) {
 			try_create (path);
 			if (Posix.geteuid () == 0 && ! is_pseudo_user)
 				try_chown (path, get_user_pw ());
@@ -647,7 +647,7 @@ public class User : Object {
 	{
 		var user_db = get_overlay_db ();
 		var path = Path.build_filename (user_db, package);
-		if (FileUtils.test (path, FileTest.EXISTS))
+		if (exists (path))
 			return true;
 		else if (is_symlink (path))
 			/* Already hidden. */

@@ -12,7 +12,7 @@ X-Python3-Version: >= 3.2
 
 Package: click
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (>= ${source:Version}), python3-click (<< ${source:Version}.1), adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (= ${binary:Version}), adduser
 Recommends: click-apparmor, upstart-app-launch-tools
 Conflicts: click-package
 Replaces: click-package

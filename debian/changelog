@@ -21,6 +21,8 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Build-depend on python3-pep8 so that test_pep8_clean doesn't need to be
     skipped when running under Python 3.  This can safely be removed for
     backports to precise.
+  * Simplify click -> python3-click dependency given that both are
+    Architecture: any.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
 

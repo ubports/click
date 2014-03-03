@@ -450,6 +450,7 @@ public class SingleDB : Object {
 	public void
 	ensure_ownership () throws Error
 	{
+		errno = 0;
 		unowned Posix.Passwd? pw = Posix.getpwnam ("clickpkg");
 		if (pw == null)
 			throw new DatabaseError.ENSURE_OWNERSHIP

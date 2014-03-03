@@ -45,3 +45,8 @@ class TestQuery(TestCase):
         touch(path)
         pkgdir = Click.find_package_directory(path)
         self.assertEqual(self.temp_dir, pkgdir)
+
+    def test_find_package_directory_outside(self):
+        self.assertRaisesQueryError(
+            Click.QueryError.NO_PACKAGE_DIR, Click.find_package_directory,
+            "/bin")

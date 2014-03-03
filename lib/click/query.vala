@@ -45,7 +45,10 @@ find_package_directory (string path) throws QueryError
 			return dir;
 		if (dir == ".")
 			break;
-		dir = Path.get_dirname (dir);
+		var new_dir = Path.get_dirname (dir);
+		if (new_dir == dir)
+			break;
+		dir = new_dir;
 	} while (dir != null);
 
 	throw new QueryError.NO_PACKAGE_DIR

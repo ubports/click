@@ -29,6 +29,8 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Sync up substvar use with what debhelper actually generates for us: add
     ${misc:Pre-Depends} to click and packagekit-plugin-click, and remove
     ${python3:Depends} from click-dev.
+  * Reset SIGPIPE handling from Python's default of raising an exception to
+    the Unix default of terminating the process (LP: #1285790).
   * Move an initial core of functionality (database, hooks, osextras, query,
     user) from Python into a new "libclick" library, allowing
     performance-critical clients to avoid the cost of starting a new Python

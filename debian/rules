@@ -16,49 +16,35 @@ PY3DEFAULT := $(shell py3versions -d)
 # #!/usr/bin/python3 and not #!/usr/bin/python3.X.
 PY3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
 
+confflags := --with-python-interpreters='$(PY3)'
+ifeq ($(PACKAGEKIT),no)
+confflags += --disable-packagekit
+endif
+
 override_dh_autoreconf:
 	dh_autoreconf -- ./autogen.sh
 
-ifeq ($(PACKAGEKIT),no)
 override_dh_auto_configure:
-	dh_auto_configure -- --disable-packagekit
-endif
+	dh_auto_configure -- $(confflags)
 
 override_dh_auto_build:
 	dh_auto_build
-	set -e; for python in $(PY3); do \
-		$$python setup.py build; \
-	done
 	$(MAKE) -C doc html man
-
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-override_dh_auto_test:
-	set -e; for python in $(PY3); do \
-		$$python setup.py test; \
-	done
-endif
 
 override_dh_auto_clean:
 	dh_auto_clean
 	$(MAKE) -C doc clean
-	rm -rf build *.egg-info .tox
-	find -name \*.pyc -print0 | xargs -0r rm -f
-	find -name __pycache__ -print0 | xargs -0r rm -rf
+
+PYTHON_INSTALL_FLAGS := \
+	--force --root=$(CURDIR)/debian/tmp \
+	--no-compile -O0 --install-layout=deb
 
 override_dh_auto_install:
-	# setuptools likes to leave some debris around, which confuses things.
-	find build -name \*.pyc -print0 | xargs -0r rm -f
-	find build -name __pycache__ -print0 | xargs -0r rm -rf
-	find build -name \*.egg-info -print0 | xargs -0r rm -rf
-	dh_auto_install
+	dh_auto_install -- PYTHON_INSTALL_FLAGS='$(PYTHON_INSTALL_FLAGS)'
 	rm -f debian/tmp/usr/lib/*/click/*.la
-	set -e; for python in $(PY3); do \
-		$$python setup.py install --force --root=$(CURDIR)/debian/tmp \
-			--no-compile -O0 --install-layout=deb; \
-	done
 
 override_dh_install:
-	dh_install
+	dh_install -X .la --fail-missing
 	DH_AUTOSCRIPTDIR=debhelper debhelper/dh_click --name=click-desktop
 
 # Sphinx documentation is architecture-independent.

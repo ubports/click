@@ -1,3 +1,39 @@
+click (0.4.16) UNRELEASED; urgency=medium
+
+  * hooks: Fix expansion of "$$" in hook patterns to conform to the
+    documented behaviour of expanding to the single character "$".
+  * Move version detection out of configure.ac into a separate get-version
+    script, since intltool-update has trouble with the previous approach.
+  * Stop using unittest2 if available; the relevant improvements were
+    integrated into the standard library's unittest in Python 2.7, and we no
+    longer support 2.6.
+  * user: When setting the registered version of a package to the version in
+    an underlay database (e.g. a preinstalled version vs. one in the
+    user-installed area), remove the overlay link rather than setting a new
+    one equal to the underlay; this was always the intended behaviour but
+    didn't work that way due to a typo.
+  * Add Python 3.4 to list of tested versions.
+  * Call setup.py from the top-level Makefile.am rather than from
+    debian/rules, to make the build system a bit more unified.
+  * Drop AM_GNU_GETTEXT and call intltoolize before autoreconf in
+    autogen.sh; this fixes a bug whereby "make" after "./configure" always
+    immediately needed to run aclocal.
+  * Build-depend on python3-pep8 so that test_pep8_clean doesn't need to be
+    skipped when running under Python 3.  This can safely be removed for
+    backports to precise.
+  * Simplify click -> python3-click dependency given that both are
+    Architecture: any.
+  * Tighten packagekit-plugin-click -> click dependency to require a
+    matching version.
+  * Use dh_install --fail-missing to avoid future mistakes.
+  * Sync up substvar use with what debhelper actually generates for us: add
+    ${misc:Pre-Depends} to click and packagekit-plugin-click, and remove
+    ${python3:Depends} from click-dev.
+  * Reset SIGPIPE handling from Python's default of raising an exception to
+    the Unix default of terminating the process (LP: #1285790).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
+
 click (0.4.15) trusty; urgency=medium
 
   [ Stéphane Graber ]

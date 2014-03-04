@@ -1,6 +1,4 @@
-AC_INIT([click],
-	m4_esyscmd_s([head -n1 debian/changelog | sed -n 's/.*(\(.*\)).*/\1/p']),
-	[https://launchpad.net/click])
+AC_INIT([click],m4_esyscmd([./get-version]),[https://launchpad.net/click])
 AC_CONFIG_SRCDIR([preload/clickpreload.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -8,13 +6,18 @@ AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER([config.h])
 LT_INIT([disable-static])
 
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
 AC_SUBST([GETTEXT_PACKAGE], [click])
 IT_PROG_INTLTOOL
 
 AC_PROG_CC
 CFLAGS="$CFLAGS -Wall"
+
+AC_ARG_WITH([python-interpreters],
+	[AS_HELP_STRING([--with-python-interpreters],
+		[install for these Python interpreters (space-separated, default: python3)])],
+	[PYTHON_INTERPRETERS="$withval"],
+	[PYTHON_INTERPRETERS=python3])
+AC_SUBST([PYTHON_INTERPRETERS])
 
 AC_ARG_WITH([default-root],
 	[AS_HELP_STRING([--with-default-root],

@@ -22,8 +22,8 @@ full-system installations or upgrades.
 Compatibility
 =============
 
-Currently, this package should remain compatible with Python 2.7, 3.2, and
-3.3; Ubuntu 12.04 LTS and Ubuntu 13.10.
+Currently, this package should remain compatible with Python 2.7, 3.2, 3.3,
+and 3.4; Ubuntu 12.04 LTS, Ubuntu 13.10, and Ubuntu 14.04 LTS.
 
 
 Dependencies

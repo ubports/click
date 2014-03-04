@@ -75,6 +75,11 @@ class TestClickPatternFormatter(TestCase):
         self.assertEqual("$ {foo}", self.formatter.format("$ {foo}"))
         self.assertEqual("x${y", self.formatter.format("${key}${y", key="x"))
 
+    def test_double_dollar(self):
+        self.assertEqual("$", self.formatter.format("$$"))
+        self.assertEqual("${foo}", self.formatter.format("$${foo}"))
+        self.assertEqual("x$y", self.formatter.format("x$$${key}", key="y"))
+
     def test_possible_expansion(self):
         self.assertEqual(
             {"id": "abc"},

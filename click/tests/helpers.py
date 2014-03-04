@@ -33,10 +33,7 @@ import os
 import shutil
 import sys
 import tempfile
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 try:
     from unittest import mock
 except ImportError:

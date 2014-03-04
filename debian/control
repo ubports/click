@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Colin Watson <cjwatson@ubuntu.com>
 Standards-Version: 3.9.5
-Build-Depends: debhelper (>= 9~), dh-autoreconf, autopoint (>= 0.18.1), intltool, python3:any (>= 3.2), python3-all:any, python3-setuptools, python3-apt, python3-debian, python3:any (>= 3.3) | python3-mock, pep8, pyflakes, python3-sphinx, pkg-config, libglib2.0-dev (>= 2.34), libjson-glib-dev (>= 0.10), libpackagekit-glib2-dev (>= 0.7.2)
+Build-Depends: debhelper (>= 9~), dh-autoreconf, intltool, python3:any (>= 3.2), python3-all:any, python3-setuptools, python3-apt, python3-debian, python3:any (>= 3.3) | python3-mock, pep8, python3-pep8, pyflakes, python3-sphinx, pkg-config, libglib2.0-dev (>= 2.34), libjson-glib-dev (>= 0.10), libpackagekit-glib2-dev (>= 0.7.2)
 Vcs-Bzr: https://code.launchpad.net/~ubuntu-managed-branches/click/click
 Vcs-Browser: http://bazaar.launchpad.net/~ubuntu-managed-branches/click/click/files
 X-Auto-Uploader: no-rewrite-version
@@ -12,7 +12,8 @@ X-Python3-Version: >= 3.2
 
 Package: click
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (>= ${source:Version}), python3-click (<< ${source:Version}.1), adduser
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (= ${binary:Version}), adduser
 Recommends: click-apparmor, upstart-app-launch-tools
 Conflicts: click-package
 Replaces: click-package
@@ -26,7 +27,7 @@ Description: Click packages
 Package: click-dev
 Architecture: any
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${python3:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
+Depends: ${misc:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
 Recommends: debootstrap, schroot
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of
@@ -63,7 +64,8 @@ Description: Click packages (documentation)
 
 Package: packagekit-plugin-click
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, click
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, click (= ${binary:Version})
 Description: Click packages (PackageKit plugin)
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

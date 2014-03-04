@@ -1,5 +1,6 @@
-click (0.4.16) UNRELEASED; urgency=medium
+click (0.4.16) trusty; urgency=medium
 
+  [ Colin Watson ]
   * hooks: Fix expansion of "$$" in hook patterns to conform to the
     documented behaviour of expanding to the single character "$".
   * Move version detection out of configure.ac into a separate get-version
@@ -32,7 +33,7 @@ click (0.4.16) UNRELEASED; urgency=medium
   * Reset SIGPIPE handling from Python's default of raising an exception to
     the Unix default of terminating the process (LP: #1285790).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Feb 2014 15:30:52 +0000
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 04 Mar 2014 15:23:45 +0000
 
 click (0.4.15) trusty; urgency=medium
 

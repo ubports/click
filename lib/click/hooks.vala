@@ -439,11 +439,11 @@ public class Hook : Object {
 	open_all (DB db, string? hook_name = null) throws FileError
 	{
 		var ret = new List<Hook> ();
-		foreach (var name in Click.Dir.open (get_hooks_dir ())) {
+		var dir = get_hooks_dir ();
+		foreach (var name in Click.Dir.open (dir)) {
 			if (! name.has_suffix (".hook"))
 				continue;
-			var path = Path.build_filename (get_hooks_dir (),
-							name);
+			var path = Path.build_filename (dir, name);
 			try {
 				var hook = new Hook (db, name[0:-5]);
 				hook.fields = hook.parse_hook_file (path);

@@ -28,6 +28,9 @@ libclick_0_4_la_SOURCES = \
 	query.vala \
 	user.vala
 
+EXTRA_libclick_0_4_la_DEPENDENCIES = \
+	click.sym
+
 HEADER_FILES = \
 	click.h
 

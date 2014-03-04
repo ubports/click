@@ -215,7 +215,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(preloads)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"test-update": 0})
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 0})
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("Exec: test-update", file=f)
                 print("User: root", file=f)
@@ -223,7 +223,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self.assertEqual(
                 "root", hook.get_run_commands_user(user_name=None))
             hook.run_commands(user_name=None)
-            self.assertEqual([[b"test-update"]], self.spawn_calls)
+            self.assertEqual(
+                [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
 
     def test_install_package(self):
         with self.run_in_subprocess(
@@ -499,7 +500,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(preloads)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"test-update": 0})
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 0})
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Exec: test-update", file=f)
@@ -507,7 +508,8 @@ class TestClickHookUserLevel(TestClickHookBase):
             self.assertEqual(
                 "test-user", hook.get_run_commands_user(user_name="test-user"))
             hook.run_commands(user_name="test-user")
-            self.assertEqual([[b"test-update"]], self.spawn_calls)
+            self.assertEqual(
+                [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
 
     def test_install_package(self):
         with self.run_in_subprocess(

@@ -702,8 +702,7 @@ public class Hook : Object {
 	run_commands (string? user_name = null) throws Error
 	{
 		if (fields.has_key ("exec")) {
-			string[] argv;
-			Shell.parse_argv (fields["exec"], out argv);
+			string[] argv = {"/bin/sh", "-c", fields["exec"]};
 			var target_user_name = get_run_commands_user
 				(user_name);
 			SpawnChildSetupFunc drop =

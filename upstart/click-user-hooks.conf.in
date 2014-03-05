@@ -5,4 +5,4 @@ start on starting xsession-init
 
 task
 
-exec click hook run-user
+exec @bindir@/click hook run-user

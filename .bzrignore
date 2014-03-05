@@ -61,3 +61,5 @@ po/*.gmo
 po/*.header
 po/*.sed
 po/*.sin
+upstart/click-system-hooks.conf
+upstart/click-user-hooks.conf

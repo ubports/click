@@ -62,6 +62,24 @@ class TestClickUser(TestCase):
         os.symlink(c_0_1, os.path.join(user_dbs[1], "c"))
         return user_dbs, Click.User.for_user(self.multi_db, "user")
 
+    def test_new_no_db(self):
+        with self.run_in_subprocess(
+                "click_get_db_dir", "g_get_user_name") as (enter, preloads):
+            enter()
+            preloads["click_get_db_dir"].side_effect = (
+                lambda: self.make_string(self.temp_dir))
+            preloads["g_get_user_name"].side_effect = (
+                lambda: self.make_string("test-user"))
+            db_root = os.path.join(self.temp_dir, "db")
+            os.makedirs(db_root)
+            with open(os.path.join(self.temp_dir, "db.conf"), "w") as f:
+                print("[Click Database]", file=f)
+                print("root = %s" % db_root, file=f)
+            registry = Click.User.for_user()
+            self.assertEqual(
+                os.path.join(db_root, ".click", "users", "test-user"),
+                registry.get_overlay_db())
+
     def test_get_overlay_db(self):
         self.assertEqual(
             os.path.join(self.temp_dir, ".click", "users", "user"),

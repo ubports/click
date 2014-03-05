@@ -45,6 +45,8 @@ extern int under_under_xstat (int ver, const char *pathname, struct stat *buf);
  */
 extern int under_under_xstat64 (int ver, const char *pathname, struct stat64 *buf);
 
+const gchar *g_get_user_name (void);
+
 /**
  * g_spawn_sync:
  * @argv: (array zero-terminated=1):

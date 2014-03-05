@@ -225,28 +225,35 @@ public class User : Object {
 	private int dropped_privileges_count;
 	private Posix.mode_t? old_umask;
 
-	private User (DB db, string? name = null) {
+	private User (DB? db, string? name = null) throws FileError {
+		DB real_db;
 		string real_name;
+		if (db != null)
+			real_db = db;
+		else {
+			real_db = new DB ();
+			real_db.read ();
+		}
 		if (name != null)
 			real_name = name;
 		else
 			real_name = Environment.get_user_name ().dup ();
-		Object (db: db, name: real_name);
+		Object (db: real_db, name: real_name);
 		users = null;
 		user_pw = null;
 		dropped_privileges_count = 0;
 		old_umask = null;
 	}
 
-	public User.for_user (DB db, string? name = null) {
+	public User.for_user (DB? db, string? name = null) throws FileError {
 		this (db, name);
 	}
 
-	public User.for_all_users (DB db) {
+	public User.for_all_users (DB? db) throws FileError {
 		this (db, ALL_USERS);
 	}
 
-	public User.for_gc_in_use (DB db) {
+	public User.for_gc_in_use (DB? db) throws FileError {
 		this (db, GC_IN_USE_USER);
 	}
 

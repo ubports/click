@@ -16,7 +16,10 @@ PY3DEFAULT := $(shell py3versions -d)
 # #!/usr/bin/python3 and not #!/usr/bin/python3.X.
 PY3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
 
-confflags := --with-python-interpreters='$(PY3)'
+confflags := \
+	--with-python-interpreters='$(PY3)' \
+	--with-systemdsystemunitdir=/lib/systemd/system \
+	--with-systemduserunitdir=/usr/lib/systemd/user
 ifeq ($(PACKAGEKIT),no)
 confflags += --disable-packagekit
 endif

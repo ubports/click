@@ -1,6 +1,9 @@
 click (0.4.17) UNRELEASED; urgency=medium
 
   * Use full path to click in Upstart jobs to save a $PATH lookup.
+  * Add systemd units to run Click system and user hooks at the appropriate
+    times.  We probably won't be using these for a while, but it does no
+    harm to add them.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 05 Mar 2014 16:33:14 +0000
 

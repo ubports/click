@@ -47,6 +47,10 @@ debian/files
 debian/packagekit-plugin-click
 debian/python3-click
 debian/tmp
+init/systemd/click-system-hooks.service
+init/systemd/click-user-hooks.service
+init/upstart/click-system-hooks.conf
+init/upstart/click-user-hooks.conf
 m4/*
 pk-plugin/com.ubuntu.click.policy
 po/.intltool-merge-cache
@@ -61,5 +65,3 @@ po/*.gmo
 po/*.header
 po/*.sed
 po/*.sin
-upstart/click-system-hooks.conf
-upstart/click-user-hooks.conf

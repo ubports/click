@@ -1,4 +1,4 @@
-SUBDIRS = click conf debhelper po preload schroot upstart
+SUBDIRS = click conf debhelper init po preload schroot
 if PACKAGEKIT
 SUBDIRS += pk-plugin
 endif

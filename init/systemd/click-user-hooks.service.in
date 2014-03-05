@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Click user-level hooks
+Documentation=man:click(1)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=@bindir@/click hook run-user
+Restart=no
+
+[Install]
+WantedBy=default.target

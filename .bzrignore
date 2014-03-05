@@ -52,6 +52,10 @@ debian/libclick-0.4-dev
 debian/packagekit-plugin-click
 debian/python3-click
 debian/tmp
+init/systemd/click-system-hooks.service
+init/systemd/click-user-hooks.service
+init/upstart/click-system-hooks.conf
+init/upstart/click-user-hooks.conf
 lib/click/*.c
 lib/click/*.gir
 lib/click/*.typelib

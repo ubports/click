@@ -93,6 +93,34 @@ if test "x$enable_packagekit" = xyes; then
 fi
 AM_CONDITIONAL([PACKAGEKIT], [test "x$enable_packagekit" = xyes])
 
+AC_ARG_ENABLE([systemd],
+	      AS_HELP_STRING([--disable-systemd], [Disable systemd integration]))
+AM_CONDITIONAL([INSTALL_SYSTEMD], [test "x$enable_systemd" != xno])
+
+AC_ARG_WITH([systemdsystemunitdir],
+	    AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd system unit files]))
+if test "x$enable_systemd" != xno && test "x$with_systemdsystemunitdir" = x; then
+	AC_MSG_CHECKING([for systemd system unit directory])
+	with_systemdsystemunitdir="$($PKG_CONFIG --variable=systemdsystemunitdir systemd)"
+	if test "x$with_systemdsystemunitdir" = x; then
+		AC_MSG_ERROR([no systemd system unit directory found])
+	fi
+	AC_MSG_RESULT([$with_systemdsystemunitdir])
+fi
+AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+
+AC_ARG_WITH([systemduserunitdir],
+	    AS_HELP_STRING([--with-systemduserunitdir=DIR], [Directory for systemd user unit files]))
+if test "x$enable_systemd" != xno && test "x$with_systemduserunitdir" = x; then
+	AC_MSG_CHECKING([for systemd user unit directory])
+	with_systemduserunitdir="$($PKG_CONFIG --variable=systemduserunitdir systemd)"
+	if test "x$with_systemduserunitdir" = x; then
+		AC_MSG_ERROR([no systemd user unit directory found])
+	fi
+	AC_MSG_RESULT([$with_systemduserunitdir])
+fi
+AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])
+
 AC_CONFIG_FILES([
 	Makefile
 	click/Makefile
@@ -102,6 +130,9 @@ AC_CONFIG_FILES([
 	conf/databases/Makefile
 	conf/databases/99_default.conf
 	debhelper/Makefile
+	init/Makefile
+	init/systemd/Makefile
+	init/upstart/Makefile
 	lib/Makefile
 	lib/click/Makefile
 	lib/click/click-0.4.pc
@@ -109,7 +140,6 @@ AC_CONFIG_FILES([
 	po/Makefile.in
 	preload/Makefile
 	schroot/Makefile
-	upstart/Makefile
 	])
 AC_CONFIG_FILES([lib/click/valac-wrapper], [chmod +x lib/click/valac-wrapper])
 AC_CONFIG_FILES([setup.py], [chmod +x setup.py])

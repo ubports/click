@@ -77,7 +77,7 @@ Description: development files for Click package management library
 Package: gir1.2-click-0.4
 Section: introspection
 Architecture: any
-Depends: ${misc:Depends}, ${gir:Depends}
+Depends: ${misc:Depends}, ${gir:Depends}, libclick-0.4-0 (= ${binary:Version})
 Description: GIR bindings for Click package management library
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

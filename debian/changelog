@@ -2,6 +2,7 @@ click (0.4.17.1) UNRELEASED; urgency=medium
 
   * gobject-introspection-1.0.pc is in libgirepository1.0-dev, not
     gobject-introspection.  Fix Build-Depends.
+  * Build-depend and depend on gir1.2-glib-2.0 and python3-gi.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 14:44:47 +0000
 

@@ -7,8 +7,13 @@ else
 EXTRA_DH_OPTIONS := -Npackagekit-plugin-click
 endif
 
+# The advantages of -Wl,-Bsymbolic-functions are of limited value here, and
+# they mean that the test suite's LD_PRELOAD tricks don't work properly.
+export DEB_LDFLAGS_MAINT_STRIP := -Wl,-Bsymbolic-functions
+
 %:
-	dh $@ --with autoreconf,python3,sphinxdoc --buildsystem autoconf $(EXTRA_DH_OPTIONS)
+	dh $@ --with autoreconf,gir,python3,sphinxdoc \
+		--buildsystem autoconf $(EXTRA_DH_OPTIONS)
 
 PY3REQUESTED := $(shell py3versions -r)
 PY3DEFAULT := $(shell py3versions -d)
@@ -16,7 +21,10 @@ PY3DEFAULT := $(shell py3versions -d)
 # #!/usr/bin/python3 and not #!/usr/bin/python3.X.
 PY3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
 
-confflags := --with-python-interpreters='$(PY3)'
+confflags := \
+	--with-python-interpreters='$(PY3)' \
+	--with-systemdsystemunitdir=/lib/systemd/system \
+	--with-systemduserunitdir=/usr/lib/systemd/user
 ifeq ($(PACKAGEKIT),no)
 confflags += --disable-packagekit
 endif
@@ -49,3 +57,6 @@ override_dh_install:
 
 # Sphinx documentation is architecture-independent.
 override_dh_sphinxdoc-arch:
+
+override_dh_makeshlibs:
+	dh_makeshlibs -- -c4

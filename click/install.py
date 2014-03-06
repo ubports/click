@@ -43,12 +43,10 @@ from contextlib import closing
 import apt_pkg
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
+from gi.repository import Click
 
-from click import osextras
-from click.hooks import package_install_hooks
 from click.paths import frameworks_dir, preload_path
 from click.preinst import static_preinst_matches
-from click.user import ClickUser
 from click.versions import spec_version
 
 
@@ -313,12 +311,14 @@ class ClickInstaller:
 
     def install(self, path, user=None, all_users=False):
         package_name, package_version = self.audit(path, check_arch=True)
-        package_dir = os.path.join(self.db.overlay, package_name)
+        package_dir = os.path.join(self.db.props.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
-        assert os.path.dirname(os.path.dirname(inst_dir)) == self.db.overlay
+        assert (
+            os.path.dirname(os.path.dirname(inst_dir)) ==
+            self.db.props.overlay)
 
-        self._check_write_permissions(self.db.overlay)
-        root_click = os.path.join(self.db.overlay, ".click")
+        self._check_write_permissions(self.db.props.overlay)
+        root_click = os.path.join(self.db.props.overlay, ".click")
         if not os.path.exists(root_click):
             os.makedirs(root_click)
             if os.geteuid() == 0:
@@ -348,7 +348,7 @@ class ClickInstaller:
             if "LD_PRELOAD" in env:
                 preloads.append(env["LD_PRELOAD"])
             env["LD_PRELOAD"] = " ".join(preloads)
-            env["CLICK_BASE_DIR"] = self.db.overlay
+            env["CLICK_BASE_DIR"] = self.db.props.overlay
             env["CLICK_PACKAGE_PATH"] = path
             env["CLICK_PACKAGE_FD"] = str(fd.fileno())
             env.pop("HOME", None)
@@ -379,11 +379,11 @@ class ClickInstaller:
                 old_version = None
         else:
             old_version = None
-        package_install_hooks(
+        Click.package_install_hooks(
             self.db, package_name, old_version, package_version)
 
         new_path = os.path.join(package_dir, "current.new")
-        osextras.symlink_force(package_version, new_path)
+        Click.symlink_force(package_version, new_path)
         if os.geteuid() == 0:
             # shutil.chown would be more convenient, but it doesn't support
             # follow_symlinks=False in Python 3.3.
@@ -393,7 +393,10 @@ class ClickInstaller:
         os.rename(new_path, current_path)
 
         if user is not None or all_users:
-            registry = ClickUser(self.db, user=user, all_users=all_users)
+            if all_users:
+                registry = Click.User.for_all_users(self.db)
+            else:
+                registry = Click.User.for_user(self.db, name=user)
             registry.set_version(package_name, package_version)
 
         if old_version is not None:

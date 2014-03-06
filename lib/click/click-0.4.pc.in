@@ -1,0 +1,27 @@
+# Copyright (C) 2014 Canonical Ltd.
+#
+# This file is part of click.
+#
+# click is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation; version 3 of the License.
+#
+# click is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along
+# with click.  If not, see <http://www.gnu.org/licenses/>.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @PACKAGE_NAME@
+Description: Click package manipulation library
+Version: @PACKAGE_VERSION@
+URL: https://click.readthedocs.org/en/latest/
+Libs: -L${libdir} -lclick-0.4
+Cflags: -I${includedir}/click-0.4

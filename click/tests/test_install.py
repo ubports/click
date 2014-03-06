@@ -34,10 +34,10 @@ import subprocess
 from unittest import skipUnless
 
 from debian.deb822 import Deb822
+from gi.repository import Click
 
-from click import install, osextras
+from click import install
 from click.build import ClickBuilder
-from click.database import ClickDB
 from click.install import (
     ClickInstaller,
     ClickInstallerAuditError,
@@ -68,7 +68,8 @@ class TestClickInstaller(TestCase):
     def setUp(self):
         super(TestClickInstaller, self).setUp()
         self.use_temp_dir()
-        self.db = ClickDB(self.temp_dir)
+        self.db = Click.DB()
+        self.db.add(self.temp_dir)
 
     def make_fake_package(self, control_fields=None, manifest=None,
                           control_scripts=None, data_files=None):
@@ -90,7 +91,7 @@ class TestClickInstaller(TestCase):
         for name, contents in control_scripts.items():
             with mkfile(os.path.join(control_dir, name)) as script:
                 script.write(contents)
-        osextras.ensuredir(data_dir)
+        Click.ensuredir(data_dir)
         for name, path in data_files.items():
             if path is None:
                 touch(os.path.join(data_dir, name))
@@ -108,11 +109,11 @@ class TestClickInstaller(TestCase):
         old_dir = install.frameworks_dir
         try:
             install.frameworks_dir = os.path.join(self.temp_dir, "frameworks")
-            osextras.ensuredir(install.frameworks_dir)
+            Click.ensuredir(install.frameworks_dir)
             touch(os.path.join(install.frameworks_dir, "%s.framework" % name))
             yield
         finally:
-            osextras.unlink_force(
+            Click.unlink_force(
                 os.path.join(install.frameworks_dir, "%s.framework" % name))
             install.frameworks_dir = old_dir
 
@@ -342,7 +343,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("gi.repository.Click.package_install_hooks")
     def test_install(self, mock_package_install_hooks):
         path = self.make_fake_package(
             control_fields={
@@ -361,7 +362,8 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst},
             data_files={"foo": None})
         root = os.path.join(self.temp_dir, "root")
-        db = ClickDB(root)
+        db = Click.DB()
+        db.add(root)
         installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
@@ -425,7 +427,9 @@ class TestClickInstaller(TestCase):
             control_scripts={"preinst": static_preinst},
             data_files={"foo": None})
         root = os.path.join(self.temp_dir, "root")
-        installer = ClickInstaller(ClickDB(root))
+        db = Click.DB()
+        db.add(root)
+        installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock.patch("subprocess.call") as mock_call:
             mock_call.side_effect = call_side_effect
@@ -437,8 +441,9 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("gi.repository.Click.package_install_hooks")
     def test_upgrade(self, mock_package_install_hooks):
+        os.environ["TEST_QUIET"] = "1"
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
@@ -460,7 +465,8 @@ class TestClickInstaller(TestCase):
         inst_dir = os.path.join(package_dir, "current")
         os.makedirs(os.path.join(package_dir, "1.0"))
         os.symlink("1.0", inst_dir)
-        db = ClickDB(root)
+        db = Click.DB()
+        db.add(root)
         installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
@@ -494,7 +500,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("gi.repository.Click.package_install_hooks")
     def test_world_readable(self, mock_package_install_hooks):
         owner_only_file = os.path.join(self.temp_dir, "owner-only-file")
         touch(owner_only_file)
@@ -521,7 +527,8 @@ class TestClickInstaller(TestCase):
                 "world-readable-dir": owner_only_dir,
             })
         root = os.path.join(self.temp_dir, "root")
-        db = ClickDB(root)
+        db = Click.DB()
+        db.add(root)
         installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
@@ -538,7 +545,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("gi.repository.Click.package_install_hooks")
     @mock.patch("click.install.ClickInstaller._dpkg_architecture")
     def test_single_architecture(self, mock_dpkg_architecture,
                                  mock_package_install_hooks):
@@ -560,7 +567,8 @@ class TestClickInstaller(TestCase):
             },
             control_scripts={"preinst": static_preinst})
         root = os.path.join(self.temp_dir, "root")
-        db = ClickDB(root)
+        db = Click.DB()
+        db.add(root)
         installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():
@@ -571,7 +579,7 @@ class TestClickInstaller(TestCase):
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
-    @mock.patch("click.install.package_install_hooks")
+    @mock.patch("gi.repository.Click.package_install_hooks")
     @mock.patch("click.install.ClickInstaller._dpkg_architecture")
     def test_multiple_architectures(self, mock_dpkg_architecture,
                                     mock_package_install_hooks):
@@ -593,7 +601,8 @@ class TestClickInstaller(TestCase):
             },
             control_scripts={"preinst": static_preinst})
         root = os.path.join(self.temp_dir, "root")
-        db = ClickDB(root)
+        db = Click.DB()
+        db.add(root)
         installer = ClickInstaller(db)
         with self.make_framework("ubuntu-sdk-13.10"), \
              mock_quiet_subprocess_call():

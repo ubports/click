@@ -21,9 +21,7 @@ from __future__ import print_function
 from optparse import OptionParser
 import sys
 
-from click.database import ClickDB
-from click.query import find_package_directory
-from click.user import ClickUser
+from gi.repository import Click
 
 
 def run(argv):
@@ -39,12 +37,15 @@ def run(argv):
         parser.error("need package name")
     try:
         if "/" in args[0]:
-            print(find_package_directory(args[0]))
+            print(Click.find_package_directory(args[0]))
         else:
-            db = ClickDB(options.root)
+            db = Click.DB()
+            db.read()
+            if options.root is not None:
+                db.add(options.root)
             package_name = args[0]
-            registry = ClickUser(db, user=options.user)
-            print(registry.path(package_name))
+            registry = Click.User.for_user(db, name=options.user)
+            print(registry.get_path(package_name))
     except Exception as e:
         print(e, file=sys.stderr)
         return 1

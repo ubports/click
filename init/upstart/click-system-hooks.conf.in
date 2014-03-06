@@ -5,4 +5,4 @@ start on filesystem
 
 task
 
-exec click hook run-system
+exec @bindir@/click hook run-system

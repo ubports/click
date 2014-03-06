@@ -1,4 +1,4 @@
-click (0.4.17.1) UNRELEASED; urgency=medium
+click (0.4.17.1) trusty; urgency=medium
 
   * gobject-introspection-1.0.pc is in libgirepository1.0-dev, not
     gobject-introspection.  Fix Build-Depends.
@@ -7,7 +7,7 @@ click (0.4.17.1) UNRELEASED; urgency=medium
     the same as far as glib is concerned, and ctypes does strange things
     with its bool type in callbacks.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 14:44:47 +0000
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 16:09:33 +0000
 
 click (0.4.17) trusty; urgency=medium
 

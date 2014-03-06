@@ -160,7 +160,7 @@ _c_type_override = {
 # Mapping of GI type name -> ctypes type.
 _typemap = {
     "GError**": ctypes.c_void_p,
-    "gboolean": ctypes.c_bool,
+    "gboolean": ctypes.c_int,
     "gint": ctypes.c_int,
     "gint*": ctypes.POINTER(ctypes.c_int),
     "gint32": ctypes.c_int32,

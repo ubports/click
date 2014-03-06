@@ -44,7 +44,7 @@ def run(argv):
             if options.root is not None:
                 db.add(options.root)
             package_name = args[0]
-            registry = Click.User(db, name=options.user)
+            registry = Click.User.for_user(db, name=options.user)
             print(registry.get_path(package_name))
     except Exception as e:
         print(e, file=sys.stderr)

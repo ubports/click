@@ -23,22 +23,25 @@ from optparse import OptionParser
 import os
 import sys
 
-from click.database import ClickDB
-from click.user import ClickUser
+from gi.repository import Click
 
 
 def list_packages(options):
-    db = ClickDB(options.root)
+    db = Click.DB()
+    db.read()
+    if options.root is not None:
+        db.add(options.root)
     if options.all:
-        for package, version, path, writeable in \
-                db.packages(all_versions=True):
-            yield package, version, path, writeable
-    else:
-        registry = ClickUser(db, user=options.user)
-        for package, version in sorted(registry.items()):
+        for inst in db.get_packages(all_versions=True):
             yield (
-                package, version, registry.path(package),
-                registry.removable(package))
+                inst.props.package, inst.props.version, inst.props.path,
+                inst.props.writeable)
+    else:
+        registry = Click.User.for_user(db, name=options.user)
+        for package in sorted(registry.get_package_names()):
+            yield (
+                package, registry.get_version(package),
+                registry.get_path(package), registry.is_removable(package))
 
 
 def run(argv):

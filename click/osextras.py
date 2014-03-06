@@ -13,7 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Extra OS-level utility functions."""
+"""Extra OS-level utility functions.
+
+Usually we can instead use the functions exported from
+lib/click/osextras.vala via GObject Introspection.  These pure-Python
+versions are preserved so that they can be used from code that needs to be
+maximally portable: for example, click.build is intended to be usable even
+on systems that lack GObject, as long as they have a reasonably recent
+version of Python.
+"""
 
 __all__ = [
     'ensuredir',

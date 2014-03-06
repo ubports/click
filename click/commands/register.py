@@ -19,8 +19,7 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from click.database import ClickDB
-from click.user import ClickUser
+from gi.repository import Click, GLib
 
 
 def run(argv):
@@ -38,11 +37,20 @@ def run(argv):
         parser.error("need package name")
     if len(args) < 2:
         parser.error("need version")
-    db = ClickDB(options.root)
+    db = Click.DB()
+    db.read()
+    if options.root is not None:
+        db.add(options.root)
     package = args[0]
     version = args[1]
-    registry = ClickUser(db, user=options.user, all_users=options.all_users)
-    old_version = registry.get(package)
+    if options.all_users:
+        registry = Click.User.for_all_users(db)
+    else:
+        registry = Click.User.for_user(db, name=options.user)
+    try:
+        old_version = registry.get_version(package)
+    except GLib.GError:
+        old_version = None
     registry.set_version(package, version)
     if old_version is not None:
         db.maybe_remove(package, old_version)

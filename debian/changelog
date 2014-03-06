@@ -4,6 +4,10 @@ click (0.4.17) UNRELEASED; urgency=medium
   * Add systemd units to run Click system and user hooks at the appropriate
     times.  We probably won't be using these for a while, but it does no
     harm to add them.
+  * Move an initial core of functionality (database, hooks, osextras, query,
+    user) from Python into a new "libclick" library, allowing
+    performance-critical clients to avoid the cost of starting a new Python
+    interpreter (LP: #1282311).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 05 Mar 2014 16:33:14 +0000
 

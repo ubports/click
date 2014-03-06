@@ -39,10 +39,12 @@ try:
 except ImportError:
     import mock
 
-from click import osextras
+from gi.repository import Click, GLib
+
+from click.tests import gimock
 
 
-class TestCase(unittest.TestCase):
+class TestCase(gimock.GIMockTestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         self.temp_dir = None
@@ -73,6 +75,33 @@ class TestCase(unittest.TestCase):
     # Renamed in Python 3.2 to omit the trailing 'p'.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
+    def assertRaisesGError(self, domain_name, code, callableObj,
+                           *args, **kwargs):
+        with self.assertRaises(GLib.GError) as cm:
+            callableObj(*args, **kwargs)
+        self.assertEqual(domain_name, cm.exception.domain)
+        self.assertEqual(code, cm.exception.code)
+
+    def assertRaisesFileError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "g-file-error-quark", code, callableObj, *args, **kwargs)
+
+    def assertRaisesDatabaseError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "click_database_error-quark", code, callableObj, *args, **kwargs)
+
+    def assertRaisesHooksError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "click_hooks_error-quark", code, callableObj, *args, **kwargs)
+
+    def assertRaisesQueryError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "click_query_error-quark", code, callableObj, *args, **kwargs)
+
+    def assertRaisesUserError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "click_user_error-quark", code, callableObj, *args, **kwargs)
 
 
 if not hasattr(mock, "call"):
@@ -228,14 +257,14 @@ if not hasattr(mock, "call"):
 
 @contextlib.contextmanager
 def mkfile(path, mode="w"):
-    osextras.ensuredir(os.path.dirname(path))
+    Click.ensuredir(os.path.dirname(path))
     with open(path, mode) as f:
         yield f
 
 
 @contextlib.contextmanager
 def mkfile_utf8(path, mode="w"):
-    osextras.ensuredir(os.path.dirname(path))
+    Click.ensuredir(os.path.dirname(path))
     if sys.version < "3":
         import codecs
         with codecs.open(path, mode, "UTF-8") as f:

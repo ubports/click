@@ -1,0 +1,4 @@
+#! /bin/sh
+set -e
+
+LD_LIBRARY_PATH=lib/click/.libs GI_TYPELIB_PATH=lib/click bin/click "$@"

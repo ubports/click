@@ -20,8 +20,7 @@ from __future__ import print_function
 from optparse import OptionParser
 from textwrap import dedent
 
-from click.database import ClickDB
-from click.hooks import ClickHook, run_system_hooks, run_user_hooks
+from gi.repository import Click
 
 
 per_hook_subcommands = {
@@ -54,16 +53,25 @@ def run(argv):
     if subcommand in per_hook_subcommands:
         if len(args) < 2:
             parser.error("need hook name")
-        db = ClickDB(options.root)
+        db = Click.DB()
+        db.read()
+        if options.root is not None:
+            db.add(options.root)
         name = args[1]
-        hook = ClickHook.open(db, name)
+        hook = Click.Hook.open(db, name)
         getattr(hook, per_hook_subcommands[subcommand])()
     elif subcommand == "run-system":
-        db = ClickDB(options.root)
-        run_system_hooks(db)
+        db = Click.DB()
+        db.read()
+        if options.root is not None:
+            db.add(options.root)
+        Click.run_system_hooks(db)
     elif subcommand == "run-user":
-        db = ClickDB(options.root)
-        run_user_hooks(db, user=options.user)
+        db = Click.DB()
+        db.read()
+        if options.root is not None:
+            db.add(options.root)
+        Click.run_user_hooks(db, user_name=options.user)
     else:
         parser.error(
             "unknown subcommand '%s' (known: install, remove, run-system,"

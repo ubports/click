@@ -23,8 +23,9 @@ import json
 from optparse import OptionParser
 import os
 
+from gi.repository import Click
+
 from click import osextras
-from click.query import find_package_directory
 
 
 COMMENT = \
@@ -71,7 +72,7 @@ def older(source_path, target_path):
 
 def read_hooks_for(path, package, app_name):
     try:
-        directory = find_package_directory(path)
+        directory = Click.find_package_directory(path)
         manifest_path = os.path.join(
             directory, ".click", "info", "%s.manifest" % package)
         with io.open(manifest_path, encoding="UTF-8") as manifest:
@@ -111,10 +112,10 @@ def quote_for_desktop_exec(s):
 # TODO: This is a very crude .desktop file mangler; we should instead
 # implement proper (de)serialisation.
 def write_desktop_file(target_path, source_path, profile):
-    osextras.ensuredir(os.path.dirname(target_path))
+    Click.ensuredir(os.path.dirname(target_path))
     with io.open(source_path, encoding="UTF-8") as source, \
          io.open(target_path, "w", encoding="UTF-8") as target:
-        source_dir = find_package_directory(source_path)
+        source_dir = Click.find_package_directory(source_path)
         written_comment = False
         seen_path = False
         for line in source:

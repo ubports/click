@@ -4,6 +4,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER([config.h])
+AC_USE_SYSTEM_EXTENSIONS
 LT_INIT([disable-static])
 
 AC_SUBST([GETTEXT_PACKAGE], [click])
@@ -34,6 +35,43 @@ LIBS="$click_save_LIBS"
 AC_CACHE_CHECK([for Perl vendor library directory], [click_cv_perl_vendorlib],
 	[click_cv_perl_vendorlib=`perl -MConfig -e 'print $Config{vendorlib}'`])
 AC_SUBST([perl_vendorlib], ["$click_cv_perl_vendorlib"])
+
+AM_PROG_VALAC
+PKG_CHECK_MODULES([LIBCLICK], [
+	glib-2.0 >= 2.34
+	gobject-2.0 >= 2.34
+	json-glib-1.0 >= 0.10
+	gee-0.8
+	])
+AC_SUBST([LIBCLICK_CFLAGS])
+AC_SUBST([LIBCLICK_LIBS])
+
+# Structure characteristics needed for the Python/C integration in the test
+# suite.
+AC_COMPUTE_INT([STAT_OFFSET_UID], [offsetof(struct stat, st_uid)], [
+	AC_INCLUDES_DEFAULT
+	#include <sys/stat.h>
+	])
+AC_SUBST([STAT_OFFSET_UID])
+AC_COMPUTE_INT([STAT_OFFSET_GID], [offsetof(struct stat, st_gid)], [
+	AC_INCLUDES_DEFAULT
+	#include <sys/stat.h>
+	])
+AC_SUBST([STAT_OFFSET_GID])
+AC_COMPUTE_INT([STAT64_OFFSET_UID], [offsetof(struct stat64, st_uid)], [
+	AC_INCLUDES_DEFAULT
+	#include <sys/stat.h>
+	])
+AC_SUBST([STAT64_OFFSET_UID])
+AC_COMPUTE_INT([STAT64_OFFSET_GID], [offsetof(struct stat64, st_gid)], [
+	AC_INCLUDES_DEFAULT
+	#include <sys/stat.h>
+	])
+AC_SUBST([STAT64_OFFSET_GID])
+
+GOBJECT_INTROSPECTION_REQUIRE([0.6.7])
+VAPIGEN_VAPIDIR=`$PKG_CONFIG --variable=vapidir vapigen`
+AC_SUBST([VAPIGEN_VAPIDIR])
 
 AC_ARG_ENABLE([packagekit],
 	AS_HELP_STRING([--disable-packagekit], [disable PackageKit plugin]),
@@ -86,6 +124,8 @@ AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])
 AC_CONFIG_FILES([
 	Makefile
 	click/Makefile
+	click/tests/Makefile
+	click/tests/config.py
 	conf/Makefile
 	conf/databases/Makefile
 	conf/databases/99_default.conf
@@ -93,10 +133,14 @@ AC_CONFIG_FILES([
 	init/Makefile
 	init/systemd/Makefile
 	init/upstart/Makefile
+	lib/Makefile
+	lib/click/Makefile
+	lib/click/click-0.4.pc
 	pk-plugin/Makefile
 	po/Makefile.in
 	preload/Makefile
 	schroot/Makefile
 	])
+AC_CONFIG_FILES([lib/click/valac-wrapper], [chmod +x lib/click/valac-wrapper])
 AC_CONFIG_FILES([setup.py], [chmod +x setup.py])
 AC_OUTPUT

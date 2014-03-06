@@ -21,7 +21,8 @@ from optparse import OptionParser
 import sys
 from textwrap import dedent
 
-from click.database import ClickDB
+from gi.repository import Click
+
 from click.install import ClickInstaller, ClickInstallerError
 
 
@@ -45,7 +46,10 @@ def run(argv):
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")
-    db = ClickDB(options.root)
+    db = Click.DB()
+    db.read()
+    if options.root is not None:
+        db.add(options.root)
     package_path = args[0]
     installer = ClickInstaller(db, options.force_missing_framework)
     try:

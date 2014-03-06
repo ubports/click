@@ -24,45 +24,46 @@ __all__ = [
     ]
 
 
+from functools import partial
+from itertools import takewhile
 import json
 import os
 
-from click.database import ClickDB
-from click.tests.helpers import TestCase, mkfile, mock, touch
+from gi.repository import Click
 
-
-class MockPasswd:
-    def __init__(self, pw_uid, pw_gid):
-        self.pw_uid = pw_uid
-        self.pw_gid = pw_gid
-
-
-class MockStatResult:
-    original_stat = os.stat
-
-    def __init__(self, path, **override):
-        self.st = self.original_stat(path)
-        self.override = override
-
-    def __getattr__(self, name):
-        if name in self.override:
-            return self.override[name]
-        else:
-            return getattr(self.st, name)
+from click.tests.gimock_types import Passwd
+from click.tests.helpers import TestCase, mkfile, touch
 
 
 class TestClickSingleDB(TestCase):
     def setUp(self):
         super(TestClickSingleDB, self).setUp()
         self.use_temp_dir()
-        self.master_db = ClickDB(extra_root=self.temp_dir, use_system=False)
-        self.db = self.master_db._db[-1]
+        self.master_db = Click.DB()
+        self.master_db.add(self.temp_dir)
+        self.db = self.master_db.get(self.master_db.props.size - 1)
+        self.spawn_calls = []
+
+    def g_spawn_sync_side_effect(self, status_map, working_directory, argv,
+                                 envp, flags, child_setup, user_data,
+                                 standard_output, standard_error, exit_status,
+                                 error):
+        self.spawn_calls.append(list(takewhile(lambda x: x is not None, argv)))
+        if argv[0] in status_map:
+            exit_status[0] = status_map[argv[0]]
+        else:
+            self.delegate_to_original("g_spawn_sync")
+        return 0
+
+    def _installed_packages_tuplify(self, ip):
+        return [(p.props.package, p.props.version, p.props.path) for p in ip]
 
     def test_path(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
         os.makedirs(path)
-        self.assertEqual(path, self.db.path("a", "1.0"))
-        self.assertRaises(KeyError, self.db.path, "a", "1.1")
+        self.assertEqual(path, self.db.get_path("a", "1.0"))
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST, self.db.get_path, "a", "1.1")
 
     def test_packages_current(self):
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
@@ -76,7 +77,8 @@ class TestClickSingleDB(TestCase):
         self.assertEqual([
             ("a", "1.1", a_current),
             ("b", "0.1", b_current),
-        ], list(self.db.packages()))
+        ], self._installed_packages_tuplify(
+            self.db.get_packages(all_versions=False)))
 
     def test_packages_all(self):
         os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
@@ -90,120 +92,145 @@ class TestClickSingleDB(TestCase):
             ("a", "1.1", os.path.join(self.temp_dir, "a", "1.1")),
             ("b", "0.1", os.path.join(self.temp_dir, "b", "0.1")),
             ("c", "2.0", os.path.join(self.temp_dir, "c", "2.0")),
-        ], list(self.db.packages(all_versions=True)))
+        ], self._installed_packages_tuplify(
+            self.db.get_packages(all_versions=True)))
 
-    @mock.patch("subprocess.call")
-    def test_app_running(self, mock_call):
-        mock_call.return_value = 0
-        self.assertTrue(self.db._app_running("foo", "bar", "1.0"))
-        mock_call.assert_called_once_with(
-            ["upstart-app-pid", "foo_bar_1.0"], stdout=mock.ANY)
-        mock_call.return_value = 1
-        self.assertFalse(self.db._app_running("foo", "bar", "1.0"))
+    def test_app_running(self):
+        with self.run_in_subprocess("g_spawn_sync") as (enter, preloads):
+            enter()
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+            self.assertTrue(self.db.app_running("foo", "bar", "1.0"))
+            self.assertEqual(
+                [[b"upstart-app-pid", b"foo_bar_1.0"]], self.spawn_calls)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+            self.assertFalse(self.db.app_running("foo", "bar", "1.0"))
 
-    @mock.patch("click.osextras.find_on_path")
-    @mock.patch("subprocess.call")
-    def test_any_app_running(self, mock_call, mock_find_on_path):
-        manifest_path = os.path.join(
-            self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
-        with mkfile(manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        mock_call.return_value = 0
-        mock_find_on_path.return_value = False
-        self.assertFalse(self.db._any_app_running("a", "1.0"))
-        mock_find_on_path.return_value = True
-        self.assertTrue(self.db._any_app_running("a", "1.0"))
-        mock_call.assert_called_once_with(
-            ["upstart-app-pid", "a_a-app_1.0"], stdout=mock.ANY)
-        mock_call.return_value = 1
-        self.assertFalse(self.db._any_app_running("a", "1.0"))
+    def test_any_app_running(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            manifest_path = os.path.join(
+                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+            preloads["click_find_on_path"].return_value = False
+            self.assertFalse(self.db.any_app_running("a", "1.0"))
+            preloads["click_find_on_path"].return_value = True
+            self.assertTrue(self.db.any_app_running("a", "1.0"))
+            self.assertEqual(
+                [[b"upstart-app-pid", b"a_a-app_1.0"]], self.spawn_calls)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+            self.assertFalse(self.db.any_app_running("a", "1.0"))
 
-    @mock.patch("click.osextras.find_on_path")
-    @mock.patch("subprocess.call")
-    def test_maybe_remove_registered(self, mock_call, mock_find_on_path):
-        version_path = os.path.join(self.temp_dir, "a", "1.0")
-        manifest_path = os.path.join(
-            version_path, ".click", "info", "a.manifest")
-        with mkfile(manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        user_path = os.path.join(
-            self.temp_dir, ".click", "users", "test-user", "a")
-        os.makedirs(os.path.dirname(user_path))
-        os.symlink(version_path, user_path)
-        mock_call.return_value = 0
-        mock_find_on_path.return_value = True
-        self.db.maybe_remove("a", "1.0")
-        self.assertTrue(os.path.exists(version_path))
-        self.assertTrue(os.path.exists(user_path))
+    def test_maybe_remove_registered(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            version_path = os.path.join(self.temp_dir, "a", "1.0")
+            manifest_path = os.path.join(
+                version_path, ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            user_path = os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "a")
+            os.makedirs(os.path.dirname(user_path))
+            os.symlink(version_path, user_path)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+            preloads["click_find_on_path"].return_value = True
+            self.db.maybe_remove("a", "1.0")
+            self.assertTrue(os.path.exists(version_path))
+            self.assertTrue(os.path.exists(user_path))
 
-    @mock.patch("click.osextras.find_on_path")
-    @mock.patch("subprocess.call")
-    def test_maybe_remove_running(self, mock_call, mock_find_on_path):
-        version_path = os.path.join(self.temp_dir, "a", "1.0")
-        manifest_path = os.path.join(
-            version_path, ".click", "info", "a.manifest")
-        with mkfile(manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        mock_call.return_value = 0
-        mock_find_on_path.return_value = True
-        self.db.maybe_remove("a", "1.0")
-        gcinuse_path = os.path.join(
-            self.temp_dir, ".click", "users", "@gcinuse", "a")
-        self.assertTrue(os.path.islink(gcinuse_path))
-        self.assertEqual(version_path, os.readlink(gcinuse_path))
-        self.assertTrue(os.path.exists(version_path))
-        self.db.maybe_remove("a", "1.0")
-        self.assertTrue(os.path.islink(gcinuse_path))
-        self.assertEqual(version_path, os.readlink(gcinuse_path))
-        self.assertTrue(os.path.exists(version_path))
+    def test_maybe_remove_running(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            version_path = os.path.join(self.temp_dir, "a", "1.0")
+            manifest_path = os.path.join(
+                version_path, ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+            preloads["click_find_on_path"].return_value = True
+            self.db.maybe_remove("a", "1.0")
+            gcinuse_path = os.path.join(
+                self.temp_dir, ".click", "users", "@gcinuse", "a")
+            self.assertTrue(os.path.islink(gcinuse_path))
+            self.assertEqual(version_path, os.readlink(gcinuse_path))
+            self.assertTrue(os.path.exists(version_path))
+            self.db.maybe_remove("a", "1.0")
+            self.assertTrue(os.path.islink(gcinuse_path))
+            self.assertEqual(version_path, os.readlink(gcinuse_path))
+            self.assertTrue(os.path.exists(version_path))
 
-    @mock.patch("click.osextras.find_on_path")
-    @mock.patch("subprocess.call")
-    def test_maybe_remove_not_running(self, mock_call, mock_find_on_path):
-        version_path = os.path.join(self.temp_dir, "a", "1.0")
-        manifest_path = os.path.join(
-            version_path, ".click", "info", "a.manifest")
-        with mkfile(manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        current_path = os.path.join(self.temp_dir, "a", "current")
-        os.symlink("1.0", current_path)
-        mock_call.return_value = 1
-        mock_find_on_path.return_value = True
-        self.db.maybe_remove("a", "1.0")
-        gcinuse_path = os.path.join(
-            self.temp_dir, ".click", "users", "@gcinuse", "a")
-        self.assertFalse(os.path.islink(gcinuse_path))
-        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "a")))
+    def test_maybe_remove_not_running(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            os.environ["TEST_QUIET"] = "1"
+            version_path = os.path.join(self.temp_dir, "a", "1.0")
+            manifest_path = os.path.join(
+                version_path, ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            current_path = os.path.join(self.temp_dir, "a", "current")
+            os.symlink("1.0", current_path)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+            preloads["click_find_on_path"].return_value = True
+            self.db.maybe_remove("a", "1.0")
+            gcinuse_path = os.path.join(
+                self.temp_dir, ".click", "users", "@gcinuse", "a")
+            self.assertFalse(os.path.islink(gcinuse_path))
+            self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "a")))
 
-    @mock.patch("click.osextras.find_on_path")
-    @mock.patch("subprocess.call")
-    def test_gc(self, mock_call, mock_find_on_path):
-        a_path = os.path.join(self.temp_dir, "a", "1.0")
-        a_manifest_path = os.path.join(a_path, ".click", "info", "a.manifest")
-        with mkfile(a_manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        b_path = os.path.join(self.temp_dir, "b", "1.0")
-        b_manifest_path = os.path.join(b_path, ".click", "info", "b.manifest")
-        with mkfile(b_manifest_path) as manifest:
-            json.dump({"hooks": {"b-app": {}}}, manifest)
-        c_path = os.path.join(self.temp_dir, "c", "1.0")
-        c_manifest_path = os.path.join(c_path, ".click", "info", "c.manifest")
-        with mkfile(c_manifest_path) as manifest:
-            json.dump({"hooks": {"c-app": {}}}, manifest)
-        a_user_path = os.path.join(
-            self.temp_dir, ".click", "users", "test-user", "a")
-        os.makedirs(os.path.dirname(a_user_path))
-        os.symlink(a_path, a_user_path)
-        b_gcinuse_path = os.path.join(
-            self.temp_dir, ".click", "users", "@gcinuse", "b")
-        os.makedirs(os.path.dirname(b_gcinuse_path))
-        os.symlink(b_path, b_gcinuse_path)
-        mock_call.return_value = 1
-        mock_find_on_path.return_value = True
-        self.db.gc(verbose=False)
-        self.assertTrue(os.path.exists(a_path))
-        self.assertFalse(os.path.exists(b_path))
-        self.assertTrue(os.path.exists(c_path))
+    def test_gc(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            os.environ["TEST_QUIET"] = "1"
+            a_path = os.path.join(self.temp_dir, "a", "1.0")
+            a_manifest_path = os.path.join(
+                a_path, ".click", "info", "a.manifest")
+            with mkfile(a_manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            b_path = os.path.join(self.temp_dir, "b", "1.0")
+            b_manifest_path = os.path.join(
+                b_path, ".click", "info", "b.manifest")
+            with mkfile(b_manifest_path) as manifest:
+                json.dump({"hooks": {"b-app": {}}}, manifest)
+            c_path = os.path.join(self.temp_dir, "c", "1.0")
+            c_manifest_path = os.path.join(
+                c_path, ".click", "info", "c.manifest")
+            with mkfile(c_manifest_path) as manifest:
+                json.dump({"hooks": {"c-app": {}}}, manifest)
+            a_user_path = os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "a")
+            os.makedirs(os.path.dirname(a_user_path))
+            os.symlink(a_path, a_user_path)
+            b_gcinuse_path = os.path.join(
+                self.temp_dir, ".click", "users", "@gcinuse", "b")
+            os.makedirs(os.path.dirname(b_gcinuse_path))
+            os.symlink(b_path, b_gcinuse_path)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+            preloads["click_find_on_path"].return_value = True
+            self.db.gc()
+            self.assertTrue(os.path.exists(a_path))
+            self.assertFalse(os.path.exists(b_path))
+            self.assertTrue(os.path.exists(c_path))
 
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
@@ -215,66 +242,91 @@ class TestClickSingleDB(TestCase):
         os.symlink(path, user_path)
         touch(os.path.join(self.temp_dir, ".click", "log"))
 
-    def test_clickpkg_paths(self):
-        self._make_ownership_test()
-        self.assertCountEqual([
-            self.temp_dir,
-            os.path.join(self.temp_dir, ".click"),
-            os.path.join(self.temp_dir, ".click", "log"),
-            os.path.join(self.temp_dir, ".click", "users"),
-            os.path.join(self.temp_dir, "a"),
-            os.path.join(self.temp_dir, "a", "1.0"),
-            os.path.join(self.temp_dir, "a", "1.0", ".click"),
-            os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
-            os.path.join(
-                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
-            os.path.join(self.temp_dir, "a", "current"),
-        ], list(self.db._clickpkg_paths()))
+    def _set_stat_side_effect(self, preloads, side_effect, limit):
+        limit = limit.encode()
+        preloads["__xstat"].side_effect = (
+            lambda ver, path, buf: side_effect(
+                "__xstat", limit, ver, path, buf))
+        preloads["__xstat64"].side_effect = (
+            lambda ver, path, buf: side_effect(
+                "__xstat64", limit, ver, path, buf))
 
-    @mock.patch("pwd.getpwnam")
-    @mock.patch("os.chown")
-    def test_ensure_ownership_quick_if_correct(self, mock_chown,
-                                               mock_getpwnam):
-        mock_getpwnam.return_value = MockPasswd(pw_uid=1, pw_gid=1)
-        self._make_ownership_test()
-        with mock.patch("os.stat") as mock_stat:
-            mock_stat.side_effect = (
-                lambda path, *args, **kwargs: MockStatResult(
-                    path, st_uid=1, st_gid=1))
-            self.db.ensure_ownership()
-        self.assertFalse(mock_chown.called)
+    def test_ensure_ownership_quick_if_correct(self):
+        def stat_side_effect(name, limit, ver, path, buf):
+            st = self.convert_stat_pointer(name, buf)
+            if path == limit:
+                st.st_uid = 1
+                st.st_gid = 1
+                return 0
+            else:
+                self.delegate_to_original(name)
+                return -1
 
-    @mock.patch("pwd.getpwnam")
-    @mock.patch("os.chown")
-    def test_ensure_ownership(self, mock_chown, mock_getpwnam):
-        mock_getpwnam.return_value = MockPasswd(pw_uid=1, pw_gid=1)
-        self._make_ownership_test()
-        with mock.patch("os.stat") as mock_stat:
-            mock_stat.side_effect = (
-                lambda path, *args, **kwargs: MockStatResult(
-                    path, st_uid=2, st_gid=2))
+        with self.run_in_subprocess(
+                "chown", "getpwnam", "__xstat", "__xstat64",
+                ) as (enter, preloads):
+            enter()
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
+            self._set_stat_side_effect(
+                preloads, stat_side_effect, self.db.props.root)
+
+            self._make_ownership_test()
             self.db.ensure_ownership()
-        self.assertCountEqual([
-            self.temp_dir,
-            os.path.join(self.temp_dir, ".click"),
-            os.path.join(self.temp_dir, ".click", "log"),
-            os.path.join(self.temp_dir, ".click", "users"),
-            os.path.join(self.temp_dir, "a"),
-            os.path.join(self.temp_dir, "a", "1.0"),
-            os.path.join(self.temp_dir, "a", "1.0", ".click"),
-            os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
-            os.path.join(
-                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
-            os.path.join(self.temp_dir, "a", "current"),
-        ], [args[0][0] for args in mock_chown.call_args_list])
-        self.assertCountEqual(
-            [(1, 1)], set(args[0][1:] for args in mock_chown.call_args_list))
+            self.assertFalse(preloads["chown"].called)
+
+    def test_ensure_ownership(self):
+        def stat_side_effect(name, limit, ver, path, buf):
+            st = self.convert_stat_pointer(name, buf)
+            if path == limit:
+                st.st_uid = 2
+                st.st_gid = 2
+                return 0
+            else:
+                self.delegate_to_original(name)
+                return -1
+
+        with self.run_in_subprocess(
+                "chown", "getpwnam", "__xstat", "__xstat64",
+                ) as (enter, preloads):
+            enter()
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
+            self._set_stat_side_effect(
+                preloads, stat_side_effect, self.db.props.root)
+
+            self._make_ownership_test()
+            self.db.ensure_ownership()
+            expected_paths = [
+                self.temp_dir,
+                os.path.join(self.temp_dir, ".click"),
+                os.path.join(self.temp_dir, ".click", "log"),
+                os.path.join(self.temp_dir, ".click", "users"),
+                os.path.join(self.temp_dir, "a"),
+                os.path.join(self.temp_dir, "a", "1.0"),
+                os.path.join(self.temp_dir, "a", "1.0", ".click"),
+                os.path.join(self.temp_dir, "a", "1.0", ".click", "info"),
+                os.path.join(
+                    self.temp_dir, "a", "1.0", ".click", "info", "a.manifest"),
+                os.path.join(self.temp_dir, "a", "current"),
+                ]
+            self.assertCountEqual(
+                [path.encode() for path in expected_paths],
+                [args[0][0] for args in preloads["chown"].call_args_list])
+            self.assertCountEqual(
+                [(1, 1)],
+                set(args[0][1:] for args in preloads["chown"].call_args_list))
 
 
 class TestClickDB(TestCase):
     def setUp(self):
         super(TestClickDB, self).setUp()
         self.use_temp_dir()
+
+    def _installed_packages_tuplify(self, ip):
+        return [
+            (p.props.package, p.props.version, p.props.path, p.props.writeable)
+            for p in ip]
 
     def test_read_configuration(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -283,23 +335,27 @@ class TestClickDB(TestCase):
         with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
             print("[Click Database]", file=b)
             print("root = /b", file=b)
-        db = ClickDB(extra_root="/c", override_db_dir=self.temp_dir)
-        self.assertEqual(3, len(db))
-        self.assertEqual(["/a", "/b", "/c"], [d.root for d in db])
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        db.add("/c")
+        self.assertEqual(3, db.props.size)
+        self.assertEqual(
+            ["/a", "/b", "/c"],
+            [db.get(i).props.root for i in range(db.props.size)])
 
-    def test_no_use_system(self):
+    def test_no_read(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
             print("[Click Database]", file=a)
             print("root = /a", file=a)
-        db = ClickDB(use_system=False, override_db_dir=self.temp_dir)
-        self.assertEqual(0, len(db))
+        db = Click.DB()
+        self.assertEqual(0, db.props.size)
 
     def test_add(self):
-        db = ClickDB(use_system=False)
-        self.assertEqual(0, len(db))
+        db = Click.DB()
+        self.assertEqual(0, db.props.size)
         db.add("/new/root")
-        self.assertEqual(1, len(db))
-        self.assertEqual(["/new/root"], [d.root for d in db])
+        self.assertEqual(1, db.props.size)
+        self.assertEqual("/new/root", db.get(0).props.root)
 
     def test_overlay(self):
         with open(os.path.join(self.temp_dir, "00_custom.conf"), "w") as f:
@@ -308,8 +364,9 @@ class TestClickDB(TestCase):
         with open(os.path.join(self.temp_dir, "99_default.conf"), "w") as f:
             print("[Click Database]", file=f)
             print("root = /opt/click.ubuntu.com", file=f)
-        db = ClickDB(override_db_dir=self.temp_dir)
-        self.assertEqual("/opt/click.ubuntu.com", db.overlay)
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertEqual("/opt/click.ubuntu.com", db.props.overlay)
 
     def test_path(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -318,21 +375,24 @@ class TestClickDB(TestCase):
         with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
             print("[Click Database]", file=b)
             print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
-        db = ClickDB(override_db_dir=self.temp_dir)
-        self.assertRaises(KeyError, db.path, "pkg", "1.0")
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST, db.get_path, "pkg", "1.0")
         os.makedirs(os.path.join(self.temp_dir, "a", "pkg", "1.0"))
         self.assertEqual(
             os.path.join(self.temp_dir, "a", "pkg", "1.0"),
-            db.path("pkg", "1.0"))
-        self.assertRaises(KeyError, db.path, "pkg", "1.1")
+            db.get_path("pkg", "1.0"))
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST, db.get_path, "pkg", "1.1")
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.0"))
         self.assertEqual(
             os.path.join(self.temp_dir, "b", "pkg", "1.0"),
-            db.path("pkg", "1.0"))
+            db.get_path("pkg", "1.0"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.1"))
         self.assertEqual(
             os.path.join(self.temp_dir, "b", "pkg", "1.1"),
-            db.path("pkg", "1.1"))
+            db.get_path("pkg", "1.1"))
 
     def test_packages_current(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -341,8 +401,9 @@ class TestClickDB(TestCase):
         with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
             print("[Click Database]", file=b)
             print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
-        db = ClickDB(override_db_dir=self.temp_dir)
-        self.assertEqual([], list(db.packages()))
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertEqual([], list(db.get_packages(all_versions=False)))
         os.makedirs(os.path.join(self.temp_dir, "a", "pkg1", "1.0"))
         os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg1", "1.1"))
@@ -354,7 +415,8 @@ class TestClickDB(TestCase):
         self.assertEqual([
             ("pkg1", "1.1", pkg1_current, True),
             ("pkg2", "0.1", pkg2_current, True),
-        ], list(db.packages()))
+        ], self._installed_packages_tuplify(
+            db.get_packages(all_versions=False)))
 
     def test_packages_all(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -363,8 +425,9 @@ class TestClickDB(TestCase):
         with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
             print("[Click Database]", file=b)
             print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
-        db = ClickDB(override_db_dir=self.temp_dir)
-        self.assertEqual([], list(db.packages()))
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertEqual([], list(db.get_packages(all_versions=False)))
         os.makedirs(os.path.join(self.temp_dir, "a", "pkg1", "1.0"))
         os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg1", "1.1"))
@@ -378,4 +441,5 @@ class TestClickDB(TestCase):
              True),
             ("pkg1", "1.0", os.path.join(self.temp_dir, "a", "pkg1", "1.0"),
              False),
-        ], list(db.packages(all_versions=True)))
+        ], self._installed_packages_tuplify(
+            db.get_packages(all_versions=True)))

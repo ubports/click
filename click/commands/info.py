@@ -24,18 +24,21 @@ from optparse import OptionParser
 import os
 import sys
 
-from click.database import ClickDB
+from gi.repository import Click
+
 from click.install import DebFile
-from click.user import ClickUser
 
 
 def get_manifest(options, arg):
     if "/" not in arg:
-        db = ClickDB(options.root)
-        registry = ClickUser(db, user=options.user)
-        if arg in registry:
+        db = Click.DB()
+        db.read()
+        if options.root is not None:
+            db.add(options.root)
+        registry = Click.User.for_user(db, name=options.user)
+        if registry.has_package_name(arg):
             manifest_path = os.path.join(
-                registry.path(arg), ".click", "info", "%s.manifest" % arg)
+                registry.get_path(arg), ".click", "info", "%s.manifest" % arg)
             with io.open(manifest_path, encoding="UTF-8") as manifest:
                 return json.load(manifest)
 

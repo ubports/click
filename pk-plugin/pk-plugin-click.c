@@ -264,6 +264,19 @@ click_get_envp (void)
 	return environ;
 }
 
+static void
+click_pk_error (PkPlugin *plugin, PkErrorEnum code,
+		const char *summary, const char *extra)
+{
+	if (pk_backend_job_get_is_error_set (plugin->job)) {
+		/* PK already has an error; just log this. */
+		g_warning ("%s", summary);
+		g_warning ("%s", extra);
+	} else
+		pk_backend_job_error_code
+			(plugin->job, code, "%s\n%s", summary, extra);
+}
+
 static JsonParser *
 click_get_manifest (PkPlugin *plugin, const gchar *filename)
 {
@@ -288,15 +301,11 @@ click_get_manifest (PkPlugin *plugin, const gchar *filename)
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("\"click info %s\" failed.", filename);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
-				"\"click info %s\" failed.\n%s",
-				filename, click_stderr);
+		gchar *summary = g_strdup_printf
+			("\"click info %s\" failed.", filename);
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				summary, click_stderr);
+		g_free (summary);
 		goto out;
 	}
 
@@ -378,14 +387,8 @@ click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("\"click list\" failed.");
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
-				"\"click list\" failed.\n%s", click_stderr);
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"\"click list\" failed.", click_stderr);
 		goto out;
 	}
 
@@ -541,17 +544,13 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		ret = FALSE;
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("%s failed to install", filename);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job,
+		gchar *summary = g_strdup_printf ("%s failed to install.",
+						  filename);
+		click_pk_error (plugin,
 				PK_ERROR_ENUM_PACKAGE_FAILED_TO_INSTALL,
-				"%s failed to install.\n%s",
-				filename, click_stderr);
+				summary, click_stderr);
+		g_free (summary);
+		ret = FALSE;
 		goto out;
 	}
 
@@ -678,17 +677,12 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
+		gchar *summary = g_strdup_printf
+			("%s failed to remove.", package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, click_stderr);
+		g_free (summary);
 		ret = FALSE;
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("%s failed to remove", package_id);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job,
-				PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
-				"%s failed to remove.\n%s",
-				package_id, click_stderr);
 		goto out;
 	}
 

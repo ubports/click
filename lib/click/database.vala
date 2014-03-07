@@ -119,9 +119,7 @@ public class SingleDB : Object {
 					var version_path = Path.build_filename
 						(package_path, version);
 					if (is_symlink (version_path) ||
-					    ! FileUtils.test
-					    	(version_path,
-						 FileTest.IS_DIR))
+					    ! is_dir (version_path))
 						continue;
 					ret.prepend(new InstalledPackage
 						(package, version,
@@ -377,7 +375,7 @@ public class SingleDB : Object {
 		string[] nondirs = {};
 		foreach (var name in Click.Dir.open (top)) {
 			var path = Path.build_filename (top, name);
-			if (FileUtils.test (path, FileTest.IS_DIR))
+			if (is_dir (path))
 				dirs += name;
 			else
 				nondirs += name;

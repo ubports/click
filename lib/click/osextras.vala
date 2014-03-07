@@ -55,7 +55,7 @@ find_on_path (string command)
 public void
 ensuredir (string directory) throws FileError
 {
-	if (FileUtils.test (directory, FileTest.IS_DIR))
+	if (is_dir (directory))
 		return;
 	if (DirUtils.create_with_parents (directory, 0777) < 0) {
 		var code = FileUtils.error_from_errno (errno);
@@ -208,6 +208,12 @@ private bool
 is_symlink (string path)
 {
 	return FileUtils.test (path, FileTest.IS_SYMLINK);
+}
+
+private bool
+is_dir (string path)
+{
+	return FileUtils.test (path, FileTest.IS_DIR);
 }
 
 }

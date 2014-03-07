@@ -184,7 +184,7 @@ public class Users : Object {
 					continue;
 				var path = Path.build_filename (users_db,
 								entry);
-				if (FileUtils.test (path, FileTest.IS_DIR)) {
+				if (is_dir (path)) {
 					seen.add (entry.dup ());
 					entries.prepend (entry.dup ());
 				}
@@ -205,7 +205,7 @@ public class Users : Object {
 	{
 		foreach (var single_db in db) {
 			var path = db_for_user (single_db.root, user_name);
-			if (FileUtils.test (path, FileTest.IS_DIR))
+			if (is_dir (path))
 				/* We only require the user path to exist in
 				 * any database; it doesn't matter which.
 				 */

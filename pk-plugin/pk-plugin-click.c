@@ -337,6 +337,18 @@ click_get_field_object (JsonObject *manifest, const gchar *field)
 	return json_node_get_object (node);
 }
 
+static gboolean
+click_get_field_boolean (JsonObject *manifest, const gchar *field,
+			 gboolean def)
+{
+	JsonNode *node;
+
+	node = json_object_get_member (manifest, field);
+	if (!node)
+		return def;
+	return json_node_get_boolean (node);
+}
+
 static JsonParser *
 click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 {
@@ -400,11 +412,9 @@ click_build_pkid_data (const gchar *data_prefix, JsonObject *manifest)
 	gint i;
 	JsonObject *hooks;
 	GList *hooks_members = NULL, *hooks_iter;
-	gchar *removable = NULL;
 	gchar *data = NULL;
 
 	hooks = click_get_field_object (manifest, "hooks");
-	removable = click_get_field_string (manifest, "_removable");
 
 	n_elements = 3;  /* data_prefix, removable, terminator */
 	if (hooks)
@@ -418,10 +428,10 @@ click_build_pkid_data (const gchar *data_prefix, JsonObject *manifest)
 	/* A missing "_removable" entry in the manifest means that we just
 	 * installed the package, so it must be removable.
 	 */
-	if (g_strcmp0 (removable, "0") == 0)
-		elements[i++] = g_strdup ("removable=0");
-	else
+	if (click_get_field_boolean (manifest, "_removable", TRUE))
 		elements[i++] = g_strdup ("removable=1");
+	else
+		elements[i++] = g_strdup ("removable=0");
 	if (hooks) {
 		hooks_members = json_object_get_members (hooks);
 		for (hooks_iter = hooks_members; hooks_iter;
@@ -438,7 +448,6 @@ out:
 	g_strfreev (elements);
 	if (hooks_members)
 		g_list_free (hooks_members);
-	g_free (removable);
 	return data;
 }
 

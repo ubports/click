@@ -118,9 +118,7 @@ public class SingleDB : Object {
 						(package_path)) {
 					var version_path = Path.build_filename
 						(package_path, version);
-					if (FileUtils.test
-						(version_path,
-						 FileTest.IS_SYMLINK) ||
+					if (is_symlink (version_path) ||
 					    ! FileUtils.test
 					    	(version_path,
 						 FileTest.IS_DIR))
@@ -132,8 +130,7 @@ public class SingleDB : Object {
 			} else {
 				var current_path = Path.build_filename
 					(root, package, "current");
-				if (! FileUtils.test
-					(current_path, FileTest.IS_SYMLINK))
+				if (! is_symlink (current_path))
 					continue;
 				var version = FileUtils.read_link
 					(current_path);
@@ -240,7 +237,7 @@ public class SingleDB : Object {
 		var package_path = Path.build_filename (root, package);
 		var current_path = Path.build_filename
 			(package_path, "current");
-		if (FileUtils.test (current_path, FileTest.IS_SYMLINK) &&
+		if (is_symlink (current_path) &&
 		    FileUtils.read_link (current_path) == version) {
 			if (FileUtils.unlink (current_path) < 0)
 				throw new DatabaseError.REMOVE

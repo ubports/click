@@ -778,8 +778,7 @@ public class Hook : Object {
 			path = db.get_path (package, version);
 		var target = Path.build_filename (path, relative_path);
 		var link = get_pattern (package, version, app_name, user_name);
-		if (FileUtils.test (link, FileTest.IS_SYMLINK) &&
-		    FileUtils.read_link (link) == target)
+		if (is_symlink (link) && FileUtils.read_link (link) == target)
 			return;
 		ensuredir (Path.get_dirname (link));
 		symlink_force (target, link);

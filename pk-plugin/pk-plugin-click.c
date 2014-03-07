@@ -34,6 +34,8 @@
 #define I_KNOW_THE_PACKAGEKIT_PLUGIN_API_IS_SUBJECT_TO_CHANGE
 #include <plugin/packagekit-plugin.h>
 
+#include "click.h"
+
 
 struct PkPluginPrivate {
 	guint			 dummy;
@@ -271,10 +273,13 @@ click_pk_error (PkPlugin *plugin, PkErrorEnum code,
 	if (pk_backend_job_get_is_error_set (plugin->job)) {
 		/* PK already has an error; just log this. */
 		g_warning ("%s", summary);
-		g_warning ("%s", extra);
-	} else
+		if (extra)
+			g_warning ("%s", extra);
+	} else if (extra)
 		pk_backend_job_error_code
 			(plugin->job, code, "%s\n%s", summary, extra);
+	else
+		pk_backend_job_error_code (plugin->job, code, "%s", summary);
 }
 
 static JsonParser *
@@ -643,56 +648,88 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 		      const gchar *package_id)
 {
 	gboolean ret = FALSE;
-	gchar **argv = NULL;
-	gint i;
 	gchar *username = NULL;
 	gchar *name = NULL;
 	gchar *version = NULL;
-	gchar **envp = NULL;
-	gchar *click_stderr = NULL;
-	gint click_status;
+	ClickDB *db = NULL;
+	ClickUser *registry = NULL;
+	gchar *old_version = NULL;
+	GError *error = NULL;
+	gchar *summary = NULL;
 
-	argv = g_malloc0_n (6, sizeof (*argv));
-	i = 0;
-	argv[i++] = g_strdup ("click");
-	argv[i++] = g_strdup ("unregister");
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
 	if (!username) {
 		g_error ("Click: cannot remove packages without a username");
 		goto out;
 	}
-	argv[i++] = g_strdup_printf ("--user=%s", username);
 	if (!click_split_pkid (package_id, &name, &version, NULL)) {
 		g_error ("Click: cannot parse package ID '%s'", package_id);
 		goto out;
 	}
-	argv[i++] = g_strdup (name);
-	argv[i++] = g_strdup (version);
-	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
-			    NULL, NULL, NULL, &click_stderr, &click_status,
-			    NULL);
-	if (!ret)
-		goto out;
-	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		gchar *summary = g_strdup_printf
-			("%s failed to remove.", package_id);
+	db = click_db_new ();
+	click_db_read (db, NULL, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to read Click database while removing %s.",
+			 package_id);
 		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
-				summary, click_stderr);
-		g_free (summary);
-		ret = FALSE;
+				summary, error->message);
 		goto out;
 	}
+	registry = click_user_new_for_user (db, username, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to read Click database while removing %s.",
+			 package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	old_version = click_user_get_version (registry, name, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to get current version of Click package %s.",
+			 name);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	if (strcmp (old_version, version) != 0) {
+		summary = g_strdup_printf
+			("Not removing Click package %s %s; does not match "
+			 "current version %s.", name, version, old_version);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, NULL);
+		goto out;
+	}
+	click_user_remove (registry, name, &error);
+	if (error) {
+		summary = g_strdup_printf ("Failed to remove %s.", package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	click_db_maybe_remove (db, name, version, &error);
+	if (error) {
+		summary = g_strdup_printf ("Failed to remove %s.", package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	/* TODO: remove data? */
+	ret = TRUE;
 
 out:
-	g_strfreev (argv);
-	g_free (username);
-	g_free (name);
+	g_free (summary);
+	if (error)
+		g_error_free (error);
+	g_free (old_version);
+	g_object_unref (registry);
+	g_object_unref (db);
 	g_free (version);
-	g_strfreev (envp);
-	g_free (click_stderr);
+	g_free (name);
+	g_free (username);
 
 	return ret;
 }

@@ -95,6 +95,14 @@ class TestClickSingleDB(TestCase):
         ], self._installed_packages_tuplify(
             self.db.get_packages(all_versions=True)))
 
+    def test_packages_all_ignores_non_directory(self):
+        os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
+        touch(os.path.join(self.temp_dir, "file"))
+        self.assertEqual([
+            ("a", "1.0", os.path.join(self.temp_dir, "a", "1.0")),
+        ], self._installed_packages_tuplify(
+            self.db.get_packages(all_versions=True)))
+
     def test_app_running(self):
         with self.run_in_subprocess("g_spawn_sync") as (enter, preloads):
             enter()
@@ -231,6 +239,20 @@ class TestClickSingleDB(TestCase):
             self.assertTrue(os.path.exists(a_path))
             self.assertFalse(os.path.exists(b_path))
             self.assertTrue(os.path.exists(c_path))
+
+    def test_gc_ignores_non_directory(self):
+        a_path = os.path.join(self.temp_dir, "a", "1.0")
+        a_manifest_path = os.path.join(
+            a_path, ".click", "info", "a.manifest")
+        with mkfile(a_manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        a_user_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user", "a")
+        os.makedirs(os.path.dirname(a_user_path))
+        os.symlink(a_path, a_user_path)
+        touch(os.path.join(self.temp_dir, "file"))
+        self.db.gc()
+        self.assertTrue(os.path.exists(a_path))
 
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")

@@ -114,6 +114,8 @@ public class SingleDB : Object {
 			if (all_versions) {
 				var package_path =
 					Path.build_filename (root, package);
+				if (! is_dir (package_path))
+					continue;
 				foreach (var version in Click.Dir.open
 						(package_path)) {
 					var version_path = Path.build_filename
@@ -337,6 +339,8 @@ public class SingleDB : Object {
 			if (package == ".click")
 				continue;
 			var package_path = Path.build_filename (root, package);
+			if (! is_dir (package_path))
+				continue;
 			foreach (var version in Click.Dir.open
 					(package_path)) {
 				if (version in user_reg[package])

@@ -449,7 +449,7 @@ class TestClickDB(TestCase):
             print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
         db = Click.DB()
         db.read(db_dir=self.temp_dir)
-        self.assertEqual([], list(db.get_packages(all_versions=False)))
+        self.assertEqual([], list(db.get_packages(all_versions=True)))
         os.makedirs(os.path.join(self.temp_dir, "a", "pkg1", "1.0"))
         os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg1", "1.1"))

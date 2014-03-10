@@ -17,13 +17,13 @@
 
 from __future__ import print_function
 
-import io
 import json
 from optparse import OptionParser
-import os
 import sys
 
 from gi.repository import Click
+
+from click.json_helpers import json_array_to_python
 
 
 def list_packages(options):
@@ -32,16 +32,10 @@ def list_packages(options):
     if options.root is not None:
         db.add(options.root)
     if options.all:
-        for inst in db.get_packages(all_versions=True):
-            yield (
-                inst.props.package, inst.props.version, inst.props.path,
-                inst.props.writeable)
+        return json_array_to_python(db.get_manifests(all_versions=True))
     else:
         registry = Click.User.for_user(db, name=options.user)
-        for package in sorted(registry.get_package_names()):
-            yield (
-                package, registry.get_version(package),
-                registry.get_path(package), registry.is_removable(package))
+        return json_array_to_python(registry.get_manifests())
 
 
 def run(argv):
@@ -58,28 +52,13 @@ def run(argv):
         "--manifest", default=False, action="store_true",
         help="format output as a JSON array of manifests")
     options, _ = parser.parse_args(argv)
-    json_output = []
-    for package, version, path, writeable in list_packages(options):
-        if options.manifest:
-            try:
-                manifest_path = os.path.join(
-                    path, ".click", "info", "%s.manifest" % package)
-                with io.open(manifest_path, encoding="UTF-8") as manifest:
-                    manifest_json = json.load(manifest)
-                    keys = list(manifest_json)
-                    for key in keys:
-                        if key.startswith("_"):
-                            del manifest_json[key]
-                    manifest_json["_directory"] = path
-                    manifest_json["_removable"] = 1 if writeable else 0
-                    json_output.append(manifest_json)
-            except Exception:
-                pass
-        else:
-            print("%s\t%s" % (package, version))
+    json_output = list_packages(options)
     if options.manifest:
         json.dump(
             json_output, sys.stdout, ensure_ascii=False, sort_keys=True,
             indent=4, separators=(",", ": "))
         print()
+    else:
+        for manifest in json_output:
+            print("%s\t%s" % (manifest["name"], manifest["version"]))
     return 0

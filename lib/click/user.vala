@@ -643,6 +643,46 @@ public class User : Object {
 	}
 
 	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 *
+	 * Returns: A #Json.Object containing a package's manifest.
+	 */
+	public Json.Object
+	get_manifest (string package) throws Error
+	{
+		var obj = db.get_manifest (package, get_version (package));
+		/* Adjust _directory to point to the user registration path. */
+		obj.set_string_member ("_directory", get_path (package));
+		return obj;
+	}
+
+	/**
+	 * get_manifests:
+	 *
+	 * Returns: A #Json.Array containing manifests of all packages
+	 * registered for this user.  The manifest may include additional
+	 * dynamic keys (starting with an underscore) corresponding to
+	 * dynamic properties of installed packages.
+	 */
+	public Json.Array
+	get_manifests () throws Error
+	{
+		var ret = new Json.Array ();
+		foreach (var package in get_package_names ()) {
+			var obj = get_manifest (package);
+			/* This should really be a boolean, but it was
+			 * mistakenly made an int when the "_removable" key
+			 * was first created.  We may change this in future.
+			 */
+			obj.set_int_member ("_removable",
+					    is_removable (package) ? 1 : 0);
+			ret.add_object_element (obj);
+		}
+		return ret;
+	}
+
+	/**
 	 * is_removable:
 	 * @package: A package name.
 	 *

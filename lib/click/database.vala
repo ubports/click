@@ -30,7 +30,11 @@ public errordomain DatabaseError {
 	/**
 	 * Failure to ensure correct ownership of database files.
 	 */
-	ENSURE_OWNERSHIP
+	ENSURE_OWNERSHIP,
+	/**
+	 * Package manifest cannot be parsed.
+	 */
+	BAD_MANIFEST
 }
 
 public class InstalledPackage : Object, Gee.Hashable<InstalledPackage> {
@@ -143,6 +147,51 @@ public class SingleDB : Object {
 
 		ret.reverse ();
 		return ret;
+	}
+
+	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A #Json.Object containing the manifest of this version
+	 * of this package.  The manifest may include additional dynamic
+	 * keys (starting with an underscore) corresponding to dynamic
+	 * properties of installed packages.
+	 */
+	public Json.Object
+	get_manifest (string package, string version) throws DatabaseError
+	{
+		/* Extract the raw manifest from the file system. */
+		var path = get_path (package, version);
+		var manifest_path = Path.build_filename
+			(path, ".click", "info", @"$package.manifest");
+		var parser = new Json.Parser ();
+		try {
+			parser.load_from_file (manifest_path);
+		} catch (Error e) {
+			throw new DatabaseError.BAD_MANIFEST
+				("Failed to parse manifest in %s: %s",
+				 manifest_path, e.message);
+		}
+		var node = parser.get_root ();
+		if (node.get_node_type () != Json.NodeType.OBJECT)
+			throw new DatabaseError.BAD_MANIFEST
+				("Manifest in %s is not a JSON object",
+				 manifest_path);
+		var manifest = node.dup_object ();
+
+		/* Set up dynamic keys. */
+		var to_remove = new List<string> ();
+		foreach (var name in manifest.get_members ()) {
+			if (name.has_prefix ("_"))
+				to_remove.prepend (name);
+		}
+		foreach (var name in to_remove)
+			manifest.remove_member (name);
+		manifest.set_string_member ("_directory", path);
+
+		return manifest;
 	}
 
 	/*
@@ -576,6 +625,57 @@ public class DB : Object {
 		}
 
 		ret.reverse ();
+		return ret;
+	}
+
+	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A #Json.Object containing the manifest of this version
+	 * of this package.
+	 */
+	public Json.Object
+	get_manifest (string package, string version) throws DatabaseError
+	{
+		for (int i = db.size - 1; i >= 0; --i) {
+			try {
+				return db[i].get_manifest (package, version);
+			} catch (DatabaseError e) {
+				if (e is DatabaseError.BAD_MANIFEST)
+					throw e;
+			}
+		}
+		throw new DatabaseError.DOES_NOT_EXIST
+			("%s %s does not exist in any database",
+			 package, version);
+	}
+
+	/**
+	 * get_manifests:
+	 * @all_versions: If true, return manifests for all versions, not
+	 * just current ones.
+	 *
+	 * Returns: A #Json.Array containing manifests of all packages in
+	 * this database.  The manifest may include additional dynamic keys
+	 * (starting with an underscore) corresponding to dynamic properties
+	 * of installed packages.
+	 */
+	public Json.Array
+	get_manifests (bool all_versions = false) throws Error
+	{
+		var ret = new Json.Array ();
+		foreach (var inst in get_packages (all_versions)) {
+			var obj = get_manifest (inst.package, inst.version);
+			/* This should really be a boolean, but it was
+			 * mistakenly made an int when the "_removable" key
+			 * was first created.  We may change this in future.
+			 */
+			obj.set_int_member ("_removable",
+					    inst.writeable ? 1 : 0);
+			ret.add_object_element (obj);
+		}
 		return ret;
 	}
 

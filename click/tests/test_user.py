@@ -23,11 +23,13 @@ __all__ = [
     ]
 
 
+import json
 import os
 
 from gi.repository import Click
 
-from click.tests.helpers import TestCase
+from click.json_helpers import json_array_to_python, json_object_to_python
+from click.tests.helpers import TestCase, mkfile
 
 
 class TestClickUser(TestCase):
@@ -48,12 +50,20 @@ class TestClickUser(TestCase):
         ]
         a_1_0 = os.path.join(self.temp_dir, "custom", "a", "1.0")
         os.makedirs(a_1_0)
+        with mkfile(os.path.join(a_1_0, ".click", "info", "a.manifest")) as m:
+            json.dump({"name": "a", "version": "1.0"}, m)
         b_2_0 = os.path.join(self.temp_dir, "custom", "b", "2.0")
         os.makedirs(b_2_0)
+        with mkfile(os.path.join(b_2_0, ".click", "info", "b.manifest")) as m:
+            json.dump({"name": "b", "version": "2.0"}, m)
         a_1_1 = os.path.join(self.temp_dir, "click", "a", "1.1")
         os.makedirs(a_1_1)
+        with mkfile(os.path.join(a_1_1, ".click", "info", "a.manifest")) as m:
+            json.dump({"name": "a", "version": "1.1"}, m)
         c_0_1 = os.path.join(self.temp_dir, "click", "c", "0.1")
         os.makedirs(c_0_1)
+        with mkfile(os.path.join(c_0_1, ".click", "info", "c.manifest")) as m:
+            json.dump({"name": "c", "version": "0.1"}, m)
         os.makedirs(user_dbs[0])
         os.symlink(a_1_0, os.path.join(user_dbs[0], "a"))
         os.symlink(b_2_0, os.path.join(user_dbs[0], "b"))
@@ -291,6 +301,93 @@ class TestClickUser(TestCase):
             os.path.join(user_dbs[1], "c"), registry.get_path("c"))
         self.assertRaisesUserError(
             Click.UserError.NO_SUCH_PACKAGE, registry.get_path, "d")
+
+    def test_get_manifest(self):
+        registry = Click.User.for_user(self.db, "user")
+        manifest_path = os.path.join(
+            self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+        manifest_obj = {"name": "a", "version": "1.0"}
+        with mkfile(manifest_path) as manifest:
+            json.dump(manifest_obj, manifest)
+        manifest_obj["_directory"] = os.path.join(
+            registry.get_overlay_db(), "a")
+        registry.set_version("a", "1.0")
+        self.assertEqual(
+            manifest_obj, json_object_to_python(registry.get_manifest("a")))
+
+    def test_get_manifest_multiple_root(self):
+        user_dbs, registry = self._setUpMultiDB()
+        self.assertEqual({
+            "name": "a",
+            "version": "1.1",
+            "_directory": os.path.join(user_dbs[1], "a"),
+        }, json_object_to_python(registry.get_manifest("a")))
+        self.assertEqual({
+            "name": "b",
+            "version": "2.0",
+            "_directory": os.path.join(user_dbs[0], "b"),
+        }, json_object_to_python(registry.get_manifest("b")))
+        self.assertEqual({
+            "name": "c",
+            "version": "0.1",
+            "_directory": os.path.join(user_dbs[1], "c"),
+        }, json_object_to_python(registry.get_manifest("c")))
+        self.assertRaisesUserError(
+            Click.UserError.NO_SUCH_PACKAGE, registry.get_path, "d")
+
+    def test_get_manifests(self):
+        registry = Click.User.for_user(self.db, "user")
+        a_manifest_path = os.path.join(
+            self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+        a_manifest_obj = {"name": "a", "version": "1.0"}
+        with mkfile(a_manifest_path) as a_manifest:
+            json.dump(a_manifest_obj, a_manifest)
+        registry.set_version("a", "1.0")
+        b_manifest_path = os.path.join(
+            self.temp_dir, "b", "2.0", ".click", "info", "b.manifest")
+        b_manifest_obj = {"name": "b", "version": "2.0"}
+        with mkfile(b_manifest_path) as b_manifest:
+            json.dump(b_manifest_obj, b_manifest)
+        registry.set_version("b", "2.0")
+        a_manifest_obj["_directory"] = os.path.join(
+            registry.get_overlay_db(), "a")
+        a_manifest_obj["_removable"] = 1
+        b_manifest_obj["_directory"] = os.path.join(
+            registry.get_overlay_db(), "b")
+        b_manifest_obj["_removable"] = 1
+        self.assertEqual(
+            [a_manifest_obj, b_manifest_obj],
+            json_array_to_python(registry.get_manifests()))
+
+    def test_get_manifests_multiple_root(self):
+        user_dbs, registry = self._setUpMultiDB()
+        a_manifest_obj = {
+            "name": "a",
+            "version": "1.1",
+            "_directory": os.path.join(user_dbs[1], "a"),
+            "_removable": 1,
+        }
+        b_manifest_obj = {
+            "name": "b",
+            "version": "2.0",
+            "_directory": os.path.join(user_dbs[0], "b"),
+            "_removable": 1,
+        }
+        c_manifest_obj = {
+            "name": "c",
+            "version": "0.1",
+            "_directory": os.path.join(user_dbs[1], "c"),
+            "_removable": 1,
+        }
+        self.assertEqual(
+            [a_manifest_obj, c_manifest_obj, b_manifest_obj],
+            json_array_to_python(registry.get_manifests()))
+        registry.remove("b")
+        self.assertEqual(
+            "@hidden", os.readlink(os.path.join(user_dbs[1], "b")))
+        self.assertEqual(
+            [a_manifest_obj, c_manifest_obj],
+            json_array_to_python(registry.get_manifests()))
 
     def test_is_removable(self):
         registry = Click.User.for_user(self.db, "user")

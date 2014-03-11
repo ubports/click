@@ -264,6 +264,38 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self.assertTrue(os.path.islink(symlink_path))
             self.assertEqual(target_path, os.readlink(symlink_path))
 
+    def test_install_package_uses_deepest_copy(self):
+        # If the same version of a package is unpacked in multiple
+        # databases, then we make sure the link points to the deepest copy,
+        # even if it already points somewhere else.  It is important to be
+        # consistent about this since system hooks may only have a single
+        # target for any given application ID.
+        with self.run_in_subprocess(
+                "click_get_hooks_dir") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            underlay = os.path.join(self.temp_dir, "underlay")
+            overlay = os.path.join(self.temp_dir, "overlay")
+            db = Click.DB()
+            db.add(underlay)
+            db.add(overlay)
+            os.makedirs(os.path.join(underlay, "org.example.package", "1.0"))
+            os.makedirs(os.path.join(overlay, "org.example.package", "1.0"))
+            symlink_path = os.path.join(
+                self.temp_dir, "org.example.package_test-app_1.0.test")
+            underlay_target_path = os.path.join(
+                underlay, "org.example.package", "1.0", "foo")
+            overlay_target_path = os.path.join(
+                overlay, "org.example.package", "1.0", "foo")
+            os.symlink(overlay_target_path, symlink_path)
+            hook = Click.Hook.open(db, "test")
+            hook.install_package(
+                "org.example.package", "1.0", "test-app", "foo")
+            self.assertTrue(os.path.islink(symlink_path))
+            self.assertEqual(underlay_target_path, os.readlink(symlink_path))
+
     def test_upgrade(self):
         with self.run_in_subprocess(
                 "click_get_hooks_dir") as (enter, preloads):
@@ -800,6 +832,63 @@ class TestClickHookUserLevel(TestClickHookBase):
                     "target-2"),
                 os.readlink(path_2))
             self.assertFalse(os.path.lexists(path_3))
+
+    def test_sync_uses_deepest_copy(self):
+        # If the same version of a package is unpacked in multiple
+        # databases, then we make sure the user link points to the deepest
+        # copy, even if it already points somewhere else.  It is important
+        # to be consistent about this since system hooks may only have a
+        # single target for any given application ID, and user links must
+        # match system hooks so that (for example) the version of an
+        # application run by a user has a matching system AppArmor profile.
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                ) as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            preloads["click_get_user_home"].return_value = "/home/test-user"
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("User-Level: yes", file=f)
+                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            underlay = os.path.join(self.temp_dir, "underlay")
+            overlay = os.path.join(self.temp_dir, "overlay")
+            db = Click.DB()
+            db.add(underlay)
+            db.add(overlay)
+            underlay_unpacked = os.path.join(underlay, "test-package", "1.0")
+            overlay_unpacked = os.path.join(overlay, "test-package", "1.0")
+            os.makedirs(underlay_unpacked)
+            os.makedirs(overlay_unpacked)
+            manifest = {"hooks": {"test-app": {"test": "foo"}}}
+            with mkfile(os.path.join(
+                    underlay_unpacked, ".click", "info",
+                    "test-package.manifest")) as f:
+                json.dump(manifest, f)
+            with mkfile(os.path.join(
+                    overlay_unpacked, ".click", "info",
+                    "test-package.manifest")) as f:
+                json.dump(manifest, f)
+            underlay_user_link = os.path.join(
+                underlay, ".click", "users", "@all", "test-package")
+            overlay_user_link = os.path.join(
+                overlay, ".click", "users", "test-user", "test-package")
+            Click.ensuredir(os.path.dirname(underlay_user_link))
+            os.symlink(underlay_unpacked, underlay_user_link)
+            Click.ensuredir(os.path.dirname(overlay_user_link))
+            os.symlink(overlay_unpacked, overlay_user_link)
+            symlink_path = os.path.join(
+                self.temp_dir, "test-package_test-app_1.0.test")
+            underlay_target_path = os.path.join(underlay_user_link, "foo")
+            overlay_target_path = os.path.join(overlay_user_link, "foo")
+            os.symlink(overlay_target_path, symlink_path)
+            hook = Click.Hook.open(db, "test")
+            hook.sync(user_name="test-user")
+            self.assertTrue(os.path.islink(underlay_user_link))
+            self.assertEqual(
+                underlay_unpacked, os.readlink(underlay_user_link))
+            self.assertFalse(os.path.islink(overlay_user_link))
+            self.assertTrue(os.path.islink(symlink_path))
+            self.assertEqual(underlay_target_path, os.readlink(symlink_path))
 
 
 class TestPackageInstallHooks(TestClickHookBase):

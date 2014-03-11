@@ -423,8 +423,9 @@ class TestClickDB(TestCase):
         self.assertRaisesDatabaseError(
             Click.DatabaseError.DOES_NOT_EXIST, db.get_path, "pkg", "1.1")
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.0"))
+        # The deepest copy of the same package/version is still preferred.
         self.assertEqual(
-            os.path.join(self.temp_dir, "b", "pkg", "1.0"),
+            os.path.join(self.temp_dir, "a", "pkg", "1.0"),
             db.get_path("pkg", "1.0"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.1"))
         self.assertEqual(

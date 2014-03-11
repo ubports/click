@@ -598,9 +598,9 @@ public class DB : Object {
 	public string
 	get_path (string package, string version) throws DatabaseError
 	{
-		for (int i = db.size - 1; i >= 0; --i) {
+		foreach (var single_db in db) {
 			try {
-				return db[i].get_path (package, version);
+				return single_db.get_path (package, version);
 			} catch (DatabaseError e) {
 			}
 		}
@@ -677,9 +677,10 @@ public class DB : Object {
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
 	{
-		for (int i = db.size - 1; i >= 0; --i) {
+		foreach (var single_db in db) {
 			try {
-				return db[i].get_manifest (package, version);
+				return single_db.get_manifest
+					(package, version);
 			} catch (DatabaseError e) {
 				if (e is DatabaseError.BAD_MANIFEST)
 					throw e;

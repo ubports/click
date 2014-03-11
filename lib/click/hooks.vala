@@ -952,6 +952,8 @@ public class Hook : Object {
 					(db, user_name);
 				user_db.drop_privileges ();
 				try {
+					user_db.raw_set_version
+						(package, version);
 					install_link (package, version,
 						      app_name,
 						      app.relative_path,

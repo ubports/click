@@ -519,6 +519,40 @@ public class User : Object {
 	}
 
 	/**
+	 * raw_set_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Set the version of @package to @version, without running any
+	 * hooks.  Must be run with dropped privileges.
+	 */
+	internal void
+	raw_set_version (string package, string version) throws Error
+	{
+		assert (dropped_privileges_count > 0);
+		var user_db = get_overlay_db ();
+		var path = Path.build_filename (user_db, package);
+		var new_path = Path.build_filename (user_db, @".$package.new");
+		var target = db.get_path (package, version);
+		var done = false;
+		if (is_valid_link (path)) {
+			unlink_force (path);
+			try {
+				if (get_version (package) == version)
+					done = true;
+			} catch (UserError e) {
+			}
+		}
+		if (done)
+			return;
+		symlink_force (target, new_path);
+		if (FileUtils.rename (new_path, path) < 0)
+			throw new UserError.RENAME
+				("rename %s -> %s failed: %s",
+				 new_path, path, strerror (errno));
+	}
+
+	/**
 	 * set_version:
 	 * @package: A package name.
 	 * @version: A version string.
@@ -529,9 +563,6 @@ public class User : Object {
 	set_version (string package, string version) throws Error
 	{
 		/* Only modify the last database. */
-		var user_db = get_overlay_db ();
-		var path = Path.build_filename (user_db, package);
-		var new_path = Path.build_filename (user_db, @".$package.new");
 		ensure_db ();
 		string? old_version = null;
 		try {
@@ -540,24 +571,7 @@ public class User : Object {
 		}
 		drop_privileges ();
 		try {
-			var target = db.get_path (package, version);
-			bool done = false;
-			if (is_valid_link (path)) {
-				unlink_force (path);
-				try {
-					if (get_version (package) == version)
-						done = true;
-				} catch (UserError e) {
-				}
-			}
-			if (! done) {
-				symlink_force (target, new_path);
-				if (FileUtils.rename (new_path, path) < 0)
-					throw new UserError.RENAME
-						("rename %s -> %s failed: %s",
-						 new_path, path,
-						 strerror (errno));
-			}
+			raw_set_version (package, version);
 		} finally {
 			regain_privileges ();
 		}

@@ -20,6 +20,9 @@ click (0.4.18) UNRELEASED; urgency=medium
   * If a user attempts to install a version of a package that is already
     installed in an underlay database, then just register the appropriate
     version for them rather than unpacking another copy.
+  * Make "click hook run-system" and "click hook run-user" consistently use
+    the bottom-most unpacked copy of a given version of a package, and
+    update hook symlinks and user registration symlinks if necessary.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 20:51:05 +0000
 

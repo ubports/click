@@ -101,6 +101,25 @@ public class SingleDB : Object {
 	}
 
 	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked in this
+	 * database, otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
+	}
+
+	/**
 	 * get_packages:
 	 * @all_versions: If true, return all versions, not just current ones.
 	 *
@@ -579,15 +598,34 @@ public class DB : Object {
 	public string
 	get_path (string package, string version) throws DatabaseError
 	{
-		for (int i = db.size - 1; i >= 0; --i) {
+		foreach (var single_db in db) {
 			try {
-				return db[i].get_path (package, version);
+				return single_db.get_path (package, version);
 			} catch (DatabaseError e) {
 			}
 		}
 		throw new DatabaseError.DOES_NOT_EXIST
 			("%s %s does not exist in any database",
 			 package, version);
+	}
+
+	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked,
+	 * otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
 	}
 
 	/**
@@ -639,9 +677,10 @@ public class DB : Object {
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
 	{
-		for (int i = db.size - 1; i >= 0; --i) {
+		foreach (var single_db in db) {
 			try {
-				return db[i].get_manifest (package, version);
+				return single_db.get_manifest
+					(package, version);
 			} catch (DatabaseError e) {
 				if (e is DatabaseError.BAD_MANIFEST)
 					throw e;

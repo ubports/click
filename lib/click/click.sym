@@ -10,6 +10,7 @@ click_db_get_packages
 click_db_get_path
 click_db_get_size
 click_db_get_type
+click_db_has_package_version
 click_db_maybe_remove
 click_db_new
 click_db_read
@@ -74,6 +75,7 @@ click_single_db_get_packages
 click_single_db_get_path
 click_single_db_get_root
 click_single_db_get_type
+click_single_db_has_package_version
 click_single_db_maybe_remove
 click_single_db_new
 click_symlink_force

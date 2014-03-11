@@ -305,8 +305,16 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
-    def install(self, path, user=None, all_users=False):
+    def _unpack(self, path, user=None, all_users=False):
         package_name, package_version = self.audit(path, check_arch=True)
+
+        # Is this package already unpacked in an underlay (non-topmost)
+        # database?
+        if self.db.has_package_version(package_name, package_version):
+            overlay = self.db.get(self.db.props.size - 1)
+            if not overlay.has_package_version(package_name, package_version):
+                return package_name, package_version, None
+
         package_dir = os.path.join(self.db.props.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
         assert (
@@ -387,6 +395,12 @@ class ClickInstaller:
             pw = pwd.getpwnam("clickpkg")
             os.chown(new_path, pw.pw_uid, pw.pw_gid, follow_symlinks=False)
         os.rename(new_path, current_path)
+
+        return package_name, package_version, old_version
+
+    def install(self, path, user=None, all_users=False):
+        package_name, package_version, old_version = self._unpack(
+            path, user=user, all_users=all_users)
 
         if user is not None or all_users:
             if all_users:

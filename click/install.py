@@ -45,7 +45,7 @@ from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 from gi.repository import Click
 
-from click.paths import frameworks_dir, preload_path
+from click.paths import preload_path
 from click.preinst import static_preinst_matches
 from click.versions import spec_version
 
@@ -96,10 +96,6 @@ class ClickInstaller:
         if os.path.exists(preload):
             return os.path.abspath(preload)
         return preload_path
-
-    def _has_framework(self, name):
-        return os.path.exists(os.path.join(
-            frameworks_dir, "%s.framework" % name))
 
     def _dpkg_architecture(self):
         return subprocess.check_output(
@@ -209,7 +205,7 @@ class ClickInstaller:
             if not self.force_missing_framework:
                 missing_frameworks = []
                 for or_dep in parsed_framework:
-                    if not self._has_framework(or_dep[0][0]):
+                    if not Click.Framework.has_framework(or_dep[0][0]):
                         missing_frameworks.append(or_dep[0][0])
                 if len(missing_frameworks) > 1:
                     raise ClickInstallerAuditError(

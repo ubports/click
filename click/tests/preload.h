@@ -85,6 +85,13 @@ gboolean click_find_on_path (const gchar *command);
 gchar *click_get_db_dir (void);
 
 /**
+ * click_get_frameworks_dir:
+ *
+ * Attributes: (headers glib.h)
+ */
+gchar *click_get_frameworks_dir (void);
+
+/**
  * click_get_hooks_dir:
  *
  * Attributes: (headers glib.h)

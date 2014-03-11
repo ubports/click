@@ -91,6 +91,10 @@ class TestCase(gimock.GIMockTestCase):
         self.assertRaisesGError(
             "click_database_error-quark", code, callableObj, *args, **kwargs)
 
+    def assertRaisesFrameworkError(self, code, callableObj, *args, **kwargs):
+        self.assertRaisesGError(
+            "click_framework_error-quark", code, callableObj, *args, **kwargs)
+
     def assertRaisesHooksError(self, code, callableObj, *args, **kwargs):
         self.assertRaisesGError(
             "click_hooks_error-quark", code, callableObj, *args, **kwargs)

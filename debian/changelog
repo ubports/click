@@ -13,6 +13,9 @@ click (0.4.18) UNRELEASED; urgency=medium
     (LP: #1287692) and for all installed packages (LP: #1287693).
   * Override description-starts-with-package-name Lintian error for click;
     this is describing the system as a whole rather than naming the package.
+  * Add libclick interfaces to get the list of frameworks supported by the
+    current system (LP: #1271633) and various properties of those frameworks
+    (LP: #1287694).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 20:51:05 +0000
 

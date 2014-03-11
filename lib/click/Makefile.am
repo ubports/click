@@ -21,6 +21,8 @@ lib_LTLIBRARIES = libclick-0.4.la
 
 libclick_0_4_la_SOURCES = \
 	database.vala \
+	deb822.vala \
+	framework.vala \
 	hooks.vala \
 	osextras.vala \
 	paths.vala \
@@ -42,6 +44,8 @@ CLEANFILES = \
 	libclick_0_4_la_vala.stamp \
 	click.h \
 	database.c \
+	deb822.c \
+	framework.c \
 	hooks.c \
 	osextras.c \
 	paths.c \

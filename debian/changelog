@@ -8,7 +8,8 @@ click (0.4.18) UNRELEASED; urgency=medium
   * Make the PackageKit plugin tolerate the "_removable" dynamic manifest
     key being changed to a boolean in the future.
   * Document that users of "_removable" should tolerate it being a boolean.
-  * Use libclick when removing packages via the PackageKit plugin.
+  * Use libclick when removing packages, listing packages, or searching
+    packages via the PackageKit plugin.
   * Add libclick interfaces to get package manifests, both individually
     (LP: #1287692) and for all installed packages (LP: #1287693).
   * Override description-starts-with-package-name Lintian error for click;

@@ -363,53 +363,38 @@ click_get_field_boolean (JsonObject *manifest, const gchar *field,
 	return json_node_get_boolean (node);
 }
 
-static JsonParser *
+static JsonArray *
 click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 {
-	gboolean ret;
-	gchar **argv = NULL;
-	gint i;
 	gchar *username = NULL;
-	gchar **envp = NULL;
-	gchar *list_text = NULL;
-	gchar *click_stderr = NULL;
-	gint click_status;
-	JsonParser *parser = NULL;
+	ClickUser *registry = NULL;
+	JsonArray *array = NULL;
+	GError *error = NULL;
 
-	argv = g_malloc0_n (5, sizeof (*argv));
-	i = 0;
-	argv[i++] = g_strdup ("click");
-	argv[i++] = g_strdup ("list");
-	argv[i++] = g_strdup ("--manifest");
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
-	if (username)
-		argv[i++] = g_strdup_printf ("--user=%s", username);
-	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp, G_SPAWN_SEARCH_PATH,
-			    NULL, NULL, &list_text, &click_stderr,
-			    &click_status, NULL);
-	if (!ret)
-		goto out;
-	if (!g_spawn_check_exit_status (click_status, NULL)) {
+	registry = click_user_new_for_user (NULL, username, &error);
+	if (error) {
 		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
-				"\"click list\" failed.", click_stderr);
+				"Unable to read Click database.",
+				error->message);
+		goto out;
+	}
+	array = click_user_get_manifests (registry, &error);
+	if (error) {
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"Unable to get Click package manifests.",
+				error->message);
 		goto out;
 	}
 
-	parser = json_parser_new ();
-	if (!parser)
-		goto out;
-	json_parser_load_from_data (parser, list_text, -1, NULL);
-
 out:
-	g_strfreev (argv);
+	if (error)
+		g_error_free (error);
+	g_object_unref (registry);
 	g_free (username);
-	g_strfreev (envp);
-	g_free (list_text);
-	g_free (click_stderr);
 
-	return parser;
+	return array;
 }
 
 static gchar *
@@ -626,21 +611,13 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 static void
 click_get_packages (PkPlugin *plugin, PkTransaction *transaction)
 {
-	JsonParser *parser = NULL;
-	JsonNode *node = NULL;
 	JsonArray *array = NULL;
 
-	parser = click_get_list (plugin, transaction);
-	if (!parser)
-		goto out;
-	node = json_parser_get_root (parser);
-	array = json_node_get_array (node);
+	array = click_get_list (plugin, transaction);
 	if (!array)
-		goto out;
+		return;
 	json_array_foreach_element (array, click_get_packages_one, plugin);
-
-out:
-	g_clear_object (&parser);
+	json_array_unref (array);
 }
 
 static gboolean
@@ -818,25 +795,17 @@ static void
 click_search (PkPlugin *plugin, PkTransaction *transaction, gchar **values,
 	      gboolean search_details)
 {
-	JsonParser *parser = NULL;
-	JsonNode *node = NULL;
 	JsonArray *array = NULL;
 	struct click_search_data data;
 
-	parser = click_get_list (plugin, transaction);
-	if (!parser)
-		goto out;
-	node = json_parser_get_root (parser);
-	array = json_node_get_array (node);
+	array = click_get_list (plugin, transaction);
 	if (!array)
-		goto out;
+		return;
 	data.plugin = plugin;
 	data.values = values;
 	data.search_details = search_details;
 	json_array_foreach_element (array, click_search_one, &data);
-
-out:
-	g_clear_object (&parser);
+	json_array_unref (array);
 }
 
 static void

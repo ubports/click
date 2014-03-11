@@ -1,5 +1,6 @@
-click (0.4.18.1) UNRELEASED; urgency=medium
+click (0.4.18.1) trusty; urgency=medium
 
+  [ Colin Watson ]
   * If a user attempts to install a version of a package that is already
     installed in an underlay database, then just register the appropriate
     version for them rather than unpacking another copy.
@@ -7,7 +8,7 @@ click (0.4.18.1) UNRELEASED; urgency=medium
     the bottom-most unpacked copy of a given version of a package, and
     update hook symlinks and user registration symlinks if necessary.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 11 Mar 2014 17:19:17 +0000
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 11 Mar 2014 17:22:10 +0000
 
 click (0.4.18) trusty; urgency=medium
 

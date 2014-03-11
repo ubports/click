@@ -101,6 +101,25 @@ public class SingleDB : Object {
 	}
 
 	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked in this
+	 * database, otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
+	}
+
+	/**
 	 * get_packages:
 	 * @all_versions: If true, return all versions, not just current ones.
 	 *
@@ -588,6 +607,25 @@ public class DB : Object {
 		throw new DatabaseError.DOES_NOT_EXIST
 			("%s %s does not exist in any database",
 			 package, version);
+	}
+
+	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked,
+	 * otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
 	}
 
 	/**

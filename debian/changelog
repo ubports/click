@@ -17,6 +17,9 @@ click (0.4.18) UNRELEASED; urgency=medium
   * Add libclick interfaces to get the list of frameworks supported by the
     current system (LP: #1271633) and various properties of those frameworks
     (LP: #1287694).
+  * If a user attempts to install a version of a package that is already
+    installed in an underlay database, then just register the appropriate
+    version for them rather than unpacking another copy.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 06 Mar 2014 20:51:05 +0000
 

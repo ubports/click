@@ -660,3 +660,50 @@ class TestClickInstaller(TestCase):
                 installer.install(path)
             self.assertTrue(
                 os.path.exists(os.path.join(root, "test-package", "current")))
+
+    def test_reinstall_preinstalled(self):
+        # Attempting to reinstall a preinstalled version shouldn't actually
+        # reinstall it in an overlay database (which would cause
+        # irreconcilable confusion about the correct target for system hook
+        # symlinks), but should instead simply update the user registration.
+        path = self.make_fake_package(
+            control_fields={
+                "Package": "test-package",
+                "Version": "1.1",
+                "Architecture": "all",
+                "Maintainer": "Foo Bar <foo@example.org>",
+                "Description": "test",
+                "Click-Version": "0.4",
+            },
+            manifest={
+                "name": "test-package",
+                "version": "1.1",
+                "framework": "ubuntu-sdk-13.10",
+            },
+            control_scripts={"preinst": static_preinst})
+        underlay = os.path.join(self.temp_dir, "underlay")
+        overlay = os.path.join(self.temp_dir, "overlay")
+        db = Click.DB()
+        db.add(underlay)
+        installer = ClickInstaller(db, True)
+        with mock_quiet_subprocess_call():
+            installer.install(path, all_users=True)
+        underlay_unpacked = os.path.join(underlay, "test-package", "1.1")
+        self.assertTrue(os.path.exists(underlay_unpacked))
+        all_link = os.path.join(
+            underlay, ".click", "users", "@all", "test-package")
+        self.assertTrue(os.path.islink(all_link))
+        self.assertEqual(underlay_unpacked, os.readlink(all_link))
+        db.add(overlay)
+        registry = Click.User.for_user(db, "test-user")
+        registry.remove("test-package")
+        user_link = os.path.join(
+            overlay, ".click", "users", "test-user", "test-package")
+        self.assertTrue(os.path.islink(user_link))
+        self.assertEqual("@hidden", os.readlink(user_link))
+        installer = ClickInstaller(db, True)
+        with mock_quiet_subprocess_call():
+            installer.install(path, user="test-user")
+        overlay_unpacked = os.path.join(overlay, "test-package", "1.1")
+        self.assertFalse(os.path.exists(overlay_unpacked))
+        self.assertEqual("1.1", registry.get_version("test-package"))

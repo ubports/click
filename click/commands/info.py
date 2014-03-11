@@ -18,15 +18,14 @@
 from __future__ import print_function
 
 from contextlib import closing
-import io
 import json
 from optparse import OptionParser
-import os
 import sys
 
 from gi.repository import Click
 
 from click.install import DebFile
+from click.json_helpers import json_object_to_python
 
 
 def get_manifest(options, arg):
@@ -37,10 +36,7 @@ def get_manifest(options, arg):
             db.add(options.root)
         registry = Click.User.for_user(db, name=options.user)
         if registry.has_package_name(arg):
-            manifest_path = os.path.join(
-                registry.get_path(arg), ".click", "info", "%s.manifest" % arg)
-            with io.open(manifest_path, encoding="UTF-8") as manifest:
-                return json.load(manifest)
+            return json_object_to_python(registry.get_manifest(arg))
 
     with closing(DebFile(filename=arg)) as package:
         with package.control.get_file(

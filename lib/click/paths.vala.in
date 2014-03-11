@@ -20,6 +20,7 @@ namespace Click {
 
 internal static const string hooks_dir = "@pkgdatadir@/hooks";
 internal static const string db_dir = "@sysconfdir@/click/databases";
+internal static const string frameworks_dir = "@pkgdatadir@/frameworks";
 
 /**
  * get_hooks_dir:
@@ -41,6 +42,17 @@ public string
 get_db_dir ()
 {
 	return db_dir;
+}
+
+/**
+ * get_frameworks_dir:
+ *
+ * Returns: The Click frameworks directory.
+ */
+public string
+get_frameworks_dir ()
+{
+	return frameworks_dir;
 }
 
 }

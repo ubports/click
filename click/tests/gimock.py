@@ -367,7 +367,7 @@ class GIMockTestCase(unittest.TestCase):
         # TODO: Use libtool or similar rather than hardcoding gcc invocation.
         lib_path = os.path.join(preloads_dir, "libgimockpreload.so")
         cflags = subprocess.check_output([
-            "pkg-config", "--cflags", "glib-2.0", "gee-0.8"],
+            "pkg-config", "--cflags", "glib-2.0", "gee-0.8", "json-glib-1.0"],
             universal_newlines=True).rstrip("\n").split()
         subprocess.check_call([
             "gcc", "-O0", "-g", "-shared", "-fPIC", "-DPIC", "-I", "lib/click",

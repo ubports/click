@@ -5,11 +5,14 @@ libclick-0.4.so.0 libclick-0.4-0 #MINVER#
  click_db_ensure_ownership@Base 0.4.17
  click_db_gc@Base 0.4.17
  click_db_get@Base 0.4.17
+ click_db_get_manifest@Base 0.4.18
+ click_db_get_manifests@Base 0.4.18
  click_db_get_overlay@Base 0.4.17
  click_db_get_packages@Base 0.4.17
  click_db_get_path@Base 0.4.17
  click_db_get_size@Base 0.4.17
  click_db_get_type@Base 0.4.17
+ click_db_has_package_version@Base 0.4.18
  click_db_maybe_remove@Base 0.4.17
  click_db_new@Base 0.4.17
  click_db_read@Base 0.4.17
@@ -19,7 +22,18 @@ libclick-0.4.so.0 libclick-0.4-0 #MINVER#
  click_ensuredir@Base 0.4.17
  click_find_on_path@Base 0.4.17
  click_find_package_directory@Base 0.4.17
+ click_framework_error_quark@Base 0.4.18
+ click_framework_get_base_name@Base 0.4.18
+ click_framework_get_base_version@Base 0.4.18
+ click_framework_get_fields@Base 0.4.18
+ click_framework_get_field@Base 0.4.18
+ click_framework_get_frameworks@Base 0.4.18
+ click_framework_get_name@Base 0.4.18
+ click_framework_get_type@Base 0.4.18
+ click_framework_has_framework@Base 0.4.18
+ click_framework_open@Base 0.4.18
  click_get_db_dir@Base 0.4.17
+ click_get_frameworks_dir@Base 0.4.18
  click_get_hooks_dir@Base 0.4.17
  click_get_umask@Base 0.4.17
  click_hook_get_app_id@Base 0.4.17
@@ -58,10 +72,12 @@ libclick-0.4.so.0 libclick-0.4-0 #MINVER#
  click_single_db_app_running@Base 0.4.17
  click_single_db_ensure_ownership@Base 0.4.17
  click_single_db_gc@Base 0.4.17
+ click_single_db_get_manifest@Base 0.4.18
  click_single_db_get_packages@Base 0.4.17
  click_single_db_get_path@Base 0.4.17
  click_single_db_get_root@Base 0.4.17
  click_single_db_get_type@Base 0.4.17
+ click_single_db_has_package_version@Base 0.4.18
  click_single_db_maybe_remove@Base 0.4.17
  click_single_db_new@Base 0.4.17
  click_symlink_force@Base 0.4.17
@@ -69,6 +85,8 @@ libclick-0.4.so.0 libclick-0.4-0 #MINVER#
  click_user_error_quark@Base 0.4.17
  click_user_get_is_gc_in_use@Base 0.4.17
  click_user_get_is_pseudo_user@Base 0.4.17
+ click_user_get_manifest@Base 0.4.18
+ click_user_get_manifests@Base 0.4.18
  click_user_get_overlay_db@Base 0.4.17
  click_user_get_package_names@Base 0.4.17
  click_user_get_path@Base 0.4.17

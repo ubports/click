@@ -184,7 +184,7 @@ public class Users : Object {
 					continue;
 				var path = Path.build_filename (users_db,
 								entry);
-				if (FileUtils.test (path, FileTest.IS_DIR)) {
+				if (is_dir (path)) {
 					seen.add (entry.dup ());
 					entries.prepend (entry.dup ());
 				}
@@ -205,7 +205,7 @@ public class Users : Object {
 	{
 		foreach (var single_db in db) {
 			var path = db_for_user (single_db.root, user_name);
-			if (FileUtils.test (path, FileTest.IS_DIR))
+			if (is_dir (path))
 				/* We only require the user path to exist in
 				 * any database; it doesn't matter which.
 				 */
@@ -519,6 +519,40 @@ public class User : Object {
 	}
 
 	/**
+	 * raw_set_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Set the version of @package to @version, without running any
+	 * hooks.  Must be run with dropped privileges.
+	 */
+	internal void
+	raw_set_version (string package, string version) throws Error
+	{
+		assert (dropped_privileges_count > 0);
+		var user_db = get_overlay_db ();
+		var path = Path.build_filename (user_db, package);
+		var new_path = Path.build_filename (user_db, @".$package.new");
+		var target = db.get_path (package, version);
+		var done = false;
+		if (is_valid_link (path)) {
+			unlink_force (path);
+			try {
+				if (get_version (package) == version)
+					done = true;
+			} catch (UserError e) {
+			}
+		}
+		if (done)
+			return;
+		symlink_force (target, new_path);
+		if (FileUtils.rename (new_path, path) < 0)
+			throw new UserError.RENAME
+				("rename %s -> %s failed: %s",
+				 new_path, path, strerror (errno));
+	}
+
+	/**
 	 * set_version:
 	 * @package: A package name.
 	 * @version: A version string.
@@ -529,9 +563,6 @@ public class User : Object {
 	set_version (string package, string version) throws Error
 	{
 		/* Only modify the last database. */
-		var user_db = get_overlay_db ();
-		var path = Path.build_filename (user_db, package);
-		var new_path = Path.build_filename (user_db, @".$package.new");
 		ensure_db ();
 		string? old_version = null;
 		try {
@@ -540,24 +571,7 @@ public class User : Object {
 		}
 		drop_privileges ();
 		try {
-			var target = db.get_path (package, version);
-			bool done = false;
-			if (is_valid_link (path)) {
-				unlink_force (path);
-				try {
-					if (get_version (package) == version)
-						done = true;
-				} catch (UserError e) {
-				}
-			}
-			if (! done) {
-				symlink_force (target, new_path);
-				if (FileUtils.rename (new_path, path) < 0)
-					throw new UserError.RENAME
-						("rename %s -> %s failed: %s",
-						 new_path, path,
-						 strerror (errno));
-			}
+			raw_set_version (package, version);
 		} finally {
 			regain_privileges ();
 		}
@@ -640,6 +654,46 @@ public class User : Object {
 		throw new UserError.NO_SUCH_PACKAGE
 			("%s does not exist in any database for user %s",
 			 package, name);
+	}
+
+	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 *
+	 * Returns: A #Json.Object containing a package's manifest.
+	 */
+	public Json.Object
+	get_manifest (string package) throws Error
+	{
+		var obj = db.get_manifest (package, get_version (package));
+		/* Adjust _directory to point to the user registration path. */
+		obj.set_string_member ("_directory", get_path (package));
+		return obj;
+	}
+
+	/**
+	 * get_manifests:
+	 *
+	 * Returns: A #Json.Array containing manifests of all packages
+	 * registered for this user.  The manifest may include additional
+	 * dynamic keys (starting with an underscore) corresponding to
+	 * dynamic properties of installed packages.
+	 */
+	public Json.Array
+	get_manifests () throws Error
+	{
+		var ret = new Json.Array ();
+		foreach (var package in get_package_names ()) {
+			var obj = get_manifest (package);
+			/* This should really be a boolean, but it was
+			 * mistakenly made an int when the "_removable" key
+			 * was first created.  We may change this in future.
+			 */
+			obj.set_int_member ("_removable",
+					    is_removable (package) ? 1 : 0);
+			ret.add_object_element (obj);
+		}
+		return ret;
 	}
 
 	/**

@@ -41,7 +41,7 @@ find_package_directory (string path) throws QueryError
 
 	do {
 		var info_dir = Path.build_filename (dir, ".click", "info");
-		if (FileUtils.test (info_dir, FileTest.IS_DIR))
+		if (is_dir (info_dir))
 			return dir;
 		if (dir == ".")
 			break;

@@ -350,57 +350,10 @@ public class Hook : Object {
 	public string name { private get; construct; }
 
 	private Gee.Map<string, string> fields;
-	private Regex? field_re = null;
-	private Regex? blank_re = null;
 
 	private Hook (DB db, string name)
 	{
 		Object (db: db, name: name);
-		field_re = null;
-		blank_re = null;
-	}
-
-	/**
-	 * parse_hook_file:
-	 * @path: Path to a hook file.
-	 *
-	 * A very simple deb822-like hook file parser.
-	 *
-	 * Note that this only supports a single paragraph composed only of simple
-	 * (non-folded/multiline) fields, which is fortunately all we need for hook
-	 * files.
-	 *
-	 * Returns: A mapping of field names to values.
-	 */
-	private Gee.Map<string, string>
-	parse_hook_file (string path) throws Error
-	{
-		if (field_re == null)
-			field_re = new Regex
-				("^([^:[:space:]]+)[[:space:]]*:[[:space:]]" +
-				 "([^[:space:]].*?)[[:space:]]*$");
-		if (blank_re == null)
-			blank_re = new Regex ("^[[:space:]]*$");
-
-		var ret = new Gee.HashMap<string, string> ();
-		var channel = new IOChannel.file (path, "r");
-		string line;
-		while (channel.read_line (out line, null, null)
-				== IOStatus.NORMAL &&
-		       line != null) {
-			MatchInfo match_info;
-
-			if (blank_re.match (line))
-				break;
-
-			if (field_re.match (line, 0, out match_info)) {
-				var key = match_info.fetch (1);
-				var value = match_info.fetch (2);
-				if (key != null && value != null)
-					ret[key.down ()] = value;
-			}
-		}
-		return ret;
 	}
 
 	/**
@@ -417,7 +370,7 @@ public class Hook : Object {
 			(get_hooks_dir (), @"$name.hook");
 		try {
 			var hook = new Hook (db, name);
-			hook.fields = hook.parse_hook_file (hook_path);
+			hook.fields = parse_deb822_file (hook_path);
 			return hook;
 		} catch (Error e) {
 			throw new HooksError.NO_SUCH_HOOK
@@ -446,7 +399,7 @@ public class Hook : Object {
 			var path = Path.build_filename (dir, name);
 			try {
 				var hook = new Hook (db, name[0:-5]);
-				hook.fields = hook.parse_hook_file (path);
+				hook.fields = parse_deb822_file (path);
 				if (hook_name == null ||
 				    hook.get_hook_name () == hook_name)
 					ret.prepend (hook);
@@ -778,8 +731,7 @@ public class Hook : Object {
 			path = db.get_path (package, version);
 		var target = Path.build_filename (path, relative_path);
 		var link = get_pattern (package, version, app_name, user_name);
-		if (FileUtils.test (link, FileTest.IS_SYMLINK) &&
-		    FileUtils.read_link (link) == target)
+		if (is_symlink (link) && FileUtils.read_link (link) == target)
 			return;
 		ensuredir (Path.get_dirname (link));
 		symlink_force (target, link);
@@ -1000,6 +952,8 @@ public class Hook : Object {
 					(db, user_name);
 				user_db.drop_privileges ();
 				try {
+					user_db.raw_set_version
+						(package, version);
 					install_link (package, version,
 						      app_name,
 						      app.relative_path,

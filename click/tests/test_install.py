@@ -36,7 +36,6 @@ from unittest import skipUnless
 from debian.deb822 import Deb822
 from gi.repository import Click
 
-from click import install
 from click.build import ClickBuilder
 from click.install import (
     ClickInstaller,
@@ -104,18 +103,15 @@ class TestClickInstaller(TestCase):
             self.temp_dir, control_dir, data_dir, package_path)
         return package_path
 
-    @contextmanager
-    def make_framework(self, name):
-        old_dir = install.frameworks_dir
-        try:
-            install.frameworks_dir = os.path.join(self.temp_dir, "frameworks")
-            Click.ensuredir(install.frameworks_dir)
-            touch(os.path.join(install.frameworks_dir, "%s.framework" % name))
-            yield
-        finally:
-            Click.unlink_force(
-                os.path.join(install.frameworks_dir, "%s.framework" % name))
-            install.frameworks_dir = old_dir
+    def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
+        if frameworks_dir is None:
+            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+        shutil.rmtree(frameworks_dir, ignore_errors=True)
+        Click.ensuredir(frameworks_dir)
+        for framework in frameworks:
+            touch(os.path.join(frameworks_dir, "%s.framework" % framework))
+        preloads["click_get_frameworks_dir"].side_effect = (
+            lambda: self.make_string(frameworks_dir))
 
     def test_audit_no_click_version(self):
         path = self.make_fake_package()
@@ -135,25 +131,31 @@ class TestClickInstaller(TestCase):
             ClickInstaller(self.db).audit, path)
 
     def test_audit_forbids_depends(self):
-        path = self.make_fake_package(
-            control_fields={
-                "Click-Version": "0.2",
-                "Depends": "libc6",
-            })
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={
+                    "Click-Version": "0.2",
+                    "Depends": "libc6",
+                })
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             self.assertRaisesRegex(
                 ClickInstallerAuditError,
                 "Depends field is forbidden in Click packages",
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_forbids_maintscript(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            control_scripts={
-                "preinst": "#! /bin/sh\n",
-                "postinst": "#! /bin/sh\n",
-            })
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                control_scripts={
+                    "preinst": "#! /bin/sh\n",
+                    "postinst": "#! /bin/sh\n",
+                })
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             self.assertRaisesRegex(
                 ClickInstallerAuditError,
                 r"Maintainer scripts are forbidden in Click packages "
@@ -161,19 +163,25 @@ class TestClickInstaller(TestCase):
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_requires_manifest(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            control_scripts={"preinst": static_preinst})
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                control_scripts={"preinst": static_preinst})
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             self.assertRaisesRegex(
                 ClickInstallerAuditError, "Package has no manifest",
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_invalid_manifest_json(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            control_scripts={"manifest": "{", "preinst": static_preinst})
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                control_scripts={"manifest": "{", "preinst": static_preinst})
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             self.assertRaises(ValueError, ClickInstaller(self.db).audit, path)
 
     def test_audit_no_name(self):
@@ -211,126 +219,151 @@ class TestClickInstaller(TestCase):
             ClickInstaller(self.db).audit, path)
 
     def test_audit_missing_framework(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "missing",
-            },
-            control_scripts={"preinst": static_preinst})
-        with self.make_framework("present"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "missing",
+                },
+                control_scripts={"preinst": static_preinst})
+            self._setup_frameworks(preloads, frameworks=["present"])
             self.assertRaisesRegex(
                 ClickInstallerAuditError,
                 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_missing_framework_force(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "missing",
-            })
-        with self.make_framework("present"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "missing",
+                })
+            self._setup_frameworks(preloads, frameworks=["present"])
             ClickInstaller(self.db, True).audit(path)
 
     def test_audit_passes_correct_package(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst})
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst})
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             installer = ClickInstaller(self.db)
             self.assertEqual(("test-package", "1.0"), installer.audit(path))
 
     def test_audit_multiple_frameworks(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.4"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework":
-                    "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
-            },
-            control_scripts={"preinst": static_preinst})
-        installer = ClickInstaller(self.db)
-        with self.make_framework("dummy"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.4"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework":
+                        "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
+                },
+                control_scripts={"preinst": static_preinst})
+            installer = ClickInstaller(self.db)
+            self._setup_frameworks(preloads, frameworks=["dummy"])
             self.assertRaisesRegex(
                 ClickInstallerAuditError,
                 'Frameworks "ubuntu-sdk-14.04-basic", '
                 '"ubuntu-sdk-14.04-webapps" not present on system.*',
                 installer.audit, path)
-            with self.make_framework("ubuntu-sdk-14.04-basic"):
-                self.assertRaisesRegex(
-                    ClickInstallerAuditError,
-                    'Framework "ubuntu-sdk-14.04-webapps" not present on '
-                    'system.*',
-                    installer.audit, path)
-                with self.make_framework("ubuntu-sdk-14.04-webapps"):
-                    self.assertEqual(
-                        ("test-package", "1.0"), installer.audit(path))
+            self._setup_frameworks(
+                preloads, frameworks=["dummy", "ubuntu-sdk-14.04-basic"])
+            self.assertRaisesRegex(
+                ClickInstallerAuditError,
+                'Framework "ubuntu-sdk-14.04-webapps" not present on '
+                'system.*',
+                installer.audit, path)
+            self._setup_frameworks(
+                preloads, frameworks=[
+                    "dummy", "ubuntu-sdk-14.04-basic",
+                    "ubuntu-sdk-14.04-webapps",
+                    ])
+            self.assertEqual(("test-package", "1.0"), installer.audit(path))
 
     def test_audit_broken_md5sums(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={
-                "preinst": static_preinst,
-                "md5sums": "%s  foo" % ("0" * 32),
-            },
-            data_files={"foo": None})
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer = ClickInstaller(self.db)
-            self.assertRaises(
-                subprocess.CalledProcessError, installer.audit,
-                path, slow=True)
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={
+                    "preinst": static_preinst,
+                    "md5sums": "%s  foo" % ("0" * 32),
+                },
+                data_files={"foo": None})
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer = ClickInstaller(self.db)
+                self.assertRaises(
+                    subprocess.CalledProcessError, installer.audit,
+                    path, slow=True)
 
     def test_audit_matching_md5sums(self):
-        data_path = os.path.join(self.temp_dir, "foo")
-        with mkfile(data_path) as data:
-            print("test", file=data)
-        with open(data_path, "rb") as data:
-            data_md5sum = hashlib.md5(data.read()).hexdigest()
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={
-                "preinst": static_preinst,
-                "md5sums": "%s  foo" % data_md5sum,
-            },
-            data_files={"foo": data_path})
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer = ClickInstaller(self.db)
-            self.assertEqual(
-                ("test-package", "1.0"), installer.audit(path, slow=True))
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            data_path = os.path.join(self.temp_dir, "foo")
+            with mkfile(data_path) as data:
+                print("test", file=data)
+            with open(data_path, "rb") as data:
+                data_md5sum = hashlib.md5(data.read()).hexdigest()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={
+                    "preinst": static_preinst,
+                    "md5sums": "%s  foo" % data_md5sum,
+                },
+                data_files={"foo": data_path})
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer = ClickInstaller(self.db)
+                self.assertEqual(
+                    ("test-package", "1.0"), installer.audit(path, slow=True))
 
     def test_no_write_permission(self):
-        path = self.make_fake_package(
-            control_fields={"Click-Version": "0.2"},
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst})
-        write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
-        with self.make_framework("ubuntu-sdk-13.10"):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst})
+            write_mask = ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
             installer = ClickInstaller(self.db)
             temp_dir_mode = os.stat(self.temp_dir).st_mode
             try:
@@ -345,154 +378,163 @@ class TestClickInstaller(TestCase):
         "preload bits not built; installing packages will fail")
     @mock.patch("gi.repository.Click.package_install_hooks")
     def test_install(self, mock_package_install_hooks):
-        path = self.make_fake_package(
-            control_fields={
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.0",
+                    "Architecture": "all",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst},
+                data_files={"foo": None})
+            root = os.path.join(self.temp_dir, "root")
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer.install(path)
+            self.assertCountEqual([".click", "test-package"], os.listdir(root))
+            package_dir = os.path.join(root, "test-package")
+            self.assertCountEqual(["1.0", "current"], os.listdir(package_dir))
+            inst_dir = os.path.join(package_dir, "current")
+            self.assertTrue(os.path.islink(inst_dir))
+            self.assertEqual("1.0", os.readlink(inst_dir))
+            self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
+            status_path = os.path.join(inst_dir, ".click", "status")
+            with open(status_path) as status_file:
+                # .readlines() avoids the need for a python-apt backport to
+                # Ubuntu 12.04 LTS.
+                status = list(Deb822.iter_paragraphs(status_file.readlines()))
+            self.assertEqual(1, len(status))
+            self.assertEqual({
                 "Package": "test-package",
+                "Status": "install ok installed",
                 "Version": "1.0",
                 "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.2",
-            },
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst},
-            data_files={"foo": None})
-        root = os.path.join(self.temp_dir, "root")
-        db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer.install(path)
-        self.assertCountEqual([".click", "test-package"], os.listdir(root))
-        package_dir = os.path.join(root, "test-package")
-        self.assertCountEqual(["1.0", "current"], os.listdir(package_dir))
-        inst_dir = os.path.join(package_dir, "current")
-        self.assertTrue(os.path.islink(inst_dir))
-        self.assertEqual("1.0", os.readlink(inst_dir))
-        self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
-        status_path = os.path.join(inst_dir, ".click", "status")
-        with open(status_path) as status_file:
-            # .readlines() avoids the need for a python-apt backport to
-            # Ubuntu 12.04 LTS.
-            status = list(Deb822.iter_paragraphs(status_file.readlines()))
-        self.assertEqual(1, len(status))
-        self.assertEqual({
-            "Package": "test-package",
-            "Status": "install ok installed",
-            "Version": "1.0",
-            "Architecture": "all",
-            "Maintainer": "Foo Bar <foo@example.org>",
-            "Description": "test",
-            "Click-Version": "0.2",
-        }, status[0])
-        mock_package_install_hooks.assert_called_once_with(
-            db, "test-package", None, "1.0")
+            }, status[0])
+            mock_package_install_hooks.assert_called_once_with(
+                db, "test-package", None, "1.0")
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
     def test_sandbox(self):
-        original_call = subprocess.call
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            original_call = subprocess.call
 
-        def call_side_effect(*args, **kwargs):
-            if "TEST_VERBOSE" in os.environ:
-                return original_call(
-                    ["touch", os.path.join(self.temp_dir, "sentinel")],
-                    **kwargs)
-            else:
-                with open("/dev/null", "w") as devnull:
+            def call_side_effect(*args, **kwargs):
+                if "TEST_VERBOSE" in os.environ:
                     return original_call(
                         ["touch", os.path.join(self.temp_dir, "sentinel")],
-                        stdout=devnull, stderr=devnull, **kwargs)
+                        **kwargs)
+                else:
+                    with open("/dev/null", "w") as devnull:
+                        return original_call(
+                            ["touch", os.path.join(self.temp_dir, "sentinel")],
+                            stdout=devnull, stderr=devnull, **kwargs)
 
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.0",
-                "Architecture": "all",
-                "Maintainer": "Foo Bar <foo@example.org>",
-                "Description": "test",
-                "Click-Version": "0.2",
-            },
-            manifest={
-                "name": "test-package",
-                "version": "1.0",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst},
-            data_files={"foo": None})
-        root = os.path.join(self.temp_dir, "root")
-        db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock.patch("subprocess.call") as mock_call:
-            mock_call.side_effect = call_side_effect
-            self.assertRaises(
-                subprocess.CalledProcessError, installer.install, path)
-        self.assertFalse(
-            os.path.exists(os.path.join(self.temp_dir, "sentinel")))
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.0",
+                    "Architecture": "all",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst},
+                data_files={"foo": None})
+            root = os.path.join(self.temp_dir, "root")
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock.patch("subprocess.call") as mock_call:
+                mock_call.side_effect = call_side_effect
+                self.assertRaises(
+                    subprocess.CalledProcessError, installer.install, path)
+            self.assertFalse(
+                os.path.exists(os.path.join(self.temp_dir, "sentinel")))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
         "preload bits not built; installing packages will fail")
     @mock.patch("gi.repository.Click.package_install_hooks")
     def test_upgrade(self, mock_package_install_hooks):
-        os.environ["TEST_QUIET"] = "1"
-        path = self.make_fake_package(
-            control_fields={
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            os.environ["TEST_QUIET"] = "1"
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.1",
+                    "Architecture": "all",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.1",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst},
+                data_files={"foo": None})
+            root = os.path.join(self.temp_dir, "root")
+            package_dir = os.path.join(root, "test-package")
+            inst_dir = os.path.join(package_dir, "current")
+            os.makedirs(os.path.join(package_dir, "1.0"))
+            os.symlink("1.0", inst_dir)
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer.install(path)
+            self.assertCountEqual([".click", "test-package"], os.listdir(root))
+            self.assertCountEqual(["1.1", "current"], os.listdir(package_dir))
+            self.assertTrue(os.path.islink(inst_dir))
+            self.assertEqual("1.1", os.readlink(inst_dir))
+            self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
+            status_path = os.path.join(inst_dir, ".click", "status")
+            with open(status_path) as status_file:
+                # .readlines() avoids the need for a python-apt backport to
+                # Ubuntu 12.04 LTS.
+                status = list(Deb822.iter_paragraphs(status_file.readlines()))
+            self.assertEqual(1, len(status))
+            self.assertEqual({
                 "Package": "test-package",
+                "Status": "install ok installed",
                 "Version": "1.1",
                 "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
                 "Click-Version": "0.2",
-            },
-            manifest={
-                "name": "test-package",
-                "version": "1.1",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst},
-            data_files={"foo": None})
-        root = os.path.join(self.temp_dir, "root")
-        package_dir = os.path.join(root, "test-package")
-        inst_dir = os.path.join(package_dir, "current")
-        os.makedirs(os.path.join(package_dir, "1.0"))
-        os.symlink("1.0", inst_dir)
-        db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer.install(path)
-        self.assertCountEqual([".click", "test-package"], os.listdir(root))
-        self.assertCountEqual(["1.1", "current"], os.listdir(package_dir))
-        self.assertTrue(os.path.islink(inst_dir))
-        self.assertEqual("1.1", os.readlink(inst_dir))
-        self.assertCountEqual([".click", "foo"], os.listdir(inst_dir))
-        status_path = os.path.join(inst_dir, ".click", "status")
-        with open(status_path) as status_file:
-            # .readlines() avoids the need for a python-apt backport to
-            # Ubuntu 12.04 LTS.
-            status = list(Deb822.iter_paragraphs(status_file.readlines()))
-        self.assertEqual(1, len(status))
-        self.assertEqual({
-            "Package": "test-package",
-            "Status": "install ok installed",
-            "Version": "1.1",
-            "Architecture": "all",
-            "Maintainer": "Foo Bar <foo@example.org>",
-            "Description": "test",
-            "Click-Version": "0.2",
-        }, status[0])
-        mock_package_install_hooks.assert_called_once_with(
-            db, "test-package", "1.0", "1.1")
+            }, status[0])
+            mock_package_install_hooks.assert_called_once_with(
+                db, "test-package", "1.0", "1.1")
 
     def _get_mode(self, path):
         return stat.S_IMODE(os.stat(path).st_mode)
@@ -502,45 +544,48 @@ class TestClickInstaller(TestCase):
         "preload bits not built; installing packages will fail")
     @mock.patch("gi.repository.Click.package_install_hooks")
     def test_world_readable(self, mock_package_install_hooks):
-        owner_only_file = os.path.join(self.temp_dir, "owner-only-file")
-        touch(owner_only_file)
-        os.chmod(owner_only_file, stat.S_IRUSR | stat.S_IWUSR)
-        owner_only_dir = os.path.join(self.temp_dir, "owner-only-dir")
-        os.mkdir(owner_only_dir, stat.S_IRWXU)
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.1",
-                "Architecture": "all",
-                "Maintainer": "Foo Bar <foo@example.org>",
-                "Description": "test",
-                "Click-Version": "0.2",
-            },
-            manifest={
-                "name": "test-package",
-                "version": "1.1",
-                "framework": "ubuntu-sdk-13.10",
-            },
-            control_scripts={"preinst": static_preinst},
-            data_files={
-                "world-readable-file": owner_only_file,
-                "world-readable-dir": owner_only_dir,
-            })
-        root = os.path.join(self.temp_dir, "root")
-        db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer.install(path)
-        inst_dir = os.path.join(root, "test-package", "current")
-        self.assertEqual(
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH,
-            self._get_mode(os.path.join(inst_dir, "world-readable-file")))
-        self.assertEqual(
-            stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
-            stat.S_IROTH | stat.S_IXOTH,
-            self._get_mode(os.path.join(inst_dir, "world-readable-dir")))
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            owner_only_file = os.path.join(self.temp_dir, "owner-only-file")
+            touch(owner_only_file)
+            os.chmod(owner_only_file, stat.S_IRUSR | stat.S_IWUSR)
+            owner_only_dir = os.path.join(self.temp_dir, "owner-only-dir")
+            os.mkdir(owner_only_dir, stat.S_IRWXU)
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.1",
+                    "Architecture": "all",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.1",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst},
+                data_files={
+                    "world-readable-file": owner_only_file,
+                    "world-readable-dir": owner_only_dir,
+                })
+            root = os.path.join(self.temp_dir, "root")
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer.install(path)
+            inst_dir = os.path.join(root, "test-package", "current")
+            self.assertEqual(
+                stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH,
+                self._get_mode(os.path.join(inst_dir, "world-readable-file")))
+            self.assertEqual(
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
+                stat.S_IROTH | stat.S_IXOTH,
+                self._get_mode(os.path.join(inst_dir, "world-readable-dir")))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -549,32 +594,35 @@ class TestClickInstaller(TestCase):
     @mock.patch("click.install.ClickInstaller._dpkg_architecture")
     def test_single_architecture(self, mock_dpkg_architecture,
                                  mock_package_install_hooks):
-        mock_dpkg_architecture.return_value = "armhf"
-        path = self.make_fake_package(
-            control_fields={
-                "Package": "test-package",
-                "Version": "1.1",
-                "Architecture": "armhf",
-                "Maintainer": "Foo Bar <foo@example.org>",
-                "Description": "test",
-                "Click-Version": "0.2",
-            },
-            manifest={
-                "name": "test-package",
-                "version": "1.1",
-                "framework": "ubuntu-sdk-13.10",
-                "architecture": "armhf",
-            },
-            control_scripts={"preinst": static_preinst})
-        root = os.path.join(self.temp_dir, "root")
-        db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer.install(path)
-        self.assertTrue(
-            os.path.exists(os.path.join(root, "test-package", "current")))
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            mock_dpkg_architecture.return_value = "armhf"
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.1",
+                    "Architecture": "armhf",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.1",
+                    "framework": "ubuntu-sdk-13.10",
+                    "architecture": "armhf",
+                },
+                control_scripts={"preinst": static_preinst})
+            root = os.path.join(self.temp_dir, "root")
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer.install(path)
+            self.assertTrue(
+                os.path.exists(os.path.join(root, "test-package", "current")))
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -583,29 +631,79 @@ class TestClickInstaller(TestCase):
     @mock.patch("click.install.ClickInstaller._dpkg_architecture")
     def test_multiple_architectures(self, mock_dpkg_architecture,
                                     mock_package_install_hooks):
-        mock_dpkg_architecture.return_value = "armhf"
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            mock_dpkg_architecture.return_value = "armhf"
+            path = self.make_fake_package(
+                control_fields={
+                    "Package": "test-package",
+                    "Version": "1.1",
+                    "Architecture": "multi",
+                    "Maintainer": "Foo Bar <foo@example.org>",
+                    "Description": "test",
+                    "Click-Version": "0.2",
+                },
+                manifest={
+                    "name": "test-package",
+                    "version": "1.1",
+                    "framework": "ubuntu-sdk-13.10",
+                    "architecture": ["armhf", "i386"],
+                },
+                control_scripts={"preinst": static_preinst})
+            root = os.path.join(self.temp_dir, "root")
+            db = Click.DB()
+            db.add(root)
+            installer = ClickInstaller(db)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer.install(path)
+            self.assertTrue(
+                os.path.exists(os.path.join(root, "test-package", "current")))
+
+    def test_reinstall_preinstalled(self):
+        # Attempting to reinstall a preinstalled version shouldn't actually
+        # reinstall it in an overlay database (which would cause
+        # irreconcilable confusion about the correct target for system hook
+        # symlinks), but should instead simply update the user registration.
         path = self.make_fake_package(
             control_fields={
                 "Package": "test-package",
                 "Version": "1.1",
-                "Architecture": "multi",
+                "Architecture": "all",
                 "Maintainer": "Foo Bar <foo@example.org>",
                 "Description": "test",
-                "Click-Version": "0.2",
+                "Click-Version": "0.4",
             },
             manifest={
                 "name": "test-package",
                 "version": "1.1",
                 "framework": "ubuntu-sdk-13.10",
-                "architecture": ["armhf", "i386"],
             },
             control_scripts={"preinst": static_preinst})
-        root = os.path.join(self.temp_dir, "root")
+        underlay = os.path.join(self.temp_dir, "underlay")
+        overlay = os.path.join(self.temp_dir, "overlay")
         db = Click.DB()
-        db.add(root)
-        installer = ClickInstaller(db)
-        with self.make_framework("ubuntu-sdk-13.10"), \
-             mock_quiet_subprocess_call():
-            installer.install(path)
-        self.assertTrue(
-            os.path.exists(os.path.join(root, "test-package", "current")))
+        db.add(underlay)
+        installer = ClickInstaller(db, True)
+        with mock_quiet_subprocess_call():
+            installer.install(path, all_users=True)
+        underlay_unpacked = os.path.join(underlay, "test-package", "1.1")
+        self.assertTrue(os.path.exists(underlay_unpacked))
+        all_link = os.path.join(
+            underlay, ".click", "users", "@all", "test-package")
+        self.assertTrue(os.path.islink(all_link))
+        self.assertEqual(underlay_unpacked, os.readlink(all_link))
+        db.add(overlay)
+        registry = Click.User.for_user(db, "test-user")
+        registry.remove("test-package")
+        user_link = os.path.join(
+            overlay, ".click", "users", "test-user", "test-package")
+        self.assertTrue(os.path.islink(user_link))
+        self.assertEqual("@hidden", os.readlink(user_link))
+        installer = ClickInstaller(db, True)
+        with mock_quiet_subprocess_call():
+            installer.install(path, user="test-user")
+        overlay_unpacked = os.path.join(overlay, "test-package", "1.1")
+        self.assertFalse(os.path.exists(overlay_unpacked))
+        self.assertEqual("1.1", registry.get_version("test-package"))

@@ -34,6 +34,8 @@
 #define I_KNOW_THE_PACKAGEKIT_PLUGIN_API_IS_SUBJECT_TO_CHANGE
 #include <plugin/packagekit-plugin.h>
 
+#include "click.h"
+
 
 struct PkPluginPrivate {
 	guint			 dummy;
@@ -264,6 +266,22 @@ click_get_envp (void)
 	return environ;
 }
 
+static void
+click_pk_error (PkPlugin *plugin, PkErrorEnum code,
+		const char *summary, const char *extra)
+{
+	if (pk_backend_job_get_is_error_set (plugin->job)) {
+		/* PK already has an error; just log this. */
+		g_warning ("%s", summary);
+		if (extra)
+			g_warning ("%s", extra);
+	} else if (extra)
+		pk_backend_job_error_code
+			(plugin->job, code, "%s\n%s", summary, extra);
+	else
+		pk_backend_job_error_code (plugin->job, code, "%s", summary);
+}
+
 static JsonParser *
 click_get_manifest (PkPlugin *plugin, const gchar *filename)
 {
@@ -288,15 +306,11 @@ click_get_manifest (PkPlugin *plugin, const gchar *filename)
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("\"click info %s\" failed.", filename);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
-				"\"click info %s\" failed.\n%s",
-				filename, click_stderr);
+		gchar *summary = g_strdup_printf
+			("\"click info %s\" failed.", filename);
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				summary, click_stderr);
+		g_free (summary);
 		goto out;
 	}
 
@@ -337,59 +351,50 @@ click_get_field_object (JsonObject *manifest, const gchar *field)
 	return json_node_get_object (node);
 }
 
-static JsonParser *
+static gboolean
+click_get_field_boolean (JsonObject *manifest, const gchar *field,
+			 gboolean def)
+{
+	JsonNode *node;
+
+	node = json_object_get_member (manifest, field);
+	if (!node)
+		return def;
+	return json_node_get_boolean (node);
+}
+
+static JsonArray *
 click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 {
-	gboolean ret;
-	gchar **argv = NULL;
-	gint i;
 	gchar *username = NULL;
-	gchar **envp = NULL;
-	gchar *list_text = NULL;
-	gchar *click_stderr = NULL;
-	gint click_status;
-	JsonParser *parser = NULL;
+	ClickUser *registry = NULL;
+	JsonArray *array = NULL;
+	GError *error = NULL;
 
-	argv = g_malloc0_n (5, sizeof (*argv));
-	i = 0;
-	argv[i++] = g_strdup ("click");
-	argv[i++] = g_strdup ("list");
-	argv[i++] = g_strdup ("--manifest");
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
-	if (username)
-		argv[i++] = g_strdup_printf ("--user=%s", username);
-	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp, G_SPAWN_SEARCH_PATH,
-			    NULL, NULL, &list_text, &click_stderr,
-			    &click_status, NULL);
-	if (!ret)
+	registry = click_user_new_for_user (NULL, username, &error);
+	if (error) {
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"Unable to read Click database.",
+				error->message);
 		goto out;
-	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("\"click list\" failed.");
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job, PK_ERROR_ENUM_INTERNAL_ERROR,
-				"\"click list\" failed.\n%s", click_stderr);
+	}
+	array = click_user_get_manifests (registry, &error);
+	if (error) {
+		click_pk_error (plugin, PK_ERROR_ENUM_INTERNAL_ERROR,
+				"Unable to get Click package manifests.",
+				error->message);
 		goto out;
 	}
 
-	parser = json_parser_new ();
-	if (!parser)
-		goto out;
-	json_parser_load_from_data (parser, list_text, -1, NULL);
-
 out:
-	g_strfreev (argv);
+	if (error)
+		g_error_free (error);
+	g_object_unref (registry);
 	g_free (username);
-	g_strfreev (envp);
-	g_free (list_text);
-	g_free (click_stderr);
 
-	return parser;
+	return array;
 }
 
 static gchar *
@@ -400,11 +405,9 @@ click_build_pkid_data (const gchar *data_prefix, JsonObject *manifest)
 	gint i;
 	JsonObject *hooks;
 	GList *hooks_members = NULL, *hooks_iter;
-	gchar *removable = NULL;
 	gchar *data = NULL;
 
 	hooks = click_get_field_object (manifest, "hooks");
-	removable = click_get_field_string (manifest, "_removable");
 
 	n_elements = 3;  /* data_prefix, removable, terminator */
 	if (hooks)
@@ -418,10 +421,10 @@ click_build_pkid_data (const gchar *data_prefix, JsonObject *manifest)
 	/* A missing "_removable" entry in the manifest means that we just
 	 * installed the package, so it must be removable.
 	 */
-	if (g_strcmp0 (removable, "0") == 0)
-		elements[i++] = g_strdup ("removable=0");
-	else
+	if (click_get_field_boolean (manifest, "_removable", TRUE))
 		elements[i++] = g_strdup ("removable=1");
+	else
+		elements[i++] = g_strdup ("removable=0");
 	if (hooks) {
 		hooks_members = json_object_get_members (hooks);
 		for (hooks_iter = hooks_members; hooks_iter;
@@ -438,7 +441,6 @@ out:
 	g_strfreev (elements);
 	if (hooks_members)
 		g_list_free (hooks_members);
-	g_free (removable);
 	return data;
 }
 
@@ -532,17 +534,13 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	if (!ret)
 		goto out;
 	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		ret = FALSE;
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("%s failed to install", filename);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job,
+		gchar *summary = g_strdup_printf ("%s failed to install.",
+						  filename);
+		click_pk_error (plugin,
 				PK_ERROR_ENUM_PACKAGE_FAILED_TO_INSTALL,
-				"%s failed to install.\n%s",
-				filename, click_stderr);
+				summary, click_stderr);
+		g_free (summary);
+		ret = FALSE;
 		goto out;
 	}
 
@@ -613,21 +611,13 @@ click_get_packages_one (JsonArray *array, guint index, JsonNode *element_node,
 static void
 click_get_packages (PkPlugin *plugin, PkTransaction *transaction)
 {
-	JsonParser *parser = NULL;
-	JsonNode *node = NULL;
 	JsonArray *array = NULL;
 
-	parser = click_get_list (plugin, transaction);
-	if (!parser)
-		goto out;
-	node = json_parser_get_root (parser);
-	array = json_node_get_array (node);
+	array = click_get_list (plugin, transaction);
 	if (!array)
-		goto out;
+		return;
 	json_array_foreach_element (array, click_get_packages_one, plugin);
-
-out:
-	g_clear_object (&parser);
+	json_array_unref (array);
 }
 
 static gboolean
@@ -635,61 +625,88 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 		      const gchar *package_id)
 {
 	gboolean ret = FALSE;
-	gchar **argv = NULL;
-	gint i;
 	gchar *username = NULL;
 	gchar *name = NULL;
 	gchar *version = NULL;
-	gchar **envp = NULL;
-	gchar *click_stderr = NULL;
-	gint click_status;
+	ClickDB *db = NULL;
+	ClickUser *registry = NULL;
+	gchar *old_version = NULL;
+	GError *error = NULL;
+	gchar *summary = NULL;
 
-	argv = g_malloc0_n (6, sizeof (*argv));
-	i = 0;
-	argv[i++] = g_strdup ("click");
-	argv[i++] = g_strdup ("unregister");
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
 	if (!username) {
 		g_error ("Click: cannot remove packages without a username");
 		goto out;
 	}
-	argv[i++] = g_strdup_printf ("--user=%s", username);
 	if (!click_split_pkid (package_id, &name, &version, NULL)) {
 		g_error ("Click: cannot parse package ID '%s'", package_id);
 		goto out;
 	}
-	argv[i++] = g_strdup (name);
-	argv[i++] = g_strdup (version);
-	envp = click_get_envp ();
-	ret = g_spawn_sync (NULL, argv, envp,
-			    G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
-			    NULL, NULL, NULL, &click_stderr, &click_status,
-			    NULL);
-	if (!ret)
-		goto out;
-	if (!g_spawn_check_exit_status (click_status, NULL)) {
-		ret = FALSE;
-		if (pk_backend_job_get_is_error_set (plugin->job)) {
-			/* PK already has an error; just log this. */
-			g_warning ("%s failed to remove", package_id);
-			g_warning ("Stderr: %s", click_stderr);
-		} else
-			pk_backend_job_error_code (
-				plugin->job,
-				PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
-				"%s failed to remove.\n%s",
-				package_id, click_stderr);
+	db = click_db_new ();
+	click_db_read (db, NULL, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to read Click database while removing %s.",
+			 package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
 		goto out;
 	}
+	registry = click_user_new_for_user (db, username, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to read Click database while removing %s.",
+			 package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	old_version = click_user_get_version (registry, name, &error);
+	if (error) {
+		summary = g_strdup_printf
+			("Unable to get current version of Click package %s.",
+			 name);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	if (strcmp (old_version, version) != 0) {
+		summary = g_strdup_printf
+			("Not removing Click package %s %s; does not match "
+			 "current version %s.", name, version, old_version);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, NULL);
+		goto out;
+	}
+	click_user_remove (registry, name, &error);
+	if (error) {
+		summary = g_strdup_printf ("Failed to remove %s.", package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	click_db_maybe_remove (db, name, version, &error);
+	if (error) {
+		summary = g_strdup_printf ("Failed to remove %s.", package_id);
+		click_pk_error (plugin, PK_ERROR_ENUM_PACKAGE_FAILED_TO_REMOVE,
+				summary, error->message);
+		goto out;
+	}
+	/* TODO: remove data? */
+	ret = TRUE;
 
 out:
-	g_strfreev (argv);
-	g_free (username);
-	g_free (name);
+	g_free (summary);
+	if (error)
+		g_error_free (error);
+	g_free (old_version);
+	g_object_unref (registry);
+	g_object_unref (db);
 	g_free (version);
-	g_strfreev (envp);
-	g_free (click_stderr);
+	g_free (name);
+	g_free (username);
 
 	return ret;
 }
@@ -778,25 +795,17 @@ static void
 click_search (PkPlugin *plugin, PkTransaction *transaction, gchar **values,
 	      gboolean search_details)
 {
-	JsonParser *parser = NULL;
-	JsonNode *node = NULL;
 	JsonArray *array = NULL;
 	struct click_search_data data;
 
-	parser = click_get_list (plugin, transaction);
-	if (!parser)
-		goto out;
-	node = json_parser_get_root (parser);
-	array = json_node_get_array (node);
+	array = click_get_list (plugin, transaction);
 	if (!array)
-		goto out;
+		return;
 	data.plugin = plugin;
 	data.values = values;
 	data.search_details = search_details;
 	json_array_foreach_element (array, click_search_one, &data);
-
-out:
-	g_clear_object (&parser);
+	json_array_unref (array);
 }
 
 static void

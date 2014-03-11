@@ -45,7 +45,7 @@ from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 from gi.repository import Click
 
-from click.paths import frameworks_dir, preload_path
+from click.paths import preload_path
 from click.preinst import static_preinst_matches
 from click.versions import spec_version
 
@@ -96,10 +96,6 @@ class ClickInstaller:
         if os.path.exists(preload):
             return os.path.abspath(preload)
         return preload_path
-
-    def _has_framework(self, name):
-        return os.path.exists(os.path.join(
-            frameworks_dir, "%s.framework" % name))
 
     def _dpkg_architecture(self):
         return subprocess.check_output(
@@ -209,7 +205,7 @@ class ClickInstaller:
             if not self.force_missing_framework:
                 missing_frameworks = []
                 for or_dep in parsed_framework:
-                    if not self._has_framework(or_dep[0][0]):
+                    if not Click.Framework.has_framework(or_dep[0][0]):
                         missing_frameworks.append(or_dep[0][0])
                 if len(missing_frameworks) > 1:
                     raise ClickInstallerAuditError(
@@ -309,8 +305,16 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
-    def install(self, path, user=None, all_users=False):
+    def _unpack(self, path, user=None, all_users=False):
         package_name, package_version = self.audit(path, check_arch=True)
+
+        # Is this package already unpacked in an underlay (non-topmost)
+        # database?
+        if self.db.has_package_version(package_name, package_version):
+            overlay = self.db.get(self.db.props.size - 1)
+            if not overlay.has_package_version(package_name, package_version):
+                return package_name, package_version, None
+
         package_dir = os.path.join(self.db.props.overlay, package_name)
         inst_dir = os.path.join(package_dir, package_version)
         assert (
@@ -391,6 +395,12 @@ class ClickInstaller:
             pw = pwd.getpwnam("clickpkg")
             os.chown(new_path, pw.pw_uid, pw.pw_gid, follow_symlinks=False)
         os.rename(new_path, current_path)
+
+        return package_name, package_version, old_version
+
+    def install(self, path, user=None, all_users=False):
+        package_name, package_version, old_version = self._unpack(
+            path, user=user, all_users=all_users)
 
         if user is not None or all_users:
             if all_users:

@@ -31,6 +31,7 @@ import os
 
 from gi.repository import Click
 
+from click.json_helpers import json_array_to_python, json_object_to_python
 from click.tests.gimock_types import Passwd
 from click.tests.helpers import TestCase, mkfile, touch
 
@@ -94,6 +95,28 @@ class TestClickSingleDB(TestCase):
             ("c", "2.0", os.path.join(self.temp_dir, "c", "2.0")),
         ], self._installed_packages_tuplify(
             self.db.get_packages(all_versions=True)))
+
+    def test_packages_all_ignores_non_directory(self):
+        os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
+        touch(os.path.join(self.temp_dir, "file"))
+        self.assertEqual([
+            ("a", "1.0", os.path.join(self.temp_dir, "a", "1.0")),
+        ], self._installed_packages_tuplify(
+            self.db.get_packages(all_versions=True)))
+
+    def test_manifest(self):
+        manifest_path = os.path.join(
+            self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+        manifest_obj = {"name": "a", "version": "1.0", "hooks": {"a-app": {}}}
+        with mkfile(manifest_path) as manifest:
+            json.dump(manifest_obj, manifest)
+        manifest_obj["_directory"] = os.path.join(self.temp_dir, "a", "1.0")
+        self.assertEqual(
+            manifest_obj,
+            json_object_to_python(self.db.get_manifest("a", "1.0")))
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST,
+            self.db.get_manifest, "a", "1.1")
 
     def test_app_running(self):
         with self.run_in_subprocess("g_spawn_sync") as (enter, preloads):
@@ -231,6 +254,20 @@ class TestClickSingleDB(TestCase):
             self.assertTrue(os.path.exists(a_path))
             self.assertFalse(os.path.exists(b_path))
             self.assertTrue(os.path.exists(c_path))
+
+    def test_gc_ignores_non_directory(self):
+        a_path = os.path.join(self.temp_dir, "a", "1.0")
+        a_manifest_path = os.path.join(
+            a_path, ".click", "info", "a.manifest")
+        with mkfile(a_manifest_path) as manifest:
+            json.dump({"hooks": {"a-app": {}}}, manifest)
+        a_user_path = os.path.join(
+            self.temp_dir, ".click", "users", "test-user", "a")
+        os.makedirs(os.path.dirname(a_user_path))
+        os.symlink(a_path, a_user_path)
+        touch(os.path.join(self.temp_dir, "file"))
+        self.db.gc()
+        self.assertTrue(os.path.exists(a_path))
 
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
@@ -386,8 +423,9 @@ class TestClickDB(TestCase):
         self.assertRaisesDatabaseError(
             Click.DatabaseError.DOES_NOT_EXIST, db.get_path, "pkg", "1.1")
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.0"))
+        # The deepest copy of the same package/version is still preferred.
         self.assertEqual(
-            os.path.join(self.temp_dir, "b", "pkg", "1.0"),
+            os.path.join(self.temp_dir, "a", "pkg", "1.0"),
             db.get_path("pkg", "1.0"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg", "1.1"))
         self.assertEqual(
@@ -427,7 +465,7 @@ class TestClickDB(TestCase):
             print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
         db = Click.DB()
         db.read(db_dir=self.temp_dir)
-        self.assertEqual([], list(db.get_packages(all_versions=False)))
+        self.assertEqual([], list(db.get_packages(all_versions=True)))
         os.makedirs(os.path.join(self.temp_dir, "a", "pkg1", "1.0"))
         os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
         os.makedirs(os.path.join(self.temp_dir, "b", "pkg1", "1.1"))
@@ -443,3 +481,124 @@ class TestClickDB(TestCase):
              False),
         ], self._installed_packages_tuplify(
             db.get_packages(all_versions=True)))
+
+    def test_manifest(self):
+        with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
+            print("[Click Database]", file=a)
+            print("root = %s" % os.path.join(self.temp_dir, "a"), file=a)
+        with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
+            print("[Click Database]", file=b)
+            print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST, db.get_manifest, "pkg", "1.0")
+        a_manifest_path = os.path.join(
+            self.temp_dir, "a", "pkg", "1.0", ".click", "info", "pkg.manifest")
+        a_manifest_obj = {"name": "pkg", "version": "1.0"}
+        with mkfile(a_manifest_path) as a_manifest:
+            json.dump(a_manifest_obj, a_manifest)
+        a_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "a", "pkg", "1.0")
+        self.assertEqual(
+            a_manifest_obj,
+            json_object_to_python(db.get_manifest("pkg", "1.0")))
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST, db.get_manifest, "pkg", "1.1")
+        b_manifest_path = os.path.join(
+            self.temp_dir, "b", "pkg", "1.1", ".click", "info", "pkg.manifest")
+        b_manifest_obj = {"name": "pkg", "version": "1.1"}
+        with mkfile(b_manifest_path) as b_manifest:
+            json.dump(b_manifest_obj, b_manifest)
+        b_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "b", "pkg", "1.1")
+        self.assertEqual(
+            b_manifest_obj,
+            json_object_to_python(db.get_manifest("pkg", "1.1")))
+
+    def test_manifests_current(self):
+        with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
+            print("[Click Database]", file=a)
+            print("root = %s" % os.path.join(self.temp_dir, "a"), file=a)
+        with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
+            print("[Click Database]", file=b)
+            print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertEqual(
+            [], json_array_to_python(db.get_manifests(all_versions=False)))
+        a_pkg1_manifest_path = os.path.join(
+            self.temp_dir, "a", "pkg1", "1.0",
+            ".click", "info", "pkg1.manifest")
+        a_pkg1_manifest_obj = {"name": "pkg1", "version": "1.0"}
+        with mkfile(a_pkg1_manifest_path) as a_pkg1_manifest:
+            json.dump(a_pkg1_manifest_obj, a_pkg1_manifest)
+        os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
+        b_pkg1_manifest_path = os.path.join(
+            self.temp_dir, "b", "pkg1", "1.1",
+            ".click", "info", "pkg1.manifest")
+        b_pkg1_manifest_obj = {"name": "pkg1", "version": "1.1"}
+        with mkfile(b_pkg1_manifest_path) as b_pkg1_manifest:
+            json.dump(b_pkg1_manifest_obj, b_pkg1_manifest)
+        os.symlink("1.1", os.path.join(self.temp_dir, "b", "pkg1", "current"))
+        b_pkg2_manifest_path = os.path.join(
+            self.temp_dir, "b", "pkg2", "0.1",
+            ".click", "info", "pkg2.manifest")
+        b_pkg2_manifest_obj = {"name": "pkg2", "version": "0.1"}
+        with mkfile(b_pkg2_manifest_path) as b_pkg2_manifest:
+            json.dump(b_pkg2_manifest_obj, b_pkg2_manifest)
+        os.symlink("0.1", os.path.join(self.temp_dir, "b", "pkg2", "current"))
+        b_pkg1_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "b", "pkg1", "1.1")
+        b_pkg1_manifest_obj["_removable"] = 1
+        b_pkg2_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "b", "pkg2", "0.1")
+        b_pkg2_manifest_obj["_removable"] = 1
+        self.assertEqual(
+            [b_pkg1_manifest_obj, b_pkg2_manifest_obj],
+            json_array_to_python(db.get_manifests(all_versions=False)))
+
+    def test_manifests_all(self):
+        with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
+            print("[Click Database]", file=a)
+            print("root = %s" % os.path.join(self.temp_dir, "a"), file=a)
+        with open(os.path.join(self.temp_dir, "b.conf"), "w") as b:
+            print("[Click Database]", file=b)
+            print("root = %s" % os.path.join(self.temp_dir, "b"), file=b)
+        db = Click.DB()
+        db.read(db_dir=self.temp_dir)
+        self.assertEqual(
+            [], json_array_to_python(db.get_manifests(all_versions=True)))
+        a_pkg1_manifest_path = os.path.join(
+            self.temp_dir, "a", "pkg1", "1.0",
+            ".click", "info", "pkg1.manifest")
+        a_pkg1_manifest_obj = {"name": "pkg1", "version": "1.0"}
+        with mkfile(a_pkg1_manifest_path) as a_pkg1_manifest:
+            json.dump(a_pkg1_manifest_obj, a_pkg1_manifest)
+        os.symlink("1.0", os.path.join(self.temp_dir, "a", "pkg1", "current"))
+        b_pkg1_manifest_path = os.path.join(
+            self.temp_dir, "b", "pkg1", "1.1",
+            ".click", "info", "pkg1.manifest")
+        b_pkg1_manifest_obj = {"name": "pkg1", "version": "1.1"}
+        with mkfile(b_pkg1_manifest_path) as b_pkg1_manifest:
+            json.dump(b_pkg1_manifest_obj, b_pkg1_manifest)
+        os.symlink("1.1", os.path.join(self.temp_dir, "b", "pkg1", "current"))
+        b_pkg2_manifest_path = os.path.join(
+            self.temp_dir, "b", "pkg2", "0.1",
+            ".click", "info", "pkg2.manifest")
+        b_pkg2_manifest_obj = {"name": "pkg2", "version": "0.1"}
+        with mkfile(b_pkg2_manifest_path) as b_pkg2_manifest:
+            json.dump(b_pkg2_manifest_obj, b_pkg2_manifest)
+        os.symlink("0.1", os.path.join(self.temp_dir, "b", "pkg2", "current"))
+        a_pkg1_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "a", "pkg1", "1.0")
+        a_pkg1_manifest_obj["_removable"] = 0
+        b_pkg1_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "b", "pkg1", "1.1")
+        b_pkg1_manifest_obj["_removable"] = 1
+        b_pkg2_manifest_obj["_directory"] = os.path.join(
+            self.temp_dir, "b", "pkg2", "0.1")
+        b_pkg2_manifest_obj["_removable"] = 1
+        self.assertEqual(
+            [b_pkg1_manifest_obj, b_pkg2_manifest_obj, a_pkg1_manifest_obj],
+            json_array_to_python(db.get_manifests(all_versions=True)))

@@ -30,7 +30,11 @@ public errordomain DatabaseError {
 	/**
 	 * Failure to ensure correct ownership of database files.
 	 */
-	ENSURE_OWNERSHIP
+	ENSURE_OWNERSHIP,
+	/**
+	 * Package manifest cannot be parsed.
+	 */
+	BAD_MANIFEST
 }
 
 public class InstalledPackage : Object, Gee.Hashable<InstalledPackage> {
@@ -97,6 +101,25 @@ public class SingleDB : Object {
 	}
 
 	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked in this
+	 * database, otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
+	}
+
+	/**
 	 * get_packages:
 	 * @all_versions: If true, return all versions, not just current ones.
 	 *
@@ -114,16 +137,14 @@ public class SingleDB : Object {
 			if (all_versions) {
 				var package_path =
 					Path.build_filename (root, package);
+				if (! is_dir (package_path))
+					continue;
 				foreach (var version in Click.Dir.open
 						(package_path)) {
 					var version_path = Path.build_filename
 						(package_path, version);
-					if (FileUtils.test
-						(version_path,
-						 FileTest.IS_SYMLINK) ||
-					    ! FileUtils.test
-					    	(version_path,
-						 FileTest.IS_DIR))
+					if (is_symlink (version_path) ||
+					    ! is_dir (version_path))
 						continue;
 					ret.prepend(new InstalledPackage
 						(package, version,
@@ -132,8 +153,7 @@ public class SingleDB : Object {
 			} else {
 				var current_path = Path.build_filename
 					(root, package, "current");
-				if (! FileUtils.test
-					(current_path, FileTest.IS_SYMLINK))
+				if (! is_symlink (current_path))
 					continue;
 				var version = FileUtils.read_link
 					(current_path);
@@ -146,6 +166,51 @@ public class SingleDB : Object {
 
 		ret.reverse ();
 		return ret;
+	}
+
+	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A #Json.Object containing the manifest of this version
+	 * of this package.  The manifest may include additional dynamic
+	 * keys (starting with an underscore) corresponding to dynamic
+	 * properties of installed packages.
+	 */
+	public Json.Object
+	get_manifest (string package, string version) throws DatabaseError
+	{
+		/* Extract the raw manifest from the file system. */
+		var path = get_path (package, version);
+		var manifest_path = Path.build_filename
+			(path, ".click", "info", @"$package.manifest");
+		var parser = new Json.Parser ();
+		try {
+			parser.load_from_file (manifest_path);
+		} catch (Error e) {
+			throw new DatabaseError.BAD_MANIFEST
+				("Failed to parse manifest in %s: %s",
+				 manifest_path, e.message);
+		}
+		var node = parser.get_root ();
+		if (node.get_node_type () != Json.NodeType.OBJECT)
+			throw new DatabaseError.BAD_MANIFEST
+				("Manifest in %s is not a JSON object",
+				 manifest_path);
+		var manifest = node.dup_object ();
+
+		/* Set up dynamic keys. */
+		var to_remove = new List<string> ();
+		foreach (var name in manifest.get_members ()) {
+			if (name.has_prefix ("_"))
+				to_remove.prepend (name);
+		}
+		foreach (var name in to_remove)
+			manifest.remove_member (name);
+		manifest.set_string_member ("_directory", path);
+
+		return manifest;
 	}
 
 	/*
@@ -240,7 +305,7 @@ public class SingleDB : Object {
 		var package_path = Path.build_filename (root, package);
 		var current_path = Path.build_filename
 			(package_path, "current");
-		if (FileUtils.test (current_path, FileTest.IS_SYMLINK) &&
+		if (is_symlink (current_path) &&
 		    FileUtils.read_link (current_path) == version) {
 			if (FileUtils.unlink (current_path) < 0)
 				throw new DatabaseError.REMOVE
@@ -342,6 +407,8 @@ public class SingleDB : Object {
 			if (package == ".click")
 				continue;
 			var package_path = Path.build_filename (root, package);
+			if (! is_dir (package_path))
+				continue;
 			foreach (var version in Click.Dir.open
 					(package_path)) {
 				if (version in user_reg[package])
@@ -380,7 +447,7 @@ public class SingleDB : Object {
 		string[] nondirs = {};
 		foreach (var name in Click.Dir.open (top)) {
 			var path = Path.build_filename (top, name);
-			if (FileUtils.test (path, FileTest.IS_DIR))
+			if (is_dir (path))
 				dirs += name;
 			else
 				nondirs += name;
@@ -531,15 +598,34 @@ public class DB : Object {
 	public string
 	get_path (string package, string version) throws DatabaseError
 	{
-		for (int i = db.size - 1; i >= 0; --i) {
+		foreach (var single_db in db) {
 			try {
-				return db[i].get_path (package, version);
+				return single_db.get_path (package, version);
 			} catch (DatabaseError e) {
 			}
 		}
 		throw new DatabaseError.DOES_NOT_EXIST
 			("%s %s does not exist in any database",
 			 package, version);
+	}
+
+	/**
+	 * has_package_version:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: True if this version of this package is unpacked,
+	 * otherwise false.
+	 */
+	public bool
+	has_package_version (string package, string version)
+	{
+		try {
+			get_path (package, version);
+			return true;
+		} catch (DatabaseError e) {
+			return false;
+		}
 	}
 
 	/**
@@ -577,6 +663,58 @@ public class DB : Object {
 		}
 
 		ret.reverse ();
+		return ret;
+	}
+
+	/**
+	 * get_manifest:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A #Json.Object containing the manifest of this version
+	 * of this package.
+	 */
+	public Json.Object
+	get_manifest (string package, string version) throws DatabaseError
+	{
+		foreach (var single_db in db) {
+			try {
+				return single_db.get_manifest
+					(package, version);
+			} catch (DatabaseError e) {
+				if (e is DatabaseError.BAD_MANIFEST)
+					throw e;
+			}
+		}
+		throw new DatabaseError.DOES_NOT_EXIST
+			("%s %s does not exist in any database",
+			 package, version);
+	}
+
+	/**
+	 * get_manifests:
+	 * @all_versions: If true, return manifests for all versions, not
+	 * just current ones.
+	 *
+	 * Returns: A #Json.Array containing manifests of all packages in
+	 * this database.  The manifest may include additional dynamic keys
+	 * (starting with an underscore) corresponding to dynamic properties
+	 * of installed packages.
+	 */
+	public Json.Array
+	get_manifests (bool all_versions = false) throws Error
+	{
+		var ret = new Json.Array ();
+		foreach (var inst in get_packages (all_versions)) {
+			var obj = get_manifest (inst.package, inst.version);
+			/* This should really be a boolean, but it was
+			 * mistakenly made an int when the "_removable" key
+			 * was first created.  We may change this in future.
+			 */
+			obj.set_int_member ("_removable",
+					    inst.writeable ? 1 : 0);
+			ret.add_object_element (obj);
+		}
 		return ret;
 	}
 

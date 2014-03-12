@@ -950,10 +950,14 @@ public class Hook : Object {
 			if (is_user_level) {
 				var user_db = new User.for_user
 					(db, user_name);
+				var overlay_path = Path.build_filename
+					(user_db.get_overlay_db (),
+					 package);
 				user_db.drop_privileges ();
 				try {
-					user_db.raw_set_version
-						(package, version);
+					if (exists (overlay_path))
+						user_db.raw_set_version
+							(package, version);
 					install_link (package, version,
 						      app_name,
 						      app.relative_path,

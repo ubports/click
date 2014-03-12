@@ -833,6 +833,30 @@ class TestClickHookUserLevel(TestClickHookBase):
                 os.readlink(path_2))
             self.assertFalse(os.path.lexists(path_3))
 
+    def test_sync_without_user_db(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                ) as (enter, preloads):
+            enter()
+            preloads["click_get_user_home"].return_value = "/home/test-user"
+            with mkfile(
+                    os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
+                print("User-Level: yes", file=f)
+                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            with mkfile(os.path.join(
+                    self.temp_dir, "test-package", "1.0", ".click", "info",
+                    "test-package.manifest")) as f:
+                json.dump({"hooks": {"test-app": {"test": "target"}}}, f)
+            all_users_db = Click.User.for_all_users(self.db)
+            all_users_db.set_version("test-package", "1.0")
+            self._setup_hooks_dir(
+                preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
+            hook = Click.Hook.open(self.db, "test")
+            hook.sync(user_name="test-user")
+            self.assertFalse(os.path.exists(os.path.join(
+                self.temp_dir, ".click", "users", "test-user",
+                "test-package")))
+
     def test_sync_uses_deepest_copy(self):
         # If the same version of a package is unpacked in multiple
         # databases, then we make sure the user link points to the deepest

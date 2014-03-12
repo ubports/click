@@ -1,10 +1,10 @@
-click (0.4.18.2) UNRELEASED; urgency=medium
+click (0.4.18.2) trusty; urgency=medium
 
   * Make "click hook run-user" ensure that the user registration directory
     exists before dropping privileges and trying to create symlinks in it
     (LP: #1291192).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 10:48:07 +0000
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 11:59:31 +0000
 
 click (0.4.18.1) trusty; urgency=medium
 

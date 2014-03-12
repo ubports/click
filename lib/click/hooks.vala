@@ -942,6 +942,7 @@ public class Hook : Object {
 			assert (user_name == null);
 
 		var seen = new Gee.HashSet<string> ();
+		bool ensured = false;
 		foreach (var app in get_relevant_apps (user_name)) {
 			unowned string package = app.package;
 			unowned string version = app.version;
@@ -950,6 +951,8 @@ public class Hook : Object {
 			if (is_user_level) {
 				var user_db = new User.for_user
 					(db, user_name);
+				if (! ensured)
+					user_db.ensure_db ();
 				user_db.drop_privileges ();
 				try {
 					user_db.raw_set_version

@@ -951,8 +951,10 @@ public class Hook : Object {
 			if (is_user_level) {
 				var user_db = new User.for_user
 					(db, user_name);
-				if (! ensured)
+				if (! ensured) {
 					user_db.ensure_db ();
+					ensured = true;
+				}
 				user_db.drop_privileges ();
 				try {
 					user_db.raw_set_version

@@ -301,7 +301,7 @@ public class User : Object {
 		return db_for_user (db.overlay, name);
 	}
 
-	internal void
+	private void
 	ensure_db () throws UserError
 	{
 		if (users == null)

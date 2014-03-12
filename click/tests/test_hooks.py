@@ -847,17 +847,15 @@ class TestClickHookUserLevel(TestClickHookBase):
                     self.temp_dir, "test-package", "1.0", ".click", "info",
                     "test-package.manifest")) as f:
                 json.dump({"hooks": {"test-app": {"test": "target"}}}, f)
-            package_path = os.path.join(self.temp_dir, "test-package", "1.0")
             all_users_db = Click.User.for_all_users(self.db)
             all_users_db.set_version("test-package", "1.0")
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "test")
             hook.sync(user_name="test-user")
-            symlink_path = os.path.join(
-                self.temp_dir, ".click", "users", "test-user", "test-package")
-            self.assertTrue(os.path.islink(symlink_path))
-            self.assertEqual(package_path, os.readlink(symlink_path))
+            self.assertFalse(os.path.exists(os.path.join(
+                self.temp_dir, ".click", "users", "test-user",
+                "test-package")))
 
     def test_sync_uses_deepest_copy(self):
         # If the same version of a package is unpacked in multiple

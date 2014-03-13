@@ -2,6 +2,8 @@ click (0.4.18.4) UNRELEASED; urgency=medium
 
   * Set Click.User.ensure_db visibility back to private, since it's no
     longer used by Click.Hook.  (The C ABI is unaffected.)
+  * Add brief documentation on Click's multiple-database scheme, based on my
+    recent mail to ubuntu-phone.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 14:23:34 +0000
 

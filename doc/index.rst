@@ -84,6 +84,7 @@ Contents:
    file-format.rst
    constraints.rst
    hooks.rst
+   databases.rst
    todo.rst
 
 

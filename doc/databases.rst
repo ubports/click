@@ -7,8 +7,8 @@ ubuntu-phone mailing list, preserved here since it may be useful.)
 
 Click has multiple databases where packages may be unpacked: by default we
 have the "core" database for core apps (``/usr/share/click/preinstalled/``),
-the "custom" database for carrier/OEM customisations (``/custom/``), and the
-"default" database for user-installed applications
+the "custom" database for carrier/OEM customisations (``/custom/click/``),
+and the "default" database for user-installed applications
 (``/opt/click.ubuntu.com/``), although these are configurable in
 ``/etc/click/databases/``.  Each database may have multiple unpacked
 versions of any given package.
@@ -54,9 +54,9 @@ visible in context, according to the rules above.
 The effect of all this is that we can hide a core app for a carrier by doing
 this as root when preparing their custom overlay image::
 
-  click unregister --root=/custom --all-users PACKAGE-NAME
+  click unregister --root=/custom/click --all-users PACKAGE-NAME
 
-This will create a symlink ``/custom/.click/users/@all/PACKAGE-NAME``
+This will create a symlink ``/custom/click/.click/users/@all/PACKAGE-NAME``
 pointing to ``@hidden``.  Unless a user explicitly installs the app in
 question, the effect of this will be that it's as if the app just isn't
 there.  It shouldn't incur any more than a negligible cost at startup

@@ -5,6 +5,8 @@ click (0.4.18.4) UNRELEASED; urgency=medium
   * Add brief documentation on Click's multiple-database scheme, based on my
     recent mail to ubuntu-phone.
   * Fix a few potential GLib critical messages from the PackageKit plugin.
+  * Make libclick-0.4-dev depend on libjson-glib-dev for
+    <json-glib/json-glib.h>.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 14:23:34 +0000
 

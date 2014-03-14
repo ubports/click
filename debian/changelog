@@ -1,5 +1,6 @@
 click (0.4.18.4) UNRELEASED; urgency=medium
 
+  [ Colin Watson ]
   * Set Click.User.ensure_db visibility back to private, since it's no
     longer used by Click.Hook.  (The C ABI is unaffected.)
   * Add brief documentation on Click's multiple-database scheme, based on my
@@ -9,6 +10,9 @@ click (0.4.18.4) UNRELEASED; urgency=medium
     <json-glib/json-glib.h>.
   * Add Requires.private to click-0.4.pc, so that programs built against
     libclick pick up the proper CFLAGS including glib and json-glib.
+
+  [ Benjamin Zeller ]
+  * Take pkexec env vars into account when creating a chroot.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 14:23:34 +0000
 

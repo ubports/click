@@ -87,6 +87,8 @@ class ClickChroot:
             self.archive = "http://archive.ubuntu.com/ubuntu"
         if "SUDO_USER" in os.environ:
             self.user = os.environ["SUDO_USER"]
+        elif "PKEXEC_UID" in os.environ: 
+            self.user = pwd.getpwuid(int(os.environ["PKEXEC_UID"])).pw_name
         else:
             self.user = pwd.getpwuid(os.getuid()).pw_name
         self.dpkg_architecture = self._dpkg_architecture()

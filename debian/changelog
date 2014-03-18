@@ -1,4 +1,4 @@
-click (0.4.18.4) UNRELEASED; urgency=medium
+click (0.4.19) UNRELEASED; urgency=medium
 
   [ Colin Watson ]
   * Set Click.User.ensure_db visibility back to private, since it's no

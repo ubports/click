@@ -10,6 +10,7 @@ click (0.4.18.4) UNRELEASED; urgency=medium
     <json-glib/json-glib.h>.
   * Add Requires.private to click-0.4.pc, so that programs built against
     libclick pick up the proper CFLAGS including glib and json-glib.
+  * chroot: Allow creating 14.04 chroots.
 
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.

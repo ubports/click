@@ -32,8 +32,17 @@ import stat
 import subprocess
 
 
+framework_base = {
+    "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
+    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
+    }
+
+
 framework_series = {
     "ubuntu-sdk-13.10": "saucy",
+    "ubuntu-sdk-14.04": "trusty",
     }
 
 
@@ -56,6 +65,23 @@ extra_packages = {
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         ],
+    "ubuntu-sdk-14.04": [
+        "cmake",
+        "libqt5svg5-dev:TARGET",
+        "libqt5webkit5-dev:TARGET",
+        "libqt5xmlpatterns5-dev:TARGET",
+        "qt3d5-dev:TARGET",
+        "qt5-default:TARGET",
+        "qtbase5-dev:TARGET",
+        "qtdeclarative5-dev:TARGET",
+        "qtdeclarative5-dev-tools",
+        "qtlocation5-dev:TARGET",
+        "qtmultimedia5-dev:TARGET",
+        "qtscript5-dev:TARGET",
+        "qtsensors5-dev:TARGET",
+        "qttools5-dev:TARGET",
+        "qttools5-dev-tools:TARGET",
+        ],
     }
 
 
@@ -68,13 +94,13 @@ class ClickChrootException(Exception):
 
 class ClickChroot:
     def __init__(self, target_arch, framework, name=None, series=None):
-        if name is None:
-            name = "click"
-        if series is None:
-            series = framework_series[framework]
         self.target_arch = target_arch
         self.framework = framework
+        if name is None:
+            name = "click"
         self.name = name
+        if series is None:
+            series = framework_series[self.framework_base]
         self.series = series
         self.native_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
@@ -129,8 +155,12 @@ class ClickChroot:
         return sources
 
     @property
+    def framework_base(self):
+        return framework_base[self.framework]
+
+    @property
     def full_name(self):
-        return "%s-%s-%s" % (self.name, self.framework, self.target_arch)
+        return "%s-%s-%s" % (self.name, self.framework_base, self.target_arch)
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]
@@ -158,7 +188,7 @@ class ClickChroot:
             "pkg-config-%s" % target_tuple, "cmake",
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
-        for package in extra_packages.get(self.framework, []):
+        for package in extra_packages.get(self.framework_base, []):
             package = package.replace(":TARGET", ":%s" % self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)

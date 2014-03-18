@@ -311,6 +311,7 @@ class TestClickUser(TestCase):
             json.dump(manifest_obj, manifest)
         manifest_obj["_directory"] = os.path.join(
             registry.get_overlay_db(), "a")
+        manifest_obj["_removable"] = 1
         registry.set_version("a", "1.0")
         self.assertEqual(
             manifest_obj, json_object_to_python(registry.get_manifest("a")))
@@ -321,16 +322,19 @@ class TestClickUser(TestCase):
             "name": "a",
             "version": "1.1",
             "_directory": os.path.join(user_dbs[1], "a"),
+            "_removable": 1,
         }, json_object_to_python(registry.get_manifest("a")))
         self.assertEqual({
             "name": "b",
             "version": "2.0",
             "_directory": os.path.join(user_dbs[0], "b"),
+            "_removable": 1,
         }, json_object_to_python(registry.get_manifest("b")))
         self.assertEqual({
             "name": "c",
             "version": "0.1",
             "_directory": os.path.join(user_dbs[1], "c"),
+            "_removable": 1,
         }, json_object_to_python(registry.get_manifest("c")))
         self.assertRaisesUserError(
             Click.UserError.NO_SUCH_PACKAGE, registry.get_path, "d")

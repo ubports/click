@@ -101,22 +101,36 @@ Options:
 
 Subcommands:
 
+begin-session SESSION
+    Begin a persistent chroot session.
+
 create
     Create a chroot.
 
 destroy
     Destroy a chroot.
 
+end-session SESSION
+    End a persistent chroot session.
+
 install PACKAGES
     Install packages in the chroot.
 
-maint COMMAND ARGUMENTS
+maint [-n SESSION] COMMAND ARGUMENTS
     Run a maintenance command in the chroot.  Unlike ``run``, this runs its
     command as root inside the chroot, and its effects on the chroot will
     persist after ``click chroot maint`` exits.
 
-run COMMAND ARGUMENTS
+    If a session name is given, run the command in that session.  The
+    session must previously have been created by ``click chroot
+    begin-session``.
+
+run [-n SESSION] COMMAND ARGUMENTS
     Run a program in the chroot.
+
+    If a session name is given, run the command in that session.  The
+    session must previously have been created by ``click chroot
+    begin-session``.
 
 upgrade
     Upgrade the chroot.

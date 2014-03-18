@@ -97,9 +97,20 @@ Manage chroot environments for cross-building Click packages.
 
 Options:
 
--a ARCH, --architecture ARCH    Set the target architecture.
+-a ARCH, --architecture ARCH            Set the target architecture.
+-f FRAMEWORK, --framework FRAMEWORK     Set the target framework (default:
+                                        ubuntu-sdk-13.10).
+-s SERIES, --series SERIES              Set the target series for
+                                        newly-created chroots (default: a
+                                        series appropriate for the
+                                        framework).
+                                        This option is mainly for debugging;
+                                        use -f instead.
 
 Subcommands:
+
+begin-session SESSION
+    Begin a persistent chroot session.
 
 create
     Create a chroot.
@@ -107,16 +118,27 @@ create
 destroy
     Destroy a chroot.
 
+end-session SESSION
+    End a persistent chroot session.
+
 install PACKAGES
     Install packages in the chroot.
 
-maint COMMAND ARGUMENTS
+maint [-n SESSION] COMMAND ARGUMENTS
     Run a maintenance command in the chroot.  Unlike ``run``, this runs its
     command as root inside the chroot, and its effects on the chroot will
     persist after ``click chroot maint`` exits.
 
-run COMMAND ARGUMENTS
+    If a session name is given, run the command in that session.  The
+    session must previously have been created by ``click chroot
+    begin-session``.
+
+run [-n SESSION] COMMAND ARGUMENTS
     Run a program in the chroot.
+
+    If a session name is given, run the command in that session.  The
+    session must previously have been created by ``click chroot
+    begin-session``.
 
 upgrade
     Upgrade the chroot.

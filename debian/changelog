@@ -1,3 +1,33 @@
+click (0.4.19) UNRELEASED; urgency=medium
+
+  [ Colin Watson ]
+  * Set Click.User.ensure_db visibility back to private, since it's no
+    longer used by Click.Hook.  (The C ABI is unaffected.)
+  * Add brief documentation on Click's multiple-database scheme, based on my
+    recent mail to ubuntu-phone.
+  * Fix a few potential GLib critical messages from the PackageKit plugin.
+  * Make libclick-0.4-dev depend on libjson-glib-dev for
+    <json-glib/json-glib.h>.
+  * Add Requires.private to click-0.4.pc, so that programs built against
+    libclick pick up the proper CFLAGS including glib and json-glib.
+  * chroot: Allow creating 14.04 chroots.
+  * Include _directory and _removable dynamic manifest keys in "click info"
+    output (LP: #1293788).
+  * Document -f and -s options to "click chroot" in click(1).
+  * chroot: Fix code to make /finish.sh executable.
+  * chroot: Make /usr/sbin/policy-rc.d executable in the chroot, as
+    otherwise it has no effect.
+  * chroot: Run apt-get dist-upgrade on the chroot before trying to install
+    the basic build tool set.  Fixes chroot creation for saucy.
+
+  [ Benjamin Zeller ]
+  * Take pkexec env vars into account when creating a chroot.
+
+  [ Dimitri John Ledkov ]
+  * Add session management to click chroot.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 14:23:34 +0000
+
 click (0.4.18.3) trusty; urgency=medium
 
   [ Colin Watson ]

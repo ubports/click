@@ -66,7 +66,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, libclick-0.4-0 (= ${binary:Version}), libglib2.0-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}, libclick-0.4-0 (= ${binary:Version}), libglib2.0-dev, libjson-glib-dev
 Description: development files for Click package management library
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

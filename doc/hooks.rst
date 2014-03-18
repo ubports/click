@@ -219,7 +219,7 @@ Examples
     "hooks": {
       "example-app": {
         "apparmor": "apparmor/example-app.json",
-        "desktop": "example-app.desktop",
+        "desktop": "example-app.desktop"
       }
     }
 

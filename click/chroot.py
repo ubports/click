@@ -32,8 +32,17 @@ import stat
 import subprocess
 
 
+framework_base = {
+    "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
+    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
+    }
+
+
 framework_series = {
     "ubuntu-sdk-13.10": "saucy",
+    "ubuntu-sdk-14.04": "trusty",
     }
 
 
@@ -56,6 +65,23 @@ extra_packages = {
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         ],
+    "ubuntu-sdk-14.04": [
+        "cmake",
+        "libqt5svg5-dev:TARGET",
+        "libqt5webkit5-dev:TARGET",
+        "libqt5xmlpatterns5-dev:TARGET",
+        "qt3d5-dev:TARGET",
+        "qt5-default:TARGET",
+        "qtbase5-dev:TARGET",
+        "qtdeclarative5-dev:TARGET",
+        "qtdeclarative5-dev-tools",
+        "qtlocation5-dev:TARGET",
+        "qtmultimedia5-dev:TARGET",
+        "qtscript5-dev:TARGET",
+        "qtsensors5-dev:TARGET",
+        "qttools5-dev:TARGET",
+        "qttools5-dev-tools:TARGET",
+        ],
     }
 
 
@@ -67,15 +93,16 @@ class ClickChrootException(Exception):
 
 
 class ClickChroot:
-    def __init__(self, target_arch, framework, name=None, series=None):
-        if name is None:
-            name = "click"
-        if series is None:
-            series = framework_series[framework]
+    def __init__(self, target_arch, framework, name=None, series=None, session=None):
         self.target_arch = target_arch
         self.framework = framework
+        if name is None:
+            name = "click"
         self.name = name
+        if series is None:
+            series = framework_series[self.framework_base]
         self.series = series
+        self.session = session
         self.native_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
@@ -87,6 +114,8 @@ class ClickChroot:
             self.archive = "http://archive.ubuntu.com/ubuntu"
         if "SUDO_USER" in os.environ:
             self.user = os.environ["SUDO_USER"]
+        elif "PKEXEC_UID" in os.environ:
+            self.user = pwd.getpwuid(int(os.environ["PKEXEC_UID"])).pw_name
         else:
             self.user = pwd.getpwuid(os.getuid()).pw_name
         self.dpkg_architecture = self._dpkg_architecture()
@@ -127,14 +156,29 @@ class ClickChroot:
         return sources
 
     @property
+    def framework_base(self):
+        if self.framework in framework_base:
+            return framework_base[self.framework]
+        else:
+            return self.framework
+
+    @property
     def full_name(self):
-        return "%s-%s-%s" % (self.name, self.framework, self.target_arch)
+        return "%s-%s-%s" % (self.name, self.framework_base, self.target_arch)
+
+    @property
+    def full_session_name(self):
+        return "%s-%s" % (self.full_name, self.session)
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]
         with open("/dev/null", "w") as devnull:
             return subprocess.call(
                 command, stdout=devnull, stderr=devnull) == 0
+
+    def _make_executable(self, path):
+        mode = stat.S_IMODE(os.stat(path).st_mode)
+        os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def create(self):
         if self.exists():
@@ -156,7 +200,7 @@ class ClickChroot:
             "pkg-config-%s" % target_tuple, "cmake",
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
-        for package in extra_packages.get(self.framework, []):
+        for package in extra_packages.get(self.framework_base, []):
             package = package.replace(":TARGET", ":%s" % self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)
@@ -205,6 +249,7 @@ class ClickChroot:
             print("      *) exit 101;;", file=policy)
             print("    esac", file=policy)
             print("done", file=policy)
+        self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
         finish_script = "%s/finish.sh" % mount
@@ -235,6 +280,7 @@ builds won't prompt", file=finish)
 debconf-communicate", file=finish)
             print("echo set debconf/priority critical | \
 debconf-communicate", file=finish)
+            print("apt-get -y --force-yes dist-upgrade", file=finish)
             print("# Install basic build tool set to match buildd",
                   file=finish)
             print("apt-get -y --force-yes install %s"
@@ -249,7 +295,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             print("# Clean up", file=finish)
             print("rm /finish.sh", file=finish)
             print("apt-get clean", file=finish)
-        os.chmod(finish_script, stat.S_IEXEC)
+        self._make_executable(finish_script)
         command = ["/finish.sh"]
         self.maint(*command)
 
@@ -257,16 +303,24 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        command = ["schroot", "-c", self.full_name, "--", "env"]
+        command = ["schroot", "-c"]
+        if self.session:
+            command.extend([self.full_session_name, "--run-session"])
+        else:
+            command.append(self.full_name)
+        command.extend(["--", "env"])
         for key, value in self.dpkg_architecture.items():
             command.append("%s=%s" % (key, value))
         command.extend(args)
         subprocess.check_call(command)
 
     def maint(self, *args):
-        command = [
-            "schroot", "-c", "source:%s" % self.full_name, "-u", "root", "--",
-            ]
+        command = [ "schroot", "-u", "root", "-c" ]
+        if self.session:
+            command.extend([self.full_session_name, "--run-session"])
+        else:
+            command.append("source:%s" % self.full_name)
+        command.append("--")
         command.extend(args)
         subprocess.check_call(command)
 
@@ -305,3 +359,18 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         os.remove(chroot_config)
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
         shutil.rmtree(mount)
+
+    def begin_session(self):
+        if not self.exists():
+            raise ClickChrootException(
+                "Chroot %s does not exist" % self.full_name)
+        command = ["schroot", "-c", self.full_name, "--begin-session",
+                   "--session-name", self.full_session_name]
+        subprocess.check_call(command)
+
+    def end_session(self):
+        if not self.exists():
+            raise ClickChrootException(
+                "Chroot %s does not exist" % self.full_name)
+        command = ["schroot", "-c", self.full_session_name, "--end-session"]
+        subprocess.check_call(command)

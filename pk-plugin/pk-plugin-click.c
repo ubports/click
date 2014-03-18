@@ -67,9 +67,8 @@ click_is_click_file (const gchar *filename)
 		ret = TRUE;
 
 out:
-	if (info)
-		g_object_unref (info);
-	g_object_unref (file);
+	g_clear_object (&info);
+	g_clear_object (&file);
 	return ret;
 }
 
@@ -391,7 +390,7 @@ click_get_list (PkPlugin *plugin, PkTransaction *transaction)
 out:
 	if (error)
 		g_error_free (error);
-	g_object_unref (registry);
+	g_clear_object (&registry);
 	g_free (username);
 
 	return array;
@@ -702,8 +701,8 @@ out:
 	if (error)
 		g_error_free (error);
 	g_free (old_version);
-	g_object_unref (registry);
-	g_object_unref (db);
+	g_clear_object (&registry);
+	g_clear_object (&db);
 	g_free (version);
 	g_free (name);
 	g_free (username);

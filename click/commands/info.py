@@ -41,7 +41,12 @@ def get_manifest(options, arg):
     with closing(DebFile(filename=arg)) as package:
         with package.control.get_file(
                 "manifest", encoding="UTF-8") as manifest_file:
-            return json.load(manifest_file)
+            manifest = json.load(manifest_file)
+            keys = list(manifest)
+            for key in keys:
+                if key.startswith("_"):
+                    del manifest[key]
+            return manifest
 
 
 def run(argv):
@@ -60,10 +65,6 @@ def run(argv):
     except Exception as e:
         print(e, file=sys.stderr)
         return 1
-    keys = list(manifest)
-    for key in keys:
-        if key.startswith("_"):
-            del manifest[key]
     json.dump(
         manifest, sys.stdout, ensure_ascii=False, sort_keys=True, indent=4,
         separators=(",", ": "))

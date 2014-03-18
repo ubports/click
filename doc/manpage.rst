@@ -104,6 +104,8 @@ Options:
                                         newly-created chroots (default: a
                                         series appropriate for the
                                         framework).
+                                        This option is mainly for debugging;
+                                        use -f instead.
 
 Subcommands:
 

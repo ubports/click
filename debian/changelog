@@ -15,6 +15,8 @@ click (0.4.19) UNRELEASED; urgency=medium
     output (LP: #1293788).
   * Document -f and -s options to "click chroot" in click(1).
   * chroot: Fix code to make /finish.sh executable.
+  * chroot: Make /usr/sbin/policy-rc.d executable in the chroot, as
+    otherwise it has no effect.
 
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.

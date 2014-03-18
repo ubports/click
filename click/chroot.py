@@ -249,6 +249,7 @@ class ClickChroot:
             print("      *) exit 101;;", file=policy)
             print("    esac", file=policy)
             print("done", file=policy)
+        self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
         finish_script = "%s/finish.sh" % mount

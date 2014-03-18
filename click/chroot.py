@@ -280,6 +280,7 @@ builds won't prompt", file=finish)
 debconf-communicate", file=finish)
             print("echo set debconf/priority critical | \
 debconf-communicate", file=finish)
+            print("apt-get -y --force-yes dist-upgrade", file=finish)
             print("# Install basic build tool set to match buildd",
                   file=finish)
             print("apt-get -y --force-yes install %s"

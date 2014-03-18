@@ -17,6 +17,8 @@ click (0.4.19) UNRELEASED; urgency=medium
   * chroot: Fix code to make /finish.sh executable.
   * chroot: Make /usr/sbin/policy-rc.d executable in the chroot, as
     otherwise it has no effect.
+  * chroot: Run apt-get dist-upgrade on the chroot before trying to install
+    the basic build tool set.  Fixes chroot creation for saucy.
 
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.

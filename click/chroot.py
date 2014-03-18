@@ -157,7 +157,10 @@ class ClickChroot:
 
     @property
     def framework_base(self):
-        return framework_base[self.framework]
+        if self.framework in framework_base:
+            return framework_base[self.framework]
+        else:
+            return self.framework
 
     @property
     def full_name(self):

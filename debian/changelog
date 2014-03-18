@@ -13,6 +13,7 @@ click (0.4.18.4) UNRELEASED; urgency=medium
   * chroot: Allow creating 14.04 chroots.
   * Include _directory and _removable dynamic manifest keys in "click info"
     output (LP: #1293788).
+  * Document -f and -s options to "click chroot" in click(1).
 
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.

@@ -97,7 +97,13 @@ Manage chroot environments for cross-building Click packages.
 
 Options:
 
--a ARCH, --architecture ARCH    Set the target architecture.
+-a ARCH, --architecture ARCH            Set the target architecture.
+-f FRAMEWORK, --framework FRAMEWORK     Set the target framework (default:
+                                        ubuntu-sdk-13.10).
+-s SERIES, --series SERIES              Set the target series for
+                                        newly-created chroots (default: a
+                                        series appropriate for the
+                                        framework).
 
 Subcommands:
 

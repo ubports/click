@@ -176,6 +176,10 @@ class ClickChroot:
             return subprocess.call(
                 command, stdout=devnull, stderr=devnull) == 0
 
+    def _make_executable(self, path):
+        mode = stat.S_IMODE(os.stat(path).st_mode)
+        os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
     def create(self):
         if self.exists():
             raise ClickChrootException(
@@ -289,7 +293,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             print("# Clean up", file=finish)
             print("rm /finish.sh", file=finish)
             print("apt-get clean", file=finish)
-        os.chmod(finish_script, stat.S_IEXEC)
+        self._make_executable(finish_script)
         command = ["/finish.sh"]
         self.maint(*command)
 

@@ -14,6 +14,7 @@ click (0.4.19) UNRELEASED; urgency=medium
   * Include _directory and _removable dynamic manifest keys in "click info"
     output (LP: #1293788).
   * Document -f and -s options to "click chroot" in click(1).
+  * chroot: Fix code to make /finish.sh executable.
 
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.

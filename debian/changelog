@@ -17,6 +17,9 @@ click (0.4.18.4) UNRELEASED; urgency=medium
   [ Benjamin Zeller ]
   * Take pkexec env vars into account when creating a chroot.
 
+  [ Dimitri John Ledkov ]
+  * Add session management to click chroot.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 12 Mar 2014 14:23:34 +0000
 
 click (0.4.18.3) trusty; urgency=medium

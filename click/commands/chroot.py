@@ -55,18 +55,26 @@ def execute(parser, args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, args.framework).run(*program)
+    ClickChroot(args.architecture, args.framework, session=args.session).run(*program)
 
 
 def maint(parser, args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, args.framework).maint(*program)
+    ClickChroot(args.architecture, args.framework, session=args.session).maint(*program)
 
 
 def upgrade(parser, args):
     ClickChroot(args.architecture, args.framework).upgrade()
+
+
+def begin_session(parser, args):
+    ClickChroot(args.architecture, args.framework, session=args.session).begin_session()
+
+
+def end_session(parser, args):
+    ClickChroot(args.architecture, args.framework, session=args.session).end_session()
 
 
 def run(argv):
@@ -107,6 +115,10 @@ def run(argv):
         "run",
         help="run a program in the chroot")
     execute_parser.add_argument(
+        "-n", "--session-name",
+        dest='session',
+        help="persistent chroot session name to run a program in")
+    execute_parser.add_argument(
         "program", nargs=REMAINDER,
         help="program to run with arguments")
     execute_parser.set_defaults(func=execute)
@@ -114,9 +126,27 @@ def run(argv):
         "maint",
         help="run a maintenance command in the chroot")
     maint_parser.add_argument(
+        "-n", "--session-name",
+        dest='session',
+        help="persistent chroot session name to run a maintenance command in")
+    maint_parser.add_argument(
         "program", nargs=REMAINDER,
         help="program to run with arguments")
     maint_parser.set_defaults(func=maint)
+    begin_parser = subparsers.add_parser(
+        "begin-session",
+        help="begin a persistent chroot session")
+    begin_parser.add_argument(
+        "session",
+        help="new session name")
+    begin_parser.set_defaults(func=begin_session)
+    end_parser = subparsers.add_parser(
+        "end-session",
+        help="end a persistent chroot session")
+    end_parser.add_argument(
+        "session",
+        help="session name to end")
+    end_parser.set_defaults(func=end_session)
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()

@@ -417,6 +417,10 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
             os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
             with mkfile(os.path.join(
+                    self.temp_dir, "test-2", "1.0", ".click", "info",
+                    "test-2.manifest")) as f:
+                json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
+            with mkfile(os.path.join(
                     self.temp_dir, "test-2", "1.1", ".click", "info",
                     "test-2.manifest")) as f:
                 json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
@@ -425,7 +429,10 @@ class TestClickHookSystemLevel(TestClickHookBase):
             os.symlink(
                 os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
                 path_1)
-            path_2 = os.path.join(self.temp_dir, "test-2_test2-app_1.1.test")
+            path_2_1_0 = os.path.join(
+                self.temp_dir, "test-2_test2-app_1.0.test")
+            path_2_1_1 = os.path.join(
+                self.temp_dir, "test-2_test2-app_1.1.test")
             path_3 = os.path.join(self.temp_dir, "test-3_test3-app_1.0.test")
             os.symlink(
                 os.path.join(self.temp_dir, "test-3", "1.0", "target-3"),
@@ -436,10 +443,14 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self.assertEqual(
                 os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
                 os.readlink(path_1))
-            self.assertTrue(os.path.lexists(path_2))
+            self.assertTrue(os.path.lexists(path_2_1_0))
+            self.assertEqual(
+                os.path.join(self.temp_dir, "test-2", "1.0", "target-2"),
+                os.readlink(path_2_1_0))
+            self.assertTrue(os.path.lexists(path_2_1_1))
             self.assertEqual(
                 os.path.join(self.temp_dir, "test-2", "1.1", "target-2"),
-                os.readlink(path_2))
+                os.readlink(path_2_1_1))
             self.assertFalse(os.path.lexists(path_3))
 
 

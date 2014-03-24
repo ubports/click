@@ -849,7 +849,7 @@ public class Hook : Object {
 				}
 			}
 		} else {
-			foreach (var inst in db.get_packages ())
+			foreach (var inst in db.get_packages (true))
 				ret.add (new UnpackedPackage
 					(inst.package, inst.version));
 		}

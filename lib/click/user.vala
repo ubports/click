@@ -678,6 +678,28 @@ public class User : Object {
 	}
 
 	/**
+	 * get_manifest_as_string:
+	 * @package: A package name.
+	 *
+	 * Returns: A JSON string containing a package's serialised
+	 * manifest.
+	 *
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 */
+	public string
+	get_manifest_as_string (string package) throws Error
+	{
+		var manifest = get_manifest (package);
+		var node = new Json.Node (Json.NodeType.OBJECT);
+		node.set_object (manifest);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
+	}
+
+	/**
 	 * get_manifests:
 	 *
 	 * Returns: A #Json.Array containing manifests of all packages
@@ -692,6 +714,29 @@ public class User : Object {
 		foreach (var package in get_package_names ())
 			ret.add_object_element (get_manifest (package));
 		return ret;
+	}
+
+	/**
+	 * get_manifests_as_string:
+	 *
+	 * Returns: A JSON string containing a serialised array of manifests
+	 * of all packages registered for this user.  The manifest may
+	 * include additional dynamic keys (starting with an underscore)
+	 * corresponding to dynamic properties of installed packages.
+	 *
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 */
+	public string
+	get_manifests_as_string () throws Error
+	{
+		var manifests = get_manifests ();
+		var node = new Json.Node (Json.NodeType.ARRAY);
+		node.set_array (manifests);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
 	}
 
 	/**

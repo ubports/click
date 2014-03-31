@@ -213,6 +213,32 @@ public class SingleDB : Object {
 		return manifest;
 	}
 
+	/**
+	 * get_manifest_as_string:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A JSON string containing the serialised manifest of this
+	 * version of this package.  The manifest may include additional
+	 * dynamic keys (starting with an underscore) corresponding to
+	 * dynamic properties of installed packages.
+	 *
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 */
+	public string
+	get_manifest_as_string (string package, string version)
+	throws DatabaseError
+	{
+		var manifest = get_manifest (package, version);
+		var node = new Json.Node (Json.NodeType.OBJECT);
+		node.set_object (manifest);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
+	}
+
 	/*
 	 * app_running:
 	 * @package: A package name.
@@ -692,6 +718,30 @@ public class DB : Object {
 	}
 
 	/**
+	 * get_manifest_as_string:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A JSON string containing the serialised manifest of this
+	 * version of this package.
+	 *
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 */
+	public string
+	get_manifest_as_string (string package, string version)
+	throws DatabaseError
+	{
+		var manifest = get_manifest (package, version);
+		var node = new Json.Node (Json.NodeType.OBJECT);
+		node.set_object (manifest);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
+	}
+
+	/**
 	 * get_manifests:
 	 * @all_versions: If true, return manifests for all versions, not
 	 * just current ones.
@@ -716,6 +766,31 @@ public class DB : Object {
 			ret.add_object_element (obj);
 		}
 		return ret;
+	}
+
+	/**
+	 * get_manifests:
+	 * @all_versions: If true, return manifests for all versions, not
+	 * just current ones.
+	 *
+	 * Returns: A JSON string containing a serialised array of manifests
+	 * of all packages in this database.  The manifest may include
+	 * additional dynamic keys (starting with an underscore)
+	 * corresponding to dynamic properties of installed packages.
+	 *
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 */
+	public string
+	get_manifests_as_string (bool all_versions = false) throws Error
+	{
+		var manifests = get_manifests (all_versions);
+		var node = new Json.Node (Json.NodeType.ARRAY);
+		node.set_array (manifests);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
 	}
 
 	public void

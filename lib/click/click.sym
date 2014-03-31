@@ -4,7 +4,9 @@ click_db_ensure_ownership
 click_db_gc
 click_db_get
 click_db_get_manifest
+click_db_get_manifest_as_string
 click_db_get_manifests
+click_db_get_manifests_as_string
 click_db_get_overlay
 click_db_get_packages
 click_db_get_path
@@ -71,6 +73,7 @@ click_single_db_app_running
 click_single_db_ensure_ownership
 click_single_db_gc
 click_single_db_get_manifest
+click_single_db_get_manifest_as_string
 click_single_db_get_packages
 click_single_db_get_path
 click_single_db_get_root
@@ -84,7 +87,9 @@ click_user_error_quark
 click_user_get_is_gc_in_use
 click_user_get_is_pseudo_user
 click_user_get_manifest
+click_user_get_manifest_as_string
 click_user_get_manifests
+click_user_get_manifests_as_string
 click_user_get_overlay_db
 click_user_get_package_names
 click_user_get_path

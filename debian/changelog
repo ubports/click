@@ -1,3 +1,10 @@
+click (0.4.21) UNRELEASED; urgency=medium
+
+  * Add *_as_string variants of manifest methods, for clients that already
+    have their own JSON parsing libraries and don't want to use JSON-GLib.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 31 Mar 2014 11:49:20 +0100
+
 click (0.4.20) trusty; urgency=medium
 
   [ Colin Watson ]

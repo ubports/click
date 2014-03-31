@@ -769,7 +769,7 @@ public class DB : Object {
 	}
 
 	/**
-	 * get_manifests:
+	 * get_manifests_as_string:
 	 * @all_versions: If true, return manifests for all versions, not
 	 * just current ones.
 	 *

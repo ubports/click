@@ -37,44 +37,56 @@ def create(parser, args):
             "debootstrap not installed and configured; install click-dev and "
             "debootstrap")
     requires_root(parser)
-    ClickChroot(args.architecture, args.framework, series=args.series).create()
+    chroot = ClickChroot(args.architecture, args.framework, series=args.series)
+    return chroot.create()
 
 
 def install(parser, args):
     packages = args.packages
-    ClickChroot(args.architecture, args.framework).install(*packages)
+    chroot = ClickChroot(args.architecture, args.framework)
+    return chroot.install(*packages)
 
 
 def destroy(parser, args):
     requires_root(parser)
     # ask for confirmation?
-    ClickChroot(args.architecture, args.framework).destroy()
+    chroot = ClickChroot(args.architecture, args.framework)
+    return chroot.destroy()
 
 
 def execute(parser, args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, args.framework, session=args.session).run(*program)
+    chroot = ClickChroot(
+        args.architecture, args.framework, session=args.session)
+    return chroot.run(*program)
 
 
 def maint(parser, args):
     program = args.program
     if not program:
         program = ["/bin/bash"]
-    ClickChroot(args.architecture, args.framework, session=args.session).maint(*program)
+    chroot = ClickChroot(
+        args.architecture, args.framework, session=args.session)
+    return chroot.maint(*program)
 
 
 def upgrade(parser, args):
-    ClickChroot(args.architecture, args.framework).upgrade()
+    chroot = ClickChroot(args.architecture, args.framework)
+    return chroot.upgrade()
 
 
 def begin_session(parser, args):
-    ClickChroot(args.architecture, args.framework, session=args.session).begin_session()
+    chroot = ClickChroot(
+        args.architecture, args.framework, session=args.session)
+    return chroot.begin_session()
 
 
 def end_session(parser, args):
-    ClickChroot(args.architecture, args.framework, session=args.session).end_session()
+    chroot = ClickChroot(
+        args.architecture, args.framework, session=args.session)
+    return chroot.end_session()
 
 
 def run(argv):
@@ -156,5 +168,4 @@ def run(argv):
         parser.error(
             "schroot not installed and configured; install click-dev and "
             "schroot")
-    args.func(parser, args)
-    return 0
+    return args.func(parser, args)

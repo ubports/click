@@ -5,6 +5,8 @@ click (0.4.21) UNRELEASED; urgency=medium
   * Write to stderr and exit non-zero when chrooted commands fail, rather
     than propagating an exception which is then logged as a click crash
     (LP: #1298457).
+  * Make the get_manifests family of functions log errors about individual
+    manifests to stderr rather than crashing (LP: #1297519).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 31 Mar 2014 11:49:20 +0100
 

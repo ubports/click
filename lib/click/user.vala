@@ -708,11 +708,17 @@ public class User : Object {
 	 * dynamic properties of installed packages.
 	 */
 	public Json.Array
-	get_manifests () throws Error
+	get_manifests () throws Error /* API-compatibility */
 	{
 		var ret = new Json.Array ();
-		foreach (var package in get_package_names ())
-			ret.add_object_element (get_manifest (package));
+		foreach (var package in get_package_names ()) {
+			try {
+				ret.add_object_element
+					(get_manifest (package));
+			} catch (Error e) {
+				warning ("%s", e.message);
+			}
+		}
 		return ret;
 	}
 
@@ -729,7 +735,7 @@ public class User : Object {
 	 * them.
 	 */
 	public string
-	get_manifests_as_string () throws Error
+	get_manifests_as_string () throws Error /* API-compatibility */
 	{
 		var manifests = get_manifests ();
 		var node = new Json.Node (Json.NodeType.ARRAY);

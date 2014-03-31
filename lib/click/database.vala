@@ -756,7 +756,14 @@ public class DB : Object {
 	{
 		var ret = new Json.Array ();
 		foreach (var inst in get_packages (all_versions)) {
-			var obj = get_manifest (inst.package, inst.version);
+			Json.Object obj;
+			try {
+				obj = get_manifest
+					(inst.package, inst.version);
+			} catch (DatabaseError e) {
+				warning ("%s", e.message);
+				continue;
+			}
 			/* This should really be a boolean, but it was
 			 * mistakenly made an int when the "_removable" key
 			 * was first created.  We may change this in future.

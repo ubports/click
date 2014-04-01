@@ -7,6 +7,8 @@ click (0.4.21) UNRELEASED; urgency=medium
     (LP: #1298457).
   * Make the get_manifests family of functions log errors about individual
     manifests to stderr rather than crashing (LP: #1297519).
+  * Don't run user hooks until dbus has started; the content-hub hook needs
+    to modify gsettings.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 31 Mar 2014 11:49:20 +0100
 

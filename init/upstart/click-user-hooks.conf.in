@@ -1,7 +1,7 @@
 description "Run Click user-level hooks"
 author "Colin Watson <cjwatson@ubuntu.com>"
 
-start on starting xsession-init
+start on starting xsession-init and started dbus
 
 task
 

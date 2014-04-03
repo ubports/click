@@ -194,7 +194,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
             # KeyError, but they don't right now.
             self.assertEqual(
                 "/usr/share/test/.test",
-                hook.get_pattern("package", "0.1", "app-name"))
+                hook.get_pattern("package", "0.1", "app-name", user_name=None))
 
     def test_short_id_valid_with_single_version(self):
         with self.run_in_subprocess(
@@ -207,7 +207,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual(
                 "/usr/share/test/package_app-name.test",
-                hook.get_pattern("package", "0.1", "app-name"))
+                hook.get_pattern("package", "0.1", "app-name", user_name=None))
 
     def test_run_commands(self):
         with self.run_in_subprocess(
@@ -237,7 +237,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 os.path.join(self.temp_dir, "org.example.package", "1.0"))
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
-                "org.example.package", "1.0", "test-app", "foo/bar")
+                "org.example.package", "1.0", "test-app", "foo/bar",
+                user_name=None)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             target_path = os.path.join(
@@ -256,7 +257,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 os.path.join(self.temp_dir, "org.example.package", "1.0"))
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
-                "org.example.package", "1.0", "test-app", "foo")
+                "org.example.package", "1.0", "test-app", "foo",
+                user_name=None)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0")
             target_path = os.path.join(
@@ -292,7 +294,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
             os.symlink(overlay_target_path, symlink_path)
             hook = Click.Hook.open(db, "test")
             hook.install_package(
-                "org.example.package", "1.0", "test-app", "foo")
+                "org.example.package", "1.0", "test-app", "foo",
+                user_name=None)
             self.assertTrue(os.path.islink(symlink_path))
             self.assertEqual(underlay_target_path, os.readlink(symlink_path))
 
@@ -310,7 +313,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 os.path.join(self.temp_dir, "org.example.package", "1.0"))
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
-                "org.example.package", "1.0", "test-app", "foo/bar")
+                "org.example.package", "1.0", "test-app", "foo/bar",
+                user_name=None)
             target_path = os.path.join(
                 self.temp_dir, "org.example.package", "1.0", "foo", "bar")
             self.assertTrue(os.path.islink(symlink_path))
@@ -327,7 +331,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
             hook = Click.Hook.open(self.db, "test")
-            hook.remove_package("org.example.package", "1.0", "test-app")
+            hook.remove_package(
+                "org.example.package", "1.0", "test-app", user_name=None)
             self.assertFalse(os.path.exists(symlink_path))
 
     def test_install(self):
@@ -359,7 +364,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 }, f, ensure_ascii=False)
             os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
             hook = Click.Hook.open(self.db, "new")
-            hook.install()
+            hook.install(user_name=None)
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.new")
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
@@ -398,7 +403,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 os.path.join(self.temp_dir, "test-2", "2.0", "target-2"),
                 path_2)
             hook = Click.Hook.open(self.db, "old")
-            hook.remove()
+            hook.remove(user_name=None)
             self.assertFalse(os.path.exists(path_1))
             self.assertFalse(os.path.exists(path_2))
 
@@ -438,7 +443,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 os.path.join(self.temp_dir, "test-3", "1.0", "target-3"),
                 path_3)
             hook = Click.Hook.open(self.db, "test")
-            hook.sync()
+            hook.sync(user_name=None)
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
                 os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
@@ -720,7 +725,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "new")
-            hook.install()
+            hook.install(user_name=None)
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.new")
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
@@ -787,7 +792,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "old")
-            hook.remove()
+            hook.remove(user_name=None)
             self.assertFalse(os.path.exists(path_1))
             self.assertFalse(os.path.exists(path_2))
 
@@ -968,7 +973,8 @@ class TestPackageInstallHooks(TestClickHookBase):
                     package_dir, "1.1", ".click", "info",
                     "test.manifest")) as f:
                 json.dump({}, f)
-            Click.package_install_hooks(self.db, "test", "1.0", "1.1")
+            Click.package_install_hooks(
+                self.db, "test", "1.0", "1.1", user_name=None)
             self.assertFalse(os.path.lexists(unity_path))
             self.assertFalse(os.path.lexists(yelp_docs_path))
             self.assertFalse(os.path.lexists(yelp_other_path))
@@ -998,7 +1004,8 @@ class TestPackageInstallHooks(TestClickHookBase):
                     package_dir, "1.1", ".click", "info",
                     "test.manifest")) as f:
                 json.dump({"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}, f)
-            Click.package_install_hooks(self.db, "test", "1.0", "1.1")
+            Click.package_install_hooks(
+                self.db, "test", "1.0", "1.1", user_name=None)
             self.assertTrue(os.path.lexists(
                 os.path.join(self.temp_dir, "a", "test_app_1.1.a")))
             self.assertTrue(os.path.lexists(
@@ -1050,7 +1057,8 @@ class TestPackageInstallHooks(TestClickHookBase):
                     {"hooks": {
                         "app": {"a": "foo.a", "b": "foo.b", "c": "foo.c"}}
                     }, f)
-            Click.package_install_hooks(self.db, "test", "1.0", "1.1")
+            Click.package_install_hooks(
+                self.db, "test", "1.0", "1.1", user_name=None)
             self.assertFalse(os.path.lexists(a_path))
             self.assertTrue(os.path.lexists(b_irrelevant_path))
             self.assertFalse(os.path.lexists(b_1_path))
@@ -1101,7 +1109,7 @@ class TestPackageRemoveHooks(TestClickHookBase):
                     {"hooks": {
                         "app": {"yelp": "foo.txt", "unity": "foo.scope"}}
                     }, f)
-            Click.package_remove_hooks(self.db, "test", "1.0")
+            Click.package_remove_hooks(self.db, "test", "1.0", user_name=None)
             self.assertFalse(os.path.lexists(unity_path))
             self.assertFalse(os.path.lexists(yelp_docs_path))
             self.assertFalse(os.path.lexists(yelp_other_path))

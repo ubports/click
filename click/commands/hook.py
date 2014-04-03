@@ -54,21 +54,21 @@ def run(argv):
         if len(args) < 2:
             parser.error("need hook name")
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
         name = args[1]
         hook = Click.Hook.open(db, name)
-        getattr(hook, per_hook_subcommands[subcommand])()
+        getattr(hook, per_hook_subcommands[subcommand])(user_name=None)
     elif subcommand == "run-system":
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
         Click.run_system_hooks(db)
     elif subcommand == "run-user":
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
         Click.run_user_hooks(db, user_name=options.user)

@@ -427,7 +427,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.2",
             }, status[0])
             mock_package_install_hooks.assert_called_once_with(
-                db, "test-package", None, "1.0")
+                db, "test-package", None, "1.0", user_name=None)
 
     @skipUnless(
         os.path.exists(ClickInstaller(None)._preload_path()),
@@ -534,7 +534,7 @@ class TestClickInstaller(TestCase):
                 "Click-Version": "0.2",
             }, status[0])
             mock_package_install_hooks.assert_called_once_with(
-                db, "test-package", "1.0", "1.1")
+                db, "test-package", "1.0", "1.1", user_name=None)
 
     def _get_mode(self, path):
         return stat.S_IMODE(os.stat(path).st_mode)

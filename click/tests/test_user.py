@@ -85,7 +85,7 @@ class TestClickUser(TestCase):
             with open(os.path.join(self.temp_dir, "db.conf"), "w") as f:
                 print("[Click Database]", file=f)
                 print("root = %s" % db_root, file=f)
-            registry = Click.User.for_user()
+            registry = Click.User.for_user(None, None)
             self.assertEqual(
                 os.path.join(db_root, ".click", "users", "test-user"),
                 registry.get_overlay_db())
@@ -98,7 +98,7 @@ class TestClickUser(TestCase):
     def test_get_package_names_missing(self):
         db = Click.DB()
         db.add(os.path.join(self.temp_dir, "nonexistent"))
-        registry = Click.User.for_user(db)
+        registry = Click.User.for_user(db, None)
         self.assertEqual([], list(registry.get_package_names()))
 
     def test_get_package_names(self):

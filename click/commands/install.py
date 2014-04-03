@@ -47,7 +47,7 @@ def run(argv):
     if len(args) < 1:
         parser.error("need package file name")
     db = Click.DB()
-    db.read()
+    db.read(db_dir=None)
     if options.root is not None:
         db.add(options.root)
     package_path = args[0]

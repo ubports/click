@@ -661,6 +661,8 @@ public class User : Object {
 	 * @package: A package name.
 	 *
 	 * Returns: A #Json.Object containing a package's manifest.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Object
 	get_manifest (string package) throws Error
@@ -683,10 +685,11 @@ public class User : Object {
 	 *
 	 * Returns: A JSON string containing a package's serialised
 	 * manifest.
-	 *
 	 * This interface may be useful for clients with their own JSON
 	 * parsing tools that produce representations more convenient for
 	 * them.
+	 *
+	 * Since: 0.4.21
 	 */
 	public string
 	get_manifest_as_string (string package) throws Error
@@ -706,6 +709,8 @@ public class User : Object {
 	 * registered for this user.  The manifest may include additional
 	 * dynamic keys (starting with an underscore) corresponding to
 	 * dynamic properties of installed packages.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Array
 	get_manifests () throws Error /* API-compatibility */
@@ -729,10 +734,11 @@ public class User : Object {
 	 * of all packages registered for this user.  The manifest may
 	 * include additional dynamic keys (starting with an underscore)
 	 * corresponding to dynamic properties of installed packages.
-	 *
 	 * This interface may be useful for clients with their own JSON
 	 * parsing tools that produce representations more convenient for
 	 * them.
+	 *
+	 * Since: 0.4.21
 	 */
 	public string
 	get_manifests_as_string () throws Error /* API-compatibility */

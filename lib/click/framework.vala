@@ -45,6 +45,8 @@ public class Framework : Object {
 	 * @name: The name of the framework to open.
 	 *
 	 * Returns: (transfer full): A newly-allocated #Click.Framework.
+	 *
+	 * Since: 0.4.18
 	 */
 	public static Framework
 	open (string name) throws FrameworkError
@@ -66,6 +68,8 @@ public class Framework : Object {
 	 * @name: A framework name.
 	 *
 	 * Returns: True if a framework by this name exists, otherwise false.
+	 *
+	 * Since: 0.4.18
 	 */
 	public static bool
 	has_framework (string name)
@@ -80,6 +84,8 @@ public class Framework : Object {
 	 *
 	 * Returns: (element-type ClickFramework) (transfer full): A #List
 	 * of all #Click.Framework instances installed on the system.
+	 *
+	 * Since: 0.4.18
 	 */
 	public static List<Framework>
 	get_frameworks ()
@@ -108,6 +114,8 @@ public class Framework : Object {
 	 * get_fields:
 	 *
 	 * Returns: A list of field names defined by this framework.
+	 *
+	 * Since: 0.4.18
 	 */
 	public List<string>
 	get_fields ()

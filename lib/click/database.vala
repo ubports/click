@@ -107,6 +107,8 @@ public class SingleDB : Object {
 	 *
 	 * Returns: True if this version of this package is unpacked in this
 	 * database, otherwise false.
+	 *
+	 * Since: 0.4.18
 	 */
 	public bool
 	has_package_version (string package, string version)
@@ -177,6 +179,8 @@ public class SingleDB : Object {
 	 * of this package.  The manifest may include additional dynamic
 	 * keys (starting with an underscore) corresponding to dynamic
 	 * properties of installed packages.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
@@ -222,10 +226,11 @@ public class SingleDB : Object {
 	 * version of this package.  The manifest may include additional
 	 * dynamic keys (starting with an underscore) corresponding to
 	 * dynamic properties of installed packages.
-	 *
 	 * This interface may be useful for clients with their own JSON
 	 * parsing tools that produce representations more convenient for
 	 * them.
+	 *
+	 * Since: 0.4.21
 	 */
 	public string
 	get_manifest_as_string (string package, string version)
@@ -699,6 +704,8 @@ public class DB : Object {
 	 *
 	 * Returns: A #Json.Object containing the manifest of this version
 	 * of this package.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
@@ -724,10 +731,11 @@ public class DB : Object {
 	 *
 	 * Returns: A JSON string containing the serialised manifest of this
 	 * version of this package.
-	 *
 	 * This interface may be useful for clients with their own JSON
 	 * parsing tools that produce representations more convenient for
 	 * them.
+	 *
+	 * Since: 0.4.21
 	 */
 	public string
 	get_manifest_as_string (string package, string version)
@@ -750,6 +758,8 @@ public class DB : Object {
 	 * this database.  The manifest may include additional dynamic keys
 	 * (starting with an underscore) corresponding to dynamic properties
 	 * of installed packages.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Array
 	get_manifests (bool all_versions = false) throws Error
@@ -784,10 +794,11 @@ public class DB : Object {
 	 * of all packages in this database.  The manifest may include
 	 * additional dynamic keys (starting with an underscore)
 	 * corresponding to dynamic properties of installed packages.
-	 *
 	 * This interface may be useful for clients with their own JSON
 	 * parsing tools that produce representations more convenient for
 	 * them.
+	 *
+	 * Since: 0.4.21
 	 */
 	public string
 	get_manifests_as_string (bool all_versions = false) throws Error

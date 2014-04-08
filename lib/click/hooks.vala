@@ -49,7 +49,11 @@ public errordomain HooksError {
 	/**
 	 * Hook command failed.
 	 */
-	COMMAND_FAILED
+	COMMAND_FAILED,
+	/**
+	 * Some hooks were not run successfully.
+	 */
+	INCOMPLETE
 }
 
 private Json.Object
@@ -351,7 +355,7 @@ pattern_possible_expansion (string s, string format_string, Variant args)
 
 public class Hook : Object {
 	public DB db { private get; construct; }
-	public string name { private get; construct; }
+	public string name { internal get; construct; }
 
 	private Gee.Map<string, string> fields;
 
@@ -1105,10 +1109,22 @@ public void
 run_system_hooks (DB db) throws Error
 {
 	db.ensure_ownership ();
+	string[] failed = {};
 	foreach (var hook in Hook.open_all (db)) {
-		if (! hook.is_user_level)
-			hook.sync ();
+		if (! hook.is_user_level) {
+			try {
+				hook.sync ();
+			} catch (HooksError e) {
+				warning ("System-level hook %s failed: %s",
+					 hook.name, e.message);
+				failed += hook.name;
+			}
+		}
 	}
+	if (failed.length != 0)
+		throw new HooksError.INCOMPLETE
+			("Some system-level hooks failed: %s",
+			 string.joinv (", ", failed));
 }
 
 /**
@@ -1128,10 +1144,22 @@ run_user_hooks (DB db, string? user_name = null) throws Error
 {
 	if (user_name == null)
 		user_name = Environment.get_user_name ();
+	string[] failed = {};
 	foreach (var hook in Hook.open_all (db)) {
-		if (hook.is_user_level)
-			hook.sync (user_name);
+		if (hook.is_user_level) {
+			try {
+				hook.sync (user_name);
+			} catch (HooksError e) {
+				warning ("User-level hook %s failed: %s",
+					 hook.name, e.message);
+				failed += hook.name;
+			}
+		}
 	}
+	if (failed.length != 0)
+		throw new HooksError.INCOMPLETE
+			("Some user-level hooks failed: %s",
+			 string.joinv (", ", failed));
 }
 
 }

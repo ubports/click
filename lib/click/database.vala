@@ -107,6 +107,8 @@ public class SingleDB : Object {
 	 *
 	 * Returns: True if this version of this package is unpacked in this
 	 * database, otherwise false.
+	 *
+	 * Since: 0.4.18
 	 */
 	public bool
 	has_package_version (string package, string version)
@@ -177,6 +179,8 @@ public class SingleDB : Object {
 	 * of this package.  The manifest may include additional dynamic
 	 * keys (starting with an underscore) corresponding to dynamic
 	 * properties of installed packages.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
@@ -211,6 +215,33 @@ public class SingleDB : Object {
 		manifest.set_string_member ("_directory", path);
 
 		return manifest;
+	}
+
+	/**
+	 * get_manifest_as_string:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A JSON string containing the serialised manifest of this
+	 * version of this package.  The manifest may include additional
+	 * dynamic keys (starting with an underscore) corresponding to
+	 * dynamic properties of installed packages.
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 *
+	 * Since: 0.4.21
+	 */
+	public string
+	get_manifest_as_string (string package, string version)
+	throws DatabaseError
+	{
+		var manifest = get_manifest (package, version);
+		var node = new Json.Node (Json.NodeType.OBJECT);
+		node.set_object (manifest);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
 	}
 
 	/*
@@ -673,6 +704,8 @@ public class DB : Object {
 	 *
 	 * Returns: A #Json.Object containing the manifest of this version
 	 * of this package.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Object
 	get_manifest (string package, string version) throws DatabaseError
@@ -692,6 +725,31 @@ public class DB : Object {
 	}
 
 	/**
+	 * get_manifest_as_string:
+	 * @package: A package name.
+	 * @version: A version string.
+	 *
+	 * Returns: A JSON string containing the serialised manifest of this
+	 * version of this package.
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 *
+	 * Since: 0.4.21
+	 */
+	public string
+	get_manifest_as_string (string package, string version)
+	throws DatabaseError
+	{
+		var manifest = get_manifest (package, version);
+		var node = new Json.Node (Json.NodeType.OBJECT);
+		node.set_object (manifest);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
+	}
+
+	/**
 	 * get_manifests:
 	 * @all_versions: If true, return manifests for all versions, not
 	 * just current ones.
@@ -700,13 +758,22 @@ public class DB : Object {
 	 * this database.  The manifest may include additional dynamic keys
 	 * (starting with an underscore) corresponding to dynamic properties
 	 * of installed packages.
+	 *
+	 * Since: 0.4.18
 	 */
 	public Json.Array
 	get_manifests (bool all_versions = false) throws Error
 	{
 		var ret = new Json.Array ();
 		foreach (var inst in get_packages (all_versions)) {
-			var obj = get_manifest (inst.package, inst.version);
+			Json.Object obj;
+			try {
+				obj = get_manifest
+					(inst.package, inst.version);
+			} catch (DatabaseError e) {
+				warning ("%s", e.message);
+				continue;
+			}
 			/* This should really be a boolean, but it was
 			 * mistakenly made an int when the "_removable" key
 			 * was first created.  We may change this in future.
@@ -716,6 +783,32 @@ public class DB : Object {
 			ret.add_object_element (obj);
 		}
 		return ret;
+	}
+
+	/**
+	 * get_manifests_as_string:
+	 * @all_versions: If true, return manifests for all versions, not
+	 * just current ones.
+	 *
+	 * Returns: A JSON string containing a serialised array of manifests
+	 * of all packages in this database.  The manifest may include
+	 * additional dynamic keys (starting with an underscore)
+	 * corresponding to dynamic properties of installed packages.
+	 * This interface may be useful for clients with their own JSON
+	 * parsing tools that produce representations more convenient for
+	 * them.
+	 *
+	 * Since: 0.4.21
+	 */
+	public string
+	get_manifests_as_string (bool all_versions = false) throws Error
+	{
+		var manifests = get_manifests (all_versions);
+		var node = new Json.Node (Json.NodeType.ARRAY);
+		node.set_array (manifests);
+		var generator = new Json.Generator ();
+		generator.set_root (node);
+		return generator.to_data (null);
 	}
 
 	public void

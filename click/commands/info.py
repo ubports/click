@@ -31,7 +31,7 @@ from click.json_helpers import json_object_to_python
 def get_manifest(options, arg):
     if "/" not in arg:
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
         registry = Click.User.for_user(db, name=options.user)

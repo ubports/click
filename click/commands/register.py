@@ -38,7 +38,7 @@ def run(argv):
     if len(args) < 2:
         parser.error("need version")
     db = Click.DB()
-    db.read()
+    db.read(db_dir=None)
     if options.root is not None:
         db.add(options.root)
     package = args[0]

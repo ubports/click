@@ -18,9 +18,10 @@
 from __future__ import print_function
 
 from optparse import OptionParser
+import sys
 from textwrap import dedent
 
-from gi.repository import Click
+from gi.repository import Click, GLib
 
 
 per_hook_subcommands = {
@@ -54,24 +55,38 @@ def run(argv):
         if len(args) < 2:
             parser.error("need hook name")
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
         name = args[1]
         hook = Click.Hook.open(db, name)
-        getattr(hook, per_hook_subcommands[subcommand])()
+        getattr(hook, per_hook_subcommands[subcommand])(user_name=None)
     elif subcommand == "run-system":
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
-        Click.run_system_hooks(db)
+        try:
+            Click.run_system_hooks(db)
+        except GLib.GError as e:
+            if e.domain == "click_hooks_error-quark":
+                print(e.message, file=sys.stderr)
+                return 1
+            else:
+                raise
     elif subcommand == "run-user":
         db = Click.DB()
-        db.read()
+        db.read(db_dir=None)
         if options.root is not None:
             db.add(options.root)
-        Click.run_user_hooks(db, user_name=options.user)
+        try:
+            Click.run_user_hooks(db, user_name=options.user)
+        except GLib.GError as e:
+            if e.domain == "click_hooks_error-quark":
+                print(e.message, file=sys.stderr)
+                return 1
+            else:
+                raise
     else:
         parser.error(
             "unknown subcommand '%s' (known: install, remove, run-system,"

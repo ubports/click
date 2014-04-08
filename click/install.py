@@ -384,7 +384,8 @@ class ClickInstaller:
         else:
             old_version = None
         Click.package_install_hooks(
-            self.db, package_name, old_version, package_version)
+            self.db, package_name, old_version, package_version,
+            user_name=None)
 
         new_path = os.path.join(package_dir, "current.new")
         Click.symlink_force(package_version, new_path)

@@ -85,7 +85,7 @@ class TestClickUser(TestCase):
             with open(os.path.join(self.temp_dir, "db.conf"), "w") as f:
                 print("[Click Database]", file=f)
                 print("root = %s" % db_root, file=f)
-            registry = Click.User.for_user()
+            registry = Click.User.for_user(None, None)
             self.assertEqual(
                 os.path.join(db_root, ".click", "users", "test-user"),
                 registry.get_overlay_db())
@@ -98,7 +98,7 @@ class TestClickUser(TestCase):
     def test_get_package_names_missing(self):
         db = Click.DB()
         db.add(os.path.join(self.temp_dir, "nonexistent"))
-        registry = Click.User.for_user(db)
+        registry = Click.User.for_user(db, None)
         self.assertEqual([], list(registry.get_package_names()))
 
     def test_get_package_names(self):
@@ -315,27 +315,41 @@ class TestClickUser(TestCase):
         registry.set_version("a", "1.0")
         self.assertEqual(
             manifest_obj, json_object_to_python(registry.get_manifest("a")))
+        self.assertEqual(
+            manifest_obj, json.loads(registry.get_manifest_as_string("a")))
 
     def test_get_manifest_multiple_root(self):
         user_dbs, registry = self._setUpMultiDB()
-        self.assertEqual({
+        expected_a = {
             "name": "a",
             "version": "1.1",
             "_directory": os.path.join(user_dbs[1], "a"),
             "_removable": 1,
-        }, json_object_to_python(registry.get_manifest("a")))
-        self.assertEqual({
+        }
+        self.assertEqual(
+            expected_a, json_object_to_python(registry.get_manifest("a")))
+        self.assertEqual(
+            expected_a, json.loads(registry.get_manifest_as_string("a")))
+        expected_b = {
             "name": "b",
             "version": "2.0",
             "_directory": os.path.join(user_dbs[0], "b"),
             "_removable": 1,
-        }, json_object_to_python(registry.get_manifest("b")))
-        self.assertEqual({
+        }
+        self.assertEqual(
+            expected_b, json_object_to_python(registry.get_manifest("b")))
+        self.assertEqual(
+            expected_b, json.loads(registry.get_manifest_as_string("b")))
+        expected_c = {
             "name": "c",
             "version": "0.1",
             "_directory": os.path.join(user_dbs[1], "c"),
             "_removable": 1,
-        }, json_object_to_python(registry.get_manifest("c")))
+        }
+        self.assertEqual(
+            expected_c, json_object_to_python(registry.get_manifest("c")))
+        self.assertEqual(
+            expected_c, json.loads(registry.get_manifest_as_string("c")))
         self.assertRaisesUserError(
             Click.UserError.NO_SUCH_PACKAGE, registry.get_path, "d")
 
@@ -362,6 +376,9 @@ class TestClickUser(TestCase):
         self.assertEqual(
             [a_manifest_obj, b_manifest_obj],
             json_array_to_python(registry.get_manifests()))
+        self.assertEqual(
+            [a_manifest_obj, b_manifest_obj],
+            json.loads(registry.get_manifests_as_string()))
 
     def test_get_manifests_multiple_root(self):
         user_dbs, registry = self._setUpMultiDB()
@@ -386,12 +403,18 @@ class TestClickUser(TestCase):
         self.assertEqual(
             [a_manifest_obj, c_manifest_obj, b_manifest_obj],
             json_array_to_python(registry.get_manifests()))
+        self.assertEqual(
+            [a_manifest_obj, c_manifest_obj, b_manifest_obj],
+            json.loads(registry.get_manifests_as_string()))
         registry.remove("b")
         self.assertEqual(
             "@hidden", os.readlink(os.path.join(user_dbs[1], "b")))
         self.assertEqual(
             [a_manifest_obj, c_manifest_obj],
             json_array_to_python(registry.get_manifests()))
+        self.assertEqual(
+            [a_manifest_obj, c_manifest_obj],
+            json.loads(registry.get_manifests_as_string()))
 
     def test_is_removable(self):
         registry = Click.User.for_user(self.db, "user")

@@ -44,7 +44,7 @@ def run(argv):
     if options.user is None and "SUDO_USER" in os.environ:
         options.user = os.environ["SUDO_USER"]
     db = Click.DB()
-    db.read()
+    db.read(db_dir=None)
     if options.root is not None:
         db.add(options.root)
     package = args[0]

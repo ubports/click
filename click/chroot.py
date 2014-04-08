@@ -27,9 +27,11 @@ __all__ = [
 
 import os
 import pwd
+import re
 import shutil
 import stat
 import subprocess
+import sys
 
 
 framework_base = {
@@ -86,6 +88,19 @@ extra_packages = {
 
 
 primary_arches = ["amd64", "i386"]
+
+
+non_meta_re = re.compile(r'^[a-zA-Z0-9+,./:=@_-]+$')
+
+
+def shell_escape(command):
+    escaped = []
+    for arg in command:
+        if non_meta_re.match(arg):
+            escaped.append(arg)
+        else:
+            escaped.append("'%s'" % arg.replace("'", "'\\''"))
+    return " ".join(escaped)
 
 
 class ClickChrootException(Exception):
@@ -297,7 +312,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             print("apt-get clean", file=finish)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
-        self.maint(*command)
+        return self.maint(*command)
 
     def run(self, *args):
         if not self.exists():
@@ -312,7 +327,13 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         for key, value in self.dpkg_architecture.items():
             command.append("%s=%s" % (key, value))
         command.extend(args)
-        subprocess.check_call(command)
+        ret = subprocess.call(command)
+        if ret == 0:
+            return 0
+        else:
+            print("Command returned %d: %s" % (ret, shell_escape(command)),
+                  file=sys.stderr)
+            return ret
 
     def maint(self, *args):
         command = [ "schroot", "-u", "root", "-c" ]
@@ -322,34 +343,48 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             command.append("source:%s" % self.full_name)
         command.append("--")
         command.extend(args)
-        subprocess.check_call(command)
+        ret = subprocess.call(command)
+        if ret == 0:
+            return 0
+        else:
+            print("Command returned %d: %s" % (ret, shell_escape(command)),
+                  file=sys.stderr)
+            return ret
 
     def install(self, *pkgs):
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        self.update()
+        ret = self.update()
+        if ret != 0:
+            return ret
         command = ["apt-get", "install", "--yes"]
         command.extend(pkgs)
-        self.maint(*command)
-        self.clean()
+        ret = self.maint(*command)
+        if ret != 0:
+            return ret
+        return self.clean()
 
     def clean(self):
         command = ["apt-get", "clean"]
-        self.maint(*command)
+        return self.maint(*command)
 
     def update(self):
         command = ["apt-get", "update", "--yes"]
-        self.maint(*command)
+        return self.maint(*command)
 
     def upgrade(self):
         if not self.exists():
             raise ClickChrootException(
                 "Chroot %s does not exist" % self.full_name)
-        self.update()
+        ret = self.update()
+        if ret != 0:
+            return ret
         command = ["apt-get", "dist-upgrade", "--yes"]
-        self.maint(*command)
-        self.clean()
+        ret = self.maint(*command)
+        if ret != 0:
+            return ret
+        return self.clean()
 
     def destroy(self):
         if not self.exists():
@@ -359,6 +394,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         os.remove(chroot_config)
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
         shutil.rmtree(mount)
+        return 0
 
     def begin_session(self):
         if not self.exists():
@@ -367,6 +403,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         command = ["schroot", "-c", self.full_name, "--begin-session",
                    "--session-name", self.full_session_name]
         subprocess.check_call(command)
+        return 0
 
     def end_session(self):
         if not self.exists():
@@ -374,3 +411,4 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_session_name, "--end-session"]
         subprocess.check_call(command)
+        return 0

@@ -28,7 +28,7 @@ from click.json_helpers import json_array_to_python
 
 def list_packages(options):
     db = Click.DB()
-    db.read()
+    db.read(db_dir=None)
     if options.root is not None:
         db.add(options.root)
     if options.all:

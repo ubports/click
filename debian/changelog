@@ -1,3 +1,28 @@
+click (0.4.21.1) UNRELEASED; urgency=medium
+
+  * When a hook command fails, include the command in the error message.
+  * Don't allow failure of a single hook to prevent other hooks being run.
+  * Log hook failures to stderr and exit non-zero, rather than propagating
+    an exception which is then logged as a click crash.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Apr 2014 10:14:43 +0100
+
+click (0.4.21) trusty; urgency=medium
+
+  * Add *_as_string variants of manifest methods, for clients that already
+    have their own JSON parsing libraries and don't want to use JSON-GLib.
+  * Write to stderr and exit non-zero when chrooted commands fail, rather
+    than propagating an exception which is then logged as a click crash
+    (LP: #1298457).
+  * Make the get_manifests family of functions log errors about individual
+    manifests to stderr rather than crashing (LP: #1297519).
+  * Don't run user hooks until dbus has started; the content-hub hook needs
+    to modify gsettings.
+  * Don't rely on PyGObject supporting default None arguments; this was only
+    added in 3.11.1.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Apr 2014 10:13:37 +0100
+
 click (0.4.20) trusty; urgency=medium
 
   [ Colin Watson ]

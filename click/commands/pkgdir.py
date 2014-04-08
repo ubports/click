@@ -40,7 +40,7 @@ def run(argv):
             print(Click.find_package_directory(args[0]))
         else:
             db = Click.DB()
-            db.read()
+            db.read(db_dir=None)
             if options.root is not None:
                 db.add(options.root)
             package_name = args[0]

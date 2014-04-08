@@ -117,6 +117,12 @@ class TestClickSingleDB(TestCase):
         self.assertRaisesDatabaseError(
             Click.DatabaseError.DOES_NOT_EXIST,
             self.db.get_manifest, "a", "1.1")
+        self.assertEqual(
+            manifest_obj,
+            json.loads(self.db.get_manifest_as_string("a", "1.0")))
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST,
+            self.db.get_manifest_as_string, "a", "1.1")
 
     def test_app_running(self):
         with self.run_in_subprocess("g_spawn_sync") as (enter, preloads):
@@ -493,6 +499,9 @@ class TestClickDB(TestCase):
         db.read(db_dir=self.temp_dir)
         self.assertRaisesDatabaseError(
             Click.DatabaseError.DOES_NOT_EXIST, db.get_manifest, "pkg", "1.0")
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST,
+            db.get_manifest_as_string, "pkg", "1.0")
         a_manifest_path = os.path.join(
             self.temp_dir, "a", "pkg", "1.0", ".click", "info", "pkg.manifest")
         a_manifest_obj = {"name": "pkg", "version": "1.0"}
@@ -503,8 +512,14 @@ class TestClickDB(TestCase):
         self.assertEqual(
             a_manifest_obj,
             json_object_to_python(db.get_manifest("pkg", "1.0")))
+        self.assertEqual(
+            a_manifest_obj,
+            json.loads(db.get_manifest_as_string("pkg", "1.0")))
         self.assertRaisesDatabaseError(
             Click.DatabaseError.DOES_NOT_EXIST, db.get_manifest, "pkg", "1.1")
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.DOES_NOT_EXIST,
+            db.get_manifest_as_string, "pkg", "1.1")
         b_manifest_path = os.path.join(
             self.temp_dir, "b", "pkg", "1.1", ".click", "info", "pkg.manifest")
         b_manifest_obj = {"name": "pkg", "version": "1.1"}
@@ -515,6 +530,9 @@ class TestClickDB(TestCase):
         self.assertEqual(
             b_manifest_obj,
             json_object_to_python(db.get_manifest("pkg", "1.1")))
+        self.assertEqual(
+            b_manifest_obj,
+            json.loads(db.get_manifest_as_string("pkg", "1.1")))
 
     def test_manifests_current(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -527,6 +545,8 @@ class TestClickDB(TestCase):
         db.read(db_dir=self.temp_dir)
         self.assertEqual(
             [], json_array_to_python(db.get_manifests(all_versions=False)))
+        self.assertEqual(
+            [], json.loads(db.get_manifests_as_string(all_versions=False)))
         a_pkg1_manifest_path = os.path.join(
             self.temp_dir, "a", "pkg1", "1.0",
             ".click", "info", "pkg1.manifest")
@@ -557,6 +577,9 @@ class TestClickDB(TestCase):
         self.assertEqual(
             [b_pkg1_manifest_obj, b_pkg2_manifest_obj],
             json_array_to_python(db.get_manifests(all_versions=False)))
+        self.assertEqual(
+            [b_pkg1_manifest_obj, b_pkg2_manifest_obj],
+            json.loads(db.get_manifests_as_string(all_versions=False)))
 
     def test_manifests_all(self):
         with open(os.path.join(self.temp_dir, "a.conf"), "w") as a:
@@ -569,6 +592,8 @@ class TestClickDB(TestCase):
         db.read(db_dir=self.temp_dir)
         self.assertEqual(
             [], json_array_to_python(db.get_manifests(all_versions=True)))
+        self.assertEqual(
+            [], json.loads(db.get_manifests_as_string(all_versions=True)))
         a_pkg1_manifest_path = os.path.join(
             self.temp_dir, "a", "pkg1", "1.0",
             ".click", "info", "pkg1.manifest")
@@ -602,3 +627,6 @@ class TestClickDB(TestCase):
         self.assertEqual(
             [b_pkg1_manifest_obj, b_pkg2_manifest_obj, a_pkg1_manifest_obj],
             json_array_to_python(db.get_manifests(all_versions=True)))
+        self.assertEqual(
+            [b_pkg1_manifest_obj, b_pkg2_manifest_obj, a_pkg1_manifest_obj],
+            json.loads(db.get_manifests_as_string(all_versions=True)))

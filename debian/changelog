@@ -1,4 +1,4 @@
-click (0.4.21) UNRELEASED; urgency=medium
+click (0.4.21) trusty; urgency=medium
 
   * Add *_as_string variants of manifest methods, for clients that already
     have their own JSON parsing libraries and don't want to use JSON-GLib.
@@ -12,7 +12,7 @@ click (0.4.21) UNRELEASED; urgency=medium
   * Don't rely on PyGObject supporting default None arguments; this was only
     added in 3.11.1.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 31 Mar 2014 11:49:20 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Apr 2014 10:13:37 +0100
 
 click (0.4.20) trusty; urgency=medium
 

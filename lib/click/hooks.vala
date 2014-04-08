@@ -45,7 +45,11 @@ public errordomain HooksError {
 	/**
 	 * Not yet implemented.
 	 */
-	NYI
+	NYI,
+	/**
+	 * Hook command failed.
+	 */
+	COMMAND_FAILED
 }
 
 private Json.Object
@@ -664,7 +668,13 @@ public class Hook : Object {
 			Process.spawn_sync (null, argv, null,
 					    SpawnFlags.SEARCH_PATH, drop,
 					    null, null, out exit_status);
-			Process.check_exit_status (exit_status);
+			try {
+				Process.check_exit_status (exit_status);
+			} catch (Error e) {
+				throw new HooksError.COMMAND_FAILED
+					("Hook command '%s' failed: %s",
+					 fields["exec"], e.message);
+			}
 		}
 
 		if (fields["trigger"] == "yes")

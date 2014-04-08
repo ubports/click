@@ -1,3 +1,9 @@
+click (0.4.21.1) UNRELEASED; urgency=medium
+
+  * When a hook command fails, include the command in the error message.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Apr 2014 10:14:43 +0100
+
 click (0.4.21) trusty; urgency=medium
 
   * Add *_as_string variants of manifest methods, for clients that already

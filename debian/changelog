@@ -1,11 +1,12 @@
-click (0.4.21.1) UNRELEASED; urgency=medium
+click (0.4.21.1) trusty; urgency=medium
 
+  [ Colin Watson ]
   * When a hook command fails, include the command in the error message.
   * Don't allow failure of a single hook to prevent other hooks being run.
   * Log hook failures to stderr and exit non-zero, rather than propagating
     an exception which is then logged as a click crash.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Apr 2014 10:14:43 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 08 Apr 2014 09:41:55 +0000
 
 click (0.4.21) trusty; urgency=medium
 

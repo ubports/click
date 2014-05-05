@@ -80,6 +80,15 @@ against all supported Python versions.  The ``./run-tests`` scripts just does
 an additional check to make sure you've got the preload shared library
 built.
 
+To run a specific testcase, use the standard python unittest syntax like::
+
+  $ python3 -m unittest click.tests.test_install
+
+or::
+
+  $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
+
+
 
 Documentation
 =============

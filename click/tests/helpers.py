@@ -108,10 +108,12 @@ class TestCase(gimock.GIMockTestCase):
         self.assertRaisesGError(
             "click_user_error-quark", code, callableObj, *args, **kwargs)
 
-    def _create_mock_framework_dir(self):
-        frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+    def _create_mock_framework_dir(self, frameworks_dir=None):
+        if frameworks_dir is None:
+            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
         Click.ensuredir(frameworks_dir)
         os.environ["CLICK_FRAMEWORKS_DIR"] = frameworks_dir
+        return frameworks_dir
 
     def _create_mock_framework_file(self, framework_name):
         self.use_temp_dir()

@@ -49,6 +49,11 @@ from click.paths import preload_path
 from click.preinst import static_preinst_matches
 from click.versions import spec_version
 
+from click.framework import (
+    validate_framework,
+    ClickFrameworkInvalid,
+)
+
 
 try:
     _DebFile.close
@@ -189,34 +194,9 @@ class ClickInstaller:
                 raise ClickInstallerAuditError(
                     'No "framework" entry in manifest')
             try:
-                parsed_framework = apt_pkg.parse_depends(framework)
-            except ValueError:
-                raise ClickInstallerAuditError(
-                    'Could not parse framework "%s"' % framework)
-            for or_dep in parsed_framework:
-                if len(or_dep) > 1:
-                    raise ClickInstallerAuditError(
-                        'Alternative dependencies in framework "%s" not yet '
-                        'allowed' % framework)
-                if or_dep[0][1] or or_dep[0][2]:
-                    raise ClickInstallerAuditError(
-                        'Version relationship in framework "%s" not yet '
-                        'allowed' % framework)
-            if not self.force_missing_framework:
-                missing_frameworks = []
-                for or_dep in parsed_framework:
-                    if not Click.Framework.has_framework(or_dep[0][0]):
-                        missing_frameworks.append(or_dep[0][0])
-                if len(missing_frameworks) > 1:
-                    raise ClickInstallerAuditError(
-                        'Frameworks %s not present on system (use '
-                        '--force-missing-framework option to override)' %
-                        ", ".join('"%s"' % f for f in missing_frameworks))
-                elif missing_frameworks:
-                    raise ClickInstallerAuditError(
-                        'Framework "%s" not present on system (use '
-                        '--force-missing-framework option to override)' %
-                        missing_frameworks[0])
+                validate_framework(framework, self.force_missing_framework)
+            except ClickFrameworkInvalid as e:
+                raise ClickInstallerAuditError(str(e))
 
             if check_arch:
                 architecture = manifest.get("architecture", "all")

@@ -2,6 +2,7 @@ click (0.4.22) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Update documentation for building the project.
+  * Add support for multiple frameworks.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 08 May 2014 13:47:55 +0100
 

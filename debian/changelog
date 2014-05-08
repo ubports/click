@@ -1,3 +1,10 @@
+click (0.4.22) UNRELEASED; urgency=medium
+
+  [ Michael Vogt ]
+  * Update documentation for building the project.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 08 May 2014 13:47:55 +0100
+
 click (0.4.21.1) trusty; urgency=medium
 
   [ Colin Watson ]

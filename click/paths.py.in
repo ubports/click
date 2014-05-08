@@ -16,3 +16,4 @@
 """Click paths."""
 
 preload_path = "@pkglibdir@/libclickpreload.so"
+frameworks_dir = "@pkgdatadir@/frameworks"

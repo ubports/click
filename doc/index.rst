@@ -50,9 +50,9 @@ Dependencies
 
 For Ubuntu 14.04, make sure you have the *python2.7* and *python3.4*
 packages installed.  Unless you upgraded from a previous version of Ubuntu
-and haven't removed it yet, you won't have Python3.3 and Python 3.2 available.  
-Build it from source if necessary, install them say into
-``/usr/local``, and make sure it is on your ``$PATH``.
+and haven't removed it yet, you won't have Python 3.3 and Python 3.2
+available.  Build them from source if necessary, install them say into
+``/usr/local``, and make sure they are on your ``$PATH``.
 
 You'll need *tox* (Ubuntu package *python-tox*) installed in order to run the
 full test suite.  You should be able to just say::

@@ -107,6 +107,7 @@ class TestClickHookBase(TestCase):
             hooks_dir = self.temp_dir
         preloads["click_get_hooks_dir"].side_effect = (
             lambda: self.make_string(hooks_dir))
+        self.hooks_dir = hooks_dir
 
     def g_spawn_sync_side_effect(self, status_map, working_directory, argv,
                                  envp, flags, child_setup, user_data,
@@ -1117,41 +1118,65 @@ class TestPackageRemoveHooks(TestClickHookBase):
 
 class TestPackageHooksValidateFramework(TestClickHookBase):
 
+    def _make_hook_file(self, hookname="test"):
+        hook_file = os.path.join(self.hooks_dir, "%s.hook" % hookname)
+        with mkfile(hook_file) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+
+    def _make_manifest(self, package="test-1",version="1.0",
+                       framework="ubuntu-sdk-13.10",
+                       hooks=None):
+        if hooks is None:
+            hooks = {"test1-app": {"test": "target-1"}}
+        with mkfile_utf8(os.path.join(
+                self.temp_dir, package, version, ".click", "info",
+                "%s.manifest" % package)) as f:
+            json.dump({
+                "framework": framework,
+                "hooks": hooks,
+            }, f)
+        os.symlink("1.0", os.path.join(self.temp_dir, package, "current"))
+        user_db = Click.User.for_user(self.db, "test-user")
+        user_db.set_version(package, version)
+
     def _setup_test_env(self, preloads):
         preloads["click_get_user_home"].return_value = "/home/test-user"
         self._setup_hooks_dir(
             preloads, os.path.join(self.temp_dir, "hooks"))
-        with mkfile(
-                os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
-            print("User-Level: yes", file=f)
-            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
-        user_db = Click.User.for_user(self.db, "test-user")
-        with mkfile_utf8(os.path.join(
-                self.temp_dir, "test-1", "1.0", ".click", "info",
-                "test-1.manifest")) as f:
-            json.dump({
-                "framework": "ubuntu-sdk-13.10, ubuntu-sdk-13.10-html",
-                "hooks": {"test1-app": {"test": "target-1"}}}, f)
-        os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
-        user_db.set_version("test-1", "1.0")
-        self.symlink_path = os.path.join(
+        self._make_hook_file()
+        self.hook_symlink_path = os.path.join(
             self.temp_dir, "test-1_test1-app_1.0.test")
-        self.assertTrue(os.path.lexists(self.symlink_path))
 
     def test_links_are_kept_on_validate_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home", 
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(
+                preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            self._make_manifest(framework="ubuntu-sdk-13.10")
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name="test-user")
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+
+    def test_links_are_kept_multiple_frameworks(self):
         with self.run_in_subprocess(
                 "click_get_hooks_dir", "click_get_user_home",
                 "click_get_frameworks_dir",
                 ) as (enter, preloads):
             enter()
             self._setup_frameworks(
-                preloads,
-                frameworks=["ubuntu-sdk-13.10", "ubuntu-sdk-13.10-html"])
+                preloads, frameworks=["ubuntu-sdk-14.04", "ubuntu-sdk-13.10"])
             self._setup_test_env(preloads)
+            self._make_manifest(framework="ubuntu-sdk-13.10")
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
             # run the hooks
             Click.run_user_hooks(self.db, user_name="test-user")
-            # ensure its still there
-            self.assertTrue(os.path.lexists(self.symlink_path))
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
 
     def test_links_are_removed_on_missng_framework(self):
         with self.run_in_subprocess(
@@ -1161,7 +1186,24 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
             enter()
             self._setup_frameworks(preloads, frameworks=["missing"])
             self._setup_test_env(preloads)
+            self._make_manifest(framework="ubuntu-sdk-13.10")
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
             # run the hooks
             Click.run_user_hooks(self.db, user_name="test-user")
-            # ensure its still there
-            self.assertFalse(os.path.lexists(self.symlink_path))
+            self.assertFalse(os.path.lexists(self.hook_symlink_path))
+
+    def test_links_are_removed_on_missng_multiple_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            self._make_manifest(
+                framework="ubuntu-sdk-13.10,ubuntu-sdk-13.10-html")
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name="test-user")
+            self.assertFalse(os.path.lexists(self.hook_symlink_path))
+

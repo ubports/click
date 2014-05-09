@@ -1130,7 +1130,7 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
                 self.temp_dir, "test-1", "1.0", ".click", "info",
                 "test-1.manifest")) as f:
             json.dump({
-                "framework": "ubuntu-sdk-13.10",
+                "framework": "ubuntu-sdk-13.10, ubuntu-sdk-13.10-html",
                 "hooks": {"test1-app": {"test": "target-1"}}}, f)
         os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
         user_db.set_version("test-1", "1.0")
@@ -1144,7 +1144,9 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
                 "click_get_frameworks_dir",
                 ) as (enter, preloads):
             enter()
-            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_frameworks(
+                preloads,
+                frameworks=["ubuntu-sdk-13.10", "ubuntu-sdk-13.10-html"])
             self._setup_test_env(preloads)
             # run the hooks
             Click.run_user_hooks(self.db, user_name="test-user")

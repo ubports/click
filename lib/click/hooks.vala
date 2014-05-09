@@ -57,17 +57,35 @@ public errordomain HooksError {
 }
 
 
+/* vala implementation of click.framework.validate_framework()
+ * 
+ * Note that the required_frameworks string has the form
+ *   framework1, framework2, ...
+ * 
+ */
 private bool
-validate_framework (DB db, string package, string? version)
+validate_framework (string required_frameworks)
+{
+	var valid_framework_re = new Regex("[a-z0-9-]+");
+	foreach (var framework in required_frameworks.split(","))
+	{
+		// FIXME: do we want to check base version too?
+		framework = framework.strip();
+		if(!valid_framework_re.match(framework) ||
+		   !Framework.has_framework(framework))
+			return false;
+	}
+	return true;
+}
+
+private bool
+validate_framework_for_package (DB db, string package, string? version)
 {
 	var manifest = read_manifest(db, package, version);
 	if (!manifest.has_member("framework"))
 		return true;
-	
 	var required_frameworks = manifest.get_string_member("framework");
-	// FIXME: support multiple frameworks here via a new
-	//        Framework.validate_frameworks() or similar
-	return Framework.has_framework(required_frameworks);
+	return validate_framework (required_frameworks);
 }
 
 private Json.Object
@@ -989,7 +1007,7 @@ public class Hook : Object {
 			// if the app is not using a valid framework (anymore)
 			// we skip skip it and it will be cleaned up by the
 			// get_previous_entries() code
-			if (!validate_framework (db, package, version))
+			if (!validate_framework_for_package (db, package, version))
 				continue;
 
 			seen.add (@"$(package)_$(app_name)_$(version)");

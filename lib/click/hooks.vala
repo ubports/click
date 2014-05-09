@@ -56,8 +56,22 @@ public errordomain HooksError {
 	INCOMPLETE
 }
 
+
+private bool
+validate_framework (DB db, string package, string? version)
+{
+	var manifest = read_manifest(db, package, version);
+	if (!manifest.has_member("framework"))
+		return true;
+	
+	var required_frameworks = manifest.get_string_member("framework");
+	// FIXME: support multiple frameworks here via a new
+	//        Framework.validate_frameworks() or similar
+	return Framework.has_framework(required_frameworks);
+}
+
 private Json.Object
-read_manifest_hooks (DB db, string package, string? version)
+read_manifest (DB db, string package, string? version)
 	throws DatabaseError
 {
 	if (version == null)
@@ -69,13 +83,21 @@ read_manifest_hooks (DB db, string package, string? version)
 			 @"$package.manifest");
 		parser.load_from_file (manifest_path);
 		var manifest = parser.get_root ().get_object ();
-		if (! manifest.has_member ("hooks"))
-			return new Json.Object ();
-		var hooks = manifest.get_object_member ("hooks");
-		return hooks.ref ();
+		return manifest.ref ();
 	} catch (Error e) {
 		return new Json.Object ();
 	}
+}
+
+private Json.Object
+read_manifest_hooks (DB db, string package, string? version)
+	throws DatabaseError
+{
+	var manifest = read_manifest (db, package, version);
+	if (! manifest.has_member ("hooks"))
+		return new Json.Object ();
+	var hooks = manifest.get_object_member ("hooks");
+	return hooks.ref ();
 }
 
 private class PreviousEntry : Object, Gee.Hashable<PreviousEntry> {
@@ -889,10 +911,10 @@ public class Hook : Object {
 		var ret = new List<RelevantApp> ();
 		var hook_name = get_hook_name ();
 		foreach (var unpacked in get_all_packages (user_name)) {
-			var manifest = read_manifest_hooks
+			var manifest_hooks = read_manifest_hooks
 				(db, unpacked.package, unpacked.version);
-			foreach (var app_name in manifest.get_members ()) {
-				var hooks = manifest.get_object_member
+			foreach (var app_name in manifest_hooks.get_members ()) {
+				var hooks = manifest_hooks.get_object_member
 					(app_name);
 				if (hooks.has_member (hook_name)) {
 					var relative_path = hooks.get_string_member
@@ -960,6 +982,16 @@ public class Hook : Object {
 			unowned string package = app.package;
 			unowned string version = app.version;
 			unowned string app_name = app.app_name;
+
+			// FIXME: should the validate_framwork check
+			//        in get_relevant_apps() already?
+
+			// if the app is not using a valid framework (anymore)
+			// we skip skip it and it will be cleaned up by the
+			// get_previous_entries() code
+			if (!validate_framework (db, package, version))
+				continue;
+
 			seen.add (@"$(package)_$(app_name)_$(version)");
 			if (is_user_level) {
 				var user_db = new User.for_user

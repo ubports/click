@@ -38,7 +38,9 @@ and installing anything that is missing here.
 Then run::
 
     $ ./autogen.sh
-    $ ./configure --with-systemdsystemunitdir=/lib/systemd/system \
+    $ ./configure --prefix=/usr \
+        --sysconfdir=/etc \
+        --with-systemdsystemunitdir=/lib/systemd/system \
 	--with-systemduserunitdir=/usr/lib/systemd/user
     $ make
 

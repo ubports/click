@@ -103,14 +103,6 @@ class TestClickInstaller(TestCase):
             self.temp_dir, control_dir, data_dir, package_path)
         return package_path
 
-    def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
-        frameworks_dir = self._create_mock_framework_dir(frameworks_dir)
-        shutil.rmtree(frameworks_dir, ignore_errors=True)
-        for framework in frameworks:
-            self._create_mock_framework_file(framework)
-        preloads["click_get_frameworks_dir"].side_effect = (
-            lambda: self.make_string(frameworks_dir))
-
     def test_audit_no_click_version(self):
         path = self.make_fake_package()
         self.assertRaisesRegex(

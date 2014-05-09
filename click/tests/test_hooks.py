@@ -1113,3 +1113,53 @@ class TestPackageRemoveHooks(TestClickHookBase):
             self.assertFalse(os.path.lexists(unity_path))
             self.assertFalse(os.path.lexists(yelp_docs_path))
             self.assertFalse(os.path.lexists(yelp_other_path))
+
+
+class TestPackageHooksValidateFramework(TestClickHookBase):
+
+    def _setup_test_env(self, preloads):
+        preloads["click_get_user_home"].return_value = "/home/test-user"
+        self._setup_hooks_dir(
+            preloads, os.path.join(self.temp_dir, "hooks"))
+        with mkfile(
+                os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
+            print("User-Level: yes", file=f)
+            print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+        user_db = Click.User.for_user(self.db, "test-user")
+        with mkfile_utf8(os.path.join(
+                self.temp_dir, "test-1", "1.0", ".click", "info",
+                "test-1.manifest")) as f:
+            json.dump({
+                "framework": "ubuntu-sdk-13.10",
+                "hooks": {"test1-app": {"test": "target-1"}}}, f)
+        os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+        user_db.set_version("test-1", "1.0")
+        self.symlink_path = os.path.join(
+            self.temp_dir, "test-1_test1-app_1.0.test")
+        self.assertTrue(os.path.lexists(self.symlink_path))
+
+    def test_links_are_kept_on_validate_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name="test-user")
+            # ensure its still there
+            self.assertTrue(os.path.lexists(self.symlink_path))
+
+    def test_links_are_removed_on_missng_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(preloads, frameworks=["missing"])
+            self._setup_test_env(preloads)
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name="test-user")
+            # ensure its still there
+            self.assertFalse(os.path.lexists(self.symlink_path))

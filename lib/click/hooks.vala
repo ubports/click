@@ -60,19 +60,27 @@ public errordomain HooksError {
 /* vala implementation of click.framework.validate_framework()
  * 
  * Note that the required_frameworks string has the form
- *   framework1, framework2, ...
- * 
+ *      framework1, framework2, ...
+ * See doc/file-format.rst for details.
  */
 private bool
 validate_framework (string required_frameworks)
 {
-	var valid_framework_re = new Regex("[a-z0-9-]+");
-	foreach (var framework in required_frameworks.split(","))
+	// valid framework names, cf. debian policy §5.6.1
+	var valid_framework_re = new Regex("^[a-z][a-z0-9.+-]+");
+	var base_version = "";
+	foreach (var framework_name in required_frameworks.split(","))
 	{
-		// FIXME: do we want to check base version too?
-		framework = framework.strip();
-		if(!valid_framework_re.match(framework) ||
-		   !Framework.has_framework(framework))
+		framework_name = framework_name.strip();
+		if(!valid_framework_re.match(framework_name))
+			return false;
+		if(!Framework.has_framework(framework_name))
+			return false;
+		// now check the base-version
+		var framework = Framework.open(framework_name);
+		if (base_version == "")
+			base_version = framework.get_base_version();
+		if (base_version != framework.get_base_version())
 			return false;
 	}
 	return true;

@@ -1016,7 +1016,7 @@ get_app_hooks (Json.Object manifest)
  * @new_version: The new version of the package.
  * @user_name: (allow-none): A user name, or null.
  *
- * Run hooks following removal of a Click package.
+ * Run hooks following install of a Click package.
  *
  * If @user_name is null, only run system-level hooks.  If @user_name is not
  * null, only run user-level hooks for that user.

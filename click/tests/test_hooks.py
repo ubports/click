@@ -1150,7 +1150,7 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
 
     def test_links_are_kept_on_validate_framework(self):
         with self.run_in_subprocess(
-                "click_get_hooks_dir", "click_get_user_home", 
+                "click_get_hooks_dir", "click_get_user_home",
                 "click_get_frameworks_dir",
                 ) as (enter, preloads):
             enter()
@@ -1206,4 +1206,3 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
             # run the hooks
             Click.run_user_hooks(self.db, user_name="test-user")
             self.assertFalse(os.path.lexists(self.hook_symlink_path))
-

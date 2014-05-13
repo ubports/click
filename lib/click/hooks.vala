@@ -937,6 +937,12 @@ public class Hook : Object {
 		var ret = new List<RelevantApp> ();
 		var hook_name = get_hook_name ();
 		foreach (var unpacked in get_all_packages (user_name)) {
+			// if the app is not using a valid framework (anymore)
+			// we don't consider it relevant (anymore)
+			if (!validate_framework_for_package 
+				    (db, unpacked.package, unpacked.version))
+				continue;
+
 			var manifest_hooks = read_manifest_hooks
 				(db, unpacked.package, unpacked.version);
 			foreach (var app_name in manifest_hooks.get_members ()) {
@@ -1008,15 +1014,6 @@ public class Hook : Object {
 			unowned string package = app.package;
 			unowned string version = app.version;
 			unowned string app_name = app.app_name;
-
-			// FIXME: should the validate_framwork check
-			//        in get_relevant_apps() already?
-
-			// if the app is not using a valid framework (anymore)
-			// we skip skip it and it will be cleaned up by the
-			// get_previous_entries() code
-			if (!validate_framework_for_package (db, package, version))
-				continue;
 
 			seen.add (@"$(package)_$(app_name)_$(version)");
 			if (is_user_level) {

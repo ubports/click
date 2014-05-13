@@ -29,6 +29,7 @@ __all__ = [
 
 
 import contextlib
+from functools import wraps
 import os
 import re
 import shutil
@@ -43,6 +44,19 @@ except ImportError:
 from gi.repository import Click, GLib
 
 from click.tests import gimock
+
+
+def disable_logging(func):
+    """Decorator to disable logging e.g. during a test"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        import logging
+        logging.disable(logging.CRITICAL)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            logging.disable(logging.NOTSET)
+    return wrapper
 
 
 class TestCase(gimock.GIMockTestCase):

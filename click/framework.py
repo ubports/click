@@ -24,6 +24,8 @@ try:
 except:
     pass
 
+import click.paths
+
 
 class ClickFrameworkInvalid(Exception):
     pass
@@ -57,24 +59,25 @@ def parse_deb822_file(filename):
 
 
 # python version of vala get_frameworks_dir
-def get_frameworks_dir(framework_name):
-    # FIXME: get via configure.in etc?
-    frameworks_dir = os.environ.get(
-        "CLICK_FRAMEWORKS_DIR", "/usr/share/click/frameworks")
+def get_frameworks_dir():
+    return click.paths.frameworks_dir
+
+
+def get_framework_path(framework_name):
     framework_path = os.path.join(
-        frameworks_dir, framework_name+".framework")
+        get_frameworks_dir(), framework_name+".framework")
     return framework_path
 
 
 # python version of the vala click_framework_get_base_version()
 def click_framework_get_base_version(framework_name):
-    deb822 = parse_deb822_file(get_frameworks_dir(framework_name))
+    deb822 = parse_deb822_file(get_framework_path(framework_name))
     return deb822.get("base-version", None)
 
 
 # python version of the vala click_framework_has_framework
 def click_framework_has_framework(framework_name):
-    return os.path.exists(get_frameworks_dir(framework_name))
+    return os.path.exists(get_framework_path(framework_name))
 
 
 def validate_framework(framework_string, ignore_missing_frameworks=False):

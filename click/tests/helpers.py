@@ -111,8 +111,10 @@ class TestCase(gimock.GIMockTestCase):
     def _create_mock_framework_dir(self, frameworks_dir=None):
         if frameworks_dir is None:
             frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+            patcher = mock.patch('click.paths.frameworks_dir', frameworks_dir)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         Click.ensuredir(frameworks_dir)
-        os.environ["CLICK_FRAMEWORKS_DIR"] = frameworks_dir
         return frameworks_dir
 
     def _create_mock_framework_file(self, framework_name):

@@ -29,6 +29,9 @@ def run(argv):
     parser.add_option(
         "-m", "--manifest", metavar="PATH", default="manifest.json",
         help="read package manifest from PATH (default: manifest.json)")
+    parser.add_option(
+        "-I", "--ignore", metavar="file-pattern", action='append',
+        help="Ignore the given pattern when building the package")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need directory")
@@ -43,6 +46,8 @@ def run(argv):
             (directory, options.manifest))
     builder = ClickBuilder()
     builder.add_file(directory, "./")
+    for ignore in options.ignore:
+        builder.add_ignore_pattern(ignore)
     try:
         path = builder.build(".", manifest_path=options.manifest)
     except ClickBuildError as e:

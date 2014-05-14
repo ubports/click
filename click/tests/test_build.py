@@ -218,6 +218,26 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual([], os.listdir(extract_path))
 
+    def test_build_ignore_pattern(self):
+        self.use_temp_dir()
+        scratch = os.path.join(self.temp_dir, "scratch")
+        touch(os.path.join(scratch, "build", "foo.o"))
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
+            json.dump({
+                "name": "com.ubuntu.test",
+                "version": "1.0",
+                "maintainer": "Foo Bar <foo@example.org>",
+                "title": "test title",
+                "architecture": "all",
+                "framework": "ubuntu-sdk-13.10",
+            }, f)
+        self.builder.add_file(scratch, "/")
+        self.builder.add_ignore_pattern("build")
+        path = self.builder.build(self.temp_dir)
+        extract_path = os.path.join(self.temp_dir, "extract")
+        subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
+        self.assertEqual([], os.listdir(extract_path))
+
     def test_build_multiple_architectures(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")

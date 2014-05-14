@@ -70,8 +70,14 @@ than relying on recovering it from packages.
 
 Options:
 
--m PATH, --manifest=PATH    Read package manifest from PATH
-                            (default: ``manifest.json``).
+-m PATH, --manifest=PATH                   Read package manifest from PATH
+                                           (default: ``manifest.json``).
+-I file-pattern, --ignore=file-pattern     Ignore the given shell-pattern
+                                           when building the package.
+                                           The option may be repeated multiple
+                                           times to list multiple patterns to
+                                           exclude.
+
 
 click buildsource DIRECTORY
 ---------------------------
@@ -87,8 +93,13 @@ not inside the build directory when running this command.
 
 Options:
 
--m PATH, --manifest=PATH    Read package manifest from PATH
-                            (default: ``manifest.json``).
+-m PATH, --manifest=PATH                   Read package manifest from PATH
+                                           (default: ``manifest.json``).
+-I file-pattern, --ignore=file-pattern     Ignore the given shell-pattern
+                                           when building the package.
+                                           The option may be repeated multiple
+                                           times to list multiple patterns to
+                                           exclude.
 
 click chroot
 ------------

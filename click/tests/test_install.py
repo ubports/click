@@ -104,12 +104,10 @@ class TestClickInstaller(TestCase):
         return package_path
 
     def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
-        if frameworks_dir is None:
-            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+        frameworks_dir = self._create_mock_framework_dir(frameworks_dir)
         shutil.rmtree(frameworks_dir, ignore_errors=True)
-        Click.ensuredir(frameworks_dir)
         for framework in frameworks:
-            touch(os.path.join(frameworks_dir, "%s.framework" % framework))
+            self._create_mock_framework_file(framework)
         preloads["click_get_frameworks_dir"].side_effect = (
             lambda: self.make_string(frameworks_dir))
 

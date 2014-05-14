@@ -30,6 +30,7 @@ __all__ = [
 
 import contextlib
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -106,6 +107,34 @@ class TestCase(gimock.GIMockTestCase):
     def assertRaisesUserError(self, code, callableObj, *args, **kwargs):
         self.assertRaisesGError(
             "click_user_error-quark", code, callableObj, *args, **kwargs)
+
+    def _create_mock_framework_dir(self, frameworks_dir=None):
+        if frameworks_dir is None:
+            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+            patcher = mock.patch('click.paths.frameworks_dir', frameworks_dir)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        Click.ensuredir(frameworks_dir)
+        return frameworks_dir
+
+    def _create_mock_framework_file(self, framework_name):
+        self.use_temp_dir()
+        self._create_mock_framework_dir()
+        r = r'(?P<name>[a-z]+-sdk)-(?P<ver>[0-9.]+)(-[a-z0-9-]+)?'
+        match = re.match(r, framework_name)
+        if match is None:
+            name = "unknown"
+            ver = "1.0"
+        else:
+            name = match.group("name")
+            ver = match.group("ver")
+        framework_filename = os.path.join(
+            self.temp_dir, "frameworks",
+            "{0}.framework".format(framework_name))
+        with open(framework_filename, "w") as f:
+            f.write("Base-Name: {0}\n".format(name))
+            f.write("Base-Version: {0}\n".format(ver))
+
 
 
 if not hasattr(mock, "call"):

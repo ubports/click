@@ -245,6 +245,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             del target_json["installed-size"]
             self.assertEqual(source_json, target_json)
 
+    # FIXME: DRY violation with test_build_multiple_architectures etc
     def test_build_multiple_frameworks(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
@@ -259,11 +260,44 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
                     "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
             }, f)
         self.builder.add_file(scratch, "/")
-        self.assertRaisesRegex(
-            ClickBuildError,
-            'Multiple dependencies in framework "ubuntu-sdk-14.04-basic, '
-            'ubuntu-sdk-14.04-webapps" not yet allowed',
-            self.builder.build, self.temp_dir)
+        path = self.builder.build(self.temp_dir)
+        control_path = os.path.join(self.temp_dir, "control")
+        subprocess.check_call(["dpkg-deb", "-e", path, control_path])
+        manifest_path = os.path.join(control_path, "manifest")
+        with open(os.path.join(scratch, "manifest.json")) as source, \
+                open(manifest_path) as target:
+            source_json = json.load(source)
+            target_json = json.load(target)
+            del target_json["installed-size"]
+            self.assertEqual(source_json, target_json)
+
+
+class TestClickFrameworkValidation(TestCase):
+    def setUp(self):
+        super(TestClickFrameworkValidation, self).setUp()
+        self.builder = ClickBuilder()
+        for framework_name in ("ubuntu-sdk-13.10",
+                               "ubuntu-sdk-14.04-papi",
+                               "ubuntu-sdk-14.04-html"):
+            self._create_mock_framework_file(framework_name)
+
+    def test_validate_framework_good(self):
+        valid_framework_values = (
+            "ubuntu-sdk-13.10",
+            "ubuntu-sdk-14.04-papi, ubuntu-sdk-14.04-html",
+        )
+        for framework in valid_framework_values:
+            self.builder._validate_framework(framework)
+
+    def test_validate_framework_bad(self):
+        invalid_framework_values = (
+            "ubuntu-sdk-13.10, ubuntu-sdk-14.04-papi",
+            "ubuntu-sdk-13.10 (>= 13.10)",
+            "ubuntu-sdk-13.10 | ubuntu-sdk-14.04",
+        )
+        for framework in invalid_framework_values:
+            with self.assertRaises(ClickBuildError):
+                self.builder._validate_framework(framework)
 
 
 class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):

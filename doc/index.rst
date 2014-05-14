@@ -25,20 +25,34 @@ Compatibility
 Currently, this package should remain compatible with Python 2.7, 3.2, 3.3,
 and 3.4; Ubuntu 12.04 LTS, Ubuntu 13.10, and Ubuntu 14.04 LTS.
 
+Build
+=====
+
+If you run from a fresh bzr checkout, please ensure you have the required 
+build dependencies first by running::
+
+    $ dpkg-checkbuilddeps
+
+and installing anything that is missing here.
+
+Then run::
+
+    $ ./autogen.sh
+    $ ./configure --with-systemdsystemunitdir=/lib/systemd/system \
+	--with-systemduserunitdir=/usr/lib/systemd/user
+    $ make
+
+to build the project.
+
 
 Dependencies
 ------------
 
-For Ubuntu 13.10, make sure you have the *python2.7* and *python3.3*
+For Ubuntu 14.04, make sure you have the *python2.7* and *python3.4*
 packages installed.  Unless you upgraded from a previous version of Ubuntu
-and haven't removed it yet, you won't have Python 3.2 available.  Build it
-from source if necessary, install them say into ``/usr/local``, and make
-sure it is on your ``$PATH``.
-
-You'll need *gcc* in order to build the preload shared library.  Assuming you
-have this, do the following::
-
-    $ (cd preload && make)
+and haven't removed it yet, you won't have Python 3.3 and Python 3.2
+available.  Build them from source if necessary, install them say into
+``/usr/local``, and make sure they are on your ``$PATH``.
 
 You'll need *tox* (Ubuntu package *python-tox*) installed in order to run the
 full test suite.  You should be able to just say::
@@ -65,6 +79,15 @@ After all of the above is installed, you can run ``tox`` to run the test suite
 against all supported Python versions.  The ``./run-tests`` scripts just does
 an additional check to make sure you've got the preload shared library
 built.
+
+To run a specific testcase, use the standard python unittest syntax like::
+
+  $ python3 -m unittest click.tests.test_install
+
+or::
+
+  $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
+
 
 
 Documentation

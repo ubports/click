@@ -50,6 +50,11 @@ from click.arfile import ArFile
 from click.preinst import static_preinst
 from click.versions import spec_version
 
+from click.framework import (
+    validate_framework,
+    ClickFrameworkInvalid,
+)
+
 
 @contextlib.contextmanager
 def make_temp_dir():
@@ -196,30 +201,13 @@ class ClickBuilder(ClickBuilderBase):
             package.add_file("control.tar.gz", control_tar_path)
             package.add_file("data.tar.gz", data_tar_path)
 
-    def _validate_framework(self, framework):
+    def _validate_framework(self, framework_string):
         """Apply policy checks to framework declarations."""
         try:
-            apt_pkg
-        except NameError:
-            return
-
-        try:
-            parsed_framework = apt_pkg.parse_depends(framework)
-        except ValueError:
-            raise ClickBuildError('Could not parse framework "%s"' % framework)
-        if len(parsed_framework) > 1:
-            raise ClickBuildError(
-                'Multiple dependencies in framework "%s" not yet allowed' %
-                framework)
-        for or_dep in parsed_framework:
-            if len(or_dep) > 1:
-                raise ClickBuildError(
-                    'Alternative dependencies in framework "%s" not yet '
-                    'allowed' % framework)
-            if or_dep[0][1] or or_dep[0][2]:
-                raise ClickBuildError(
-                    'Version relationship in framework "%s" not yet allowed' %
-                    framework)
+            validate_framework(
+                framework_string, ignore_missing_frameworks=True)
+        except ClickFrameworkInvalid as e:
+            raise ClickBuildError(str(e))
 
     def build(self, dest_dir, manifest_path="manifest.json"):
         with make_temp_dir() as temp_dir:

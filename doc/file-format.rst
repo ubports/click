@@ -103,8 +103,7 @@ relationship field.  Currently, only a simple name is permitted, e.g.
 "framework": "ubuntu-sdk-13.10", or a list of simple names all of which must
 be satisfied, e.g. "framework": "ubuntu-sdk-14.04-qml,
 ubuntu-sdk-14.04-webapps"; version relationships and alternative
-dependencies are not currently allowed.  At the moment, ``click build`` will
-only allow building with a single simple name, pending policy decisions.
+dependencies are not currently allowed.
 
 The manifest may contain arbitrary additional optional keys; new optional
 keys may be defined without changing the version number of this

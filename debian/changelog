@@ -1,10 +1,10 @@
-click (0.4.22) UNRELEASED; urgency=medium
+click (0.4.22) utopic; urgency=medium
 
   [ Michael Vogt ]
   * Update documentation for building the project.
   * Add support for multiple frameworks (LP: #1318757).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 08 May 2014 13:47:55 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 14 May 2014 06:28:34 +0000
 
 click (0.4.21.1) trusty; urgency=medium
 

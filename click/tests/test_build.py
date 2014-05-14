@@ -199,38 +199,34 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         self.assertEqual(
             "foo", os.readlink(os.path.join(extract_path, "bin", "bar")))
 
-    def test_build_excludes_dot_click(self):
+    def _make_scratch_dir(self, manifest_override={}):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
-        touch(os.path.join(scratch, ".click", "evil-file"))
-        with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            json.dump({
+        manifest = {
                 "name": "com.ubuntu.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
                 "architecture": "all",
                 "framework": "ubuntu-sdk-13.10",
-            }, f)
+        }
+        manifest.update(manifest_override)
+        with mkfile(os.path.join(scratch, "manifest.json")) as f:
+            json.dump(manifest, f)
         self.builder.add_file(scratch, "/")
+        return scratch
+
+    def test_build_excludes_dot_click(self):
+        scratch = self._make_scratch_dir()
+        touch(os.path.join(scratch, ".click", "evil-file"))
         path = self.builder.build(self.temp_dir)
         extract_path = os.path.join(self.temp_dir, "extract")
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual([], os.listdir(extract_path))
 
     def test_build_ignore_pattern(self):
-        self.use_temp_dir()
-        scratch = os.path.join(self.temp_dir, "scratch")
+        scratch = self._make_scratch_dir()
         touch(os.path.join(scratch, "build", "foo.o"))
-        with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            json.dump({
-                "name": "com.ubuntu.test",
-                "version": "1.0",
-                "maintainer": "Foo Bar <foo@example.org>",
-                "title": "test title",
-                "architecture": "all",
-                "framework": "ubuntu-sdk-13.10",
-            }, f)
         self.builder.add_file(scratch, "/")
         self.builder.add_ignore_pattern("build")
         path = self.builder.build(self.temp_dir)
@@ -239,18 +235,9 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         self.assertEqual([], os.listdir(extract_path))
 
     def test_build_multiple_architectures(self):
-        self.use_temp_dir()
-        scratch = os.path.join(self.temp_dir, "scratch")
-        with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            json.dump({
-                "name": "com.ubuntu.test",
-                "version": "1.0",
-                "maintainer": "Foo Bar <foo@example.org>",
-                "title": "test title",
+        scratch = self._make_scratch_dir(manifest_override={
                 "architecture": ["armhf", "i386"],
-                "framework": "ubuntu-sdk-13.10",
-            }, f)
-        self.builder.add_file(scratch, "/")
+        })
         path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_multi.click")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
@@ -265,21 +252,11 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             del target_json["installed-size"]
             self.assertEqual(source_json, target_json)
 
-    # FIXME: DRY violation with test_build_multiple_architectures etc
     def test_build_multiple_frameworks(self):
-        self.use_temp_dir()
-        scratch = os.path.join(self.temp_dir, "scratch")
-        with mkfile(os.path.join(scratch, "manifest.json")) as f:
-            json.dump({
-                "name": "com.ubuntu.test",
-                "version": "1.0",
-                "maintainer": "Foo Bar <foo@example.org>",
-                "title": "test title",
-                "architecture": "all",
+        scratch = self._make_scratch_dir(manifest_override={
                 "framework":
                     "ubuntu-sdk-14.04-basic, ubuntu-sdk-14.04-webapps",
-            }, f)
-        self.builder.add_file(scratch, "/")
+        })
         path = self.builder.build(self.temp_dir)
         control_path = os.path.join(self.temp_dir, "control")
         subprocess.check_call(["dpkg-deb", "-e", path, control_path])

@@ -308,6 +308,8 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
         scratch = os.path.join(self.temp_dir, "scratch")
         touch(os.path.join(scratch, "bin", "foo"))
         touch(os.path.join(scratch, ".git", "config"))
+        touch(os.path.join(scratch, "foo.so"))
+        touch(os.path.join(scratch, "build", "meep.goah"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
                 "name": "com.ubuntu.test",
@@ -320,6 +322,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "./")
+        self.builder.add_ignore_pattern("build")
         path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0.tar.gz")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))

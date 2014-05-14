@@ -93,7 +93,6 @@ class ClickBuilderBase:
             ".[#~]*",
             ".arch-ids",
             ".arch-inventory",
-            ".be",
             ".bzr",
             ".bzr-builddeb",
             ".bzr.backup",
@@ -306,10 +305,11 @@ class ClickSourceBuilder(ClickBuilderBase):
         # (more in ClickBuilderBase)
         self._ignore_patterns += [
             "*.a",
+            ".be",
+            ".deps",
             "*.la",
             "*.o",
             "*.so",
-            ".deps",
         ]
 
     def build(self, dest_dir, manifest_path=None):

@@ -22,6 +22,8 @@ __metaclass__ = type
 __all__ = [
     "ClickChroot",
     "ClickChrootException",
+    "ClickChrootAlreadyExistsException",
+    "ClickChrootDoesNotExistException",
     ]
 
 
@@ -104,6 +106,17 @@ def shell_escape(command):
 
 
 class ClickChrootException(Exception):
+    """A generic issue with the chroot"""
+    pass
+
+
+class ClickChrootAlreadyExistsException(ClickChrootException):
+    """The chroot already exists"""
+    pass
+
+
+class ClickChrootDoesNotExistException(ClickChrootException):
+    """A chroot with that name does not exist yet"""
     pass
 
 
@@ -197,7 +210,7 @@ class ClickChroot:
 
     def create(self):
         if self.exists():
-            raise ClickChrootException(
+            raise ClickChrootAlreadyExistsException(
                 "Chroot %s already exists" % self.full_name)
         components = ["main", "restricted", "universe", "multiverse"]
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
@@ -316,7 +329,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def run(self, *args):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c"]
         if self.session:
@@ -353,7 +366,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def install(self, *pkgs):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         ret = self.update()
         if ret != 0:
@@ -375,7 +388,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def upgrade(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         ret = self.update()
         if ret != 0:
@@ -388,7 +401,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def destroy(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
         os.remove(chroot_config)
@@ -398,7 +411,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def begin_session(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_name, "--begin-session",
                    "--session-name", self.full_session_name]
@@ -407,7 +420,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def end_session(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_session_name, "--end-session"]
         subprocess.check_call(command)

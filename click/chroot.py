@@ -110,12 +110,12 @@ class ClickChrootException(Exception):
     pass
 
 
-class ClickChrootAlreadyExistsException(Exception):
+class ClickChrootAlreadyExistsException(ClickChrootException):
     """The chroot already exists"""
     pass
 
 
-class ClickChrootDoesNotExistException(Exception):
+class ClickChrootDoesNotExistException(ClickChrootException):
     """A chroot with that name does not exist yet"""
     pass
 

@@ -65,7 +65,8 @@ def create(parser, args):
     with message_on_error(
             ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
         return chroot.create()
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def install(parser, args):
@@ -74,7 +75,8 @@ def install(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.install(*packages)
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def destroy(parser, args):
@@ -84,7 +86,8 @@ def destroy(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.destroy()
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def execute(parser, args):
@@ -96,7 +99,8 @@ def execute(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.run(*program)
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def maint(parser, args):
@@ -108,7 +112,8 @@ def maint(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.maint(*program)
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def upgrade(parser, args):
@@ -116,7 +121,8 @@ def upgrade(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.upgrade()
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def begin_session(parser, args):
@@ -125,7 +131,8 @@ def begin_session(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.begin_session()
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def end_session(parser, args):
@@ -134,7 +141,8 @@ def end_session(parser, args):
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.end_session()
-    return False
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def run(argv):

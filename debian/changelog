@@ -3,6 +3,8 @@ click (0.4.23) UNRELEASED; urgency=medium
   [ Michael Vogt ]
   * Show human-readable error message when a click chroot subcommand fails
     because of existing or non-existing chroots (LP: #1296820).
+  * Selectively disable logging on some tests to avoid message spam during
+    the test runs.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 May 2014 17:10:58 +0100
 

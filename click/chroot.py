@@ -208,7 +208,7 @@ class ClickChroot:
         mode = stat.S_IMODE(os.stat(path).st_mode)
         os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    def create(self):
+    def create(self, keep_broken_chroot_on_fail=False):
         if self.exists():
             raise ClickChrootAlreadyExistsException(
                 "Chroot %s already exists" % self.full_name)
@@ -326,7 +326,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
         ret_code = self.maint(*command)
-        if ret_code != 0:
+        if ret_code != 0 and keep_broken_chroot_on_fail is False:
             # cleanup on failure
             self.destroy()
             raise ClickChrootException(

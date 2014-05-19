@@ -80,10 +80,13 @@ validate_framework (string required_frameworks)
 		framework_name = framework_name.strip ();
 		if (!valid_framework_re.match (framework_name))
 			return false;
-		if (!Framework.has_framework (framework_name))
-			return false;
+		Framework framework;
 		// now check the base-version
-		var framework = Framework.open (framework_name);
+		try {
+			framework = Framework.open (framework_name);
+		} catch (FrameworkError e) {
+			return false;
+		}
 		if (base_version == "")
 			base_version = framework.get_base_version ();
 		if (base_version != framework.get_base_version ())
@@ -104,7 +107,6 @@ validate_framework_for_package (DB db, string package, string? version)
 
 private Json.Object
 read_manifest (DB db, string package, string? version)
-	throws DatabaseError
 {
 	if (version == null)
 		return new Json.Object ();
@@ -123,7 +125,6 @@ read_manifest (DB db, string package, string? version)
 
 private Json.Object
 read_manifest_hooks (DB db, string package, string? version)
-	throws DatabaseError
 {
 	var manifest = read_manifest (db, package, version);
 	if (! manifest.has_member ("hooks"))

@@ -67,7 +67,13 @@ private bool
 validate_framework (string required_frameworks)
 {
 	// valid framework names, cf. debian policy §5.6.1
-	var valid_framework_re = new Regex("^[a-z][a-z0-9.+-]+");
+	Regex valid_framework_re;
+	try {
+		valid_framework_re = new Regex ("^[a-z][a-z0-9.+-]+");
+	} catch (RegexError e) {
+		error ("Could not compile regex /^[a-z][a-z0-9.+-]+/: %s",
+		       e.message);
+	}
 	var base_version = "";
 	foreach (var framework_name in required_frameworks.split(","))
 	{

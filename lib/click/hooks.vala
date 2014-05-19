@@ -75,18 +75,18 @@ validate_framework (string required_frameworks)
 		       e.message);
 	}
 	var base_version = "";
-	foreach (var framework_name in required_frameworks.split(","))
+	foreach (var framework_name in required_frameworks.split (","))
 	{
-		framework_name = framework_name.strip();
-		if(!valid_framework_re.match(framework_name))
+		framework_name = framework_name.strip ();
+		if (!valid_framework_re.match (framework_name))
 			return false;
-		if(!Framework.has_framework(framework_name))
+		if (!Framework.has_framework (framework_name))
 			return false;
 		// now check the base-version
-		var framework = Framework.open(framework_name);
+		var framework = Framework.open (framework_name);
 		if (base_version == "")
-			base_version = framework.get_base_version();
-		if (base_version != framework.get_base_version())
+			base_version = framework.get_base_version ();
+		if (base_version != framework.get_base_version ())
 			return false;
 	}
 	return true;
@@ -95,10 +95,10 @@ validate_framework (string required_frameworks)
 private bool
 validate_framework_for_package (DB db, string package, string? version)
 {
-	var manifest = read_manifest(db, package, version);
-	if (!manifest.has_member("framework"))
+	var manifest = read_manifest (db, package, version);
+	if (!manifest.has_member ("framework"))
 		return true;
-	var required_frameworks = manifest.get_string_member("framework");
+	var required_frameworks = manifest.get_string_member ("framework");
 	return validate_framework (required_frameworks);
 }
 

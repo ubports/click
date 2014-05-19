@@ -41,7 +41,7 @@ Then run::
     $ ./configure --prefix=/usr \
         --sysconfdir=/etc \
         --with-systemdsystemunitdir=/lib/systemd/system \
-	--with-systemduserunitdir=/usr/lib/systemd/user
+        --with-systemduserunitdir=/usr/lib/systemd/user
     $ make
 
 to build the project.

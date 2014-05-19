@@ -6,6 +6,9 @@ click (0.4.23) UNRELEASED; urgency=medium
   * Selectively disable logging on some tests to avoid message spam during
     the test runs.
 
+  [ Pete Woods ]
+  * Add libunity-scopes-dev package to chroot (LP: #1320786).
+
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 May 2014 17:10:58 +0100
 
 click (0.4.22) utopic; urgency=medium

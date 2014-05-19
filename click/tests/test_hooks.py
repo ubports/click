@@ -1178,7 +1178,7 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
             Click.run_user_hooks(self.db, user_name="test-user")
             self.assertTrue(os.path.lexists(self.hook_symlink_path))
 
-    def test_links_are_removed_on_missng_framework(self):
+    def test_links_are_removed_on_missing_framework(self):
         with self.run_in_subprocess(
                 "click_get_hooks_dir", "click_get_user_home",
                 "click_get_frameworks_dir",
@@ -1192,7 +1192,7 @@ class TestPackageHooksValidateFramework(TestClickHookBase):
             Click.run_user_hooks(self.db, user_name="test-user")
             self.assertFalse(os.path.lexists(self.hook_symlink_path))
 
-    def test_links_are_removed_on_missng_multiple_framework(self):
+    def test_links_are_removed_on_missing_multiple_framework(self):
         with self.run_in_subprocess(
                 "click_get_hooks_dir", "click_get_user_home",
                 "click_get_frameworks_dir",

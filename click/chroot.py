@@ -72,6 +72,7 @@ extra_packages = {
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
+        "libunity-scopes-dev:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",

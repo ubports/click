@@ -702,8 +702,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
-            # FIXME: is this different from the _setup_hooks_dir() below
-            #        on purpose
+            # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
@@ -721,8 +720,8 @@ class TestClickHookUserLevel(TestClickHookBase):
                             "UTF-8"),
                     "hooks": {"test1-app": {"new": "target-2"}},
                 })
-            # FIXME: is this different from the _setup_hooks_dir() above
-            #        on purpose
+            # Now tell click about the hooks directory and make sure it
+            # catches up correctly.
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "new")
@@ -767,8 +766,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
-            # FIXME: is this different from the _setup_hooks_dir() below
-            #        on purpose
+            # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
@@ -785,8 +783,8 @@ class TestClickHookUserLevel(TestClickHookBase):
             path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
             os.symlink(
                 os.path.join(user_db.get_path("test-2"), "target-2"), path_2)
-            # FIXME: is this different from the _setup_hooks_dir() above
-            #        on purpose
+            # Now tell click about the hooks directory and make sure it
+            # catches up correctly.
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "old")

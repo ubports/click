@@ -1,4 +1,4 @@
-click (0.4.23) UNRELEASED; urgency=medium
+click (0.4.23) utopic; urgency=medium
 
   [ Michael Vogt ]
   * Show human-readable error message when a click chroot subcommand fails
@@ -26,7 +26,7 @@ click (0.4.23) UNRELEASED; urgency=medium
     architecture directly and thus don't need a cross-compiler
     (LP: #1319153).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 May 2014 17:10:58 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 20 May 2014 14:10:11 +0100
 
 click (0.4.22) utopic; urgency=medium
 

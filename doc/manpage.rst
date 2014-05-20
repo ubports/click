@@ -35,6 +35,7 @@ COMMAND OVERVIEW
     click buildsource DIRECTORY
     click chroot
     click contents PATH
+    click framework list
     click hook install HOOK
     click hook remove HOOK
     click hook run-system
@@ -42,7 +43,6 @@ COMMAND OVERVIEW
     click info PATH
     click install PACKAGE-FILE
     click list
-    click list-frameworks
     click pkgdir {PACKAGE-NAME|PATH}
     click register PACKAGE-NAME VERSION
     click unregister PACKAGE-NAME [VERSION]
@@ -148,6 +148,11 @@ click contents PATH
 -------------------
 
 Display the contents of the Click package in PATH as a file listing.
+
+click framework list
+--------------------
+
+Display a list of available frameworks as one framework per line.
 
 click hook install HOOK
 -----------------------
@@ -263,11 +268,6 @@ Options:
 --user=USER                 List packages registered by USER (if you have
                             permission).
 --manifest                  Format output as a JSON array of manifests.
-
-click list-frameworks
----------------------
-
-Display a list of available frameworks as one framework per line.
 
 click pkgdir {PACKAGE-NAME|PATH}
 --------------------------------

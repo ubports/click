@@ -170,18 +170,20 @@ class ClickChroot:
         for pocket in ['updates', 'security']:
             pockets.append('%s-%s' % (series, pocket))
         sources = []
-        if target_arch not in primary_arches:
+        # write binary lines
+        for arch in (target_arch, native_arch):
+            if arch not in primary_arches:
+                mirror = ports_mirror
+            else:
+                mirror = self.archive
             for pocket in pockets:
                 sources.append("deb [arch=%s] %s %s %s" %
-                               (target_arch, ports_mirror, pocket, components))
-                sources.append("deb-src %s %s %s" %
-                               (ports_mirror, pocket, components))
-        if native_arch in primary_arches:
-            for pocket in pockets:
-                sources.append("deb [arch=%s] %s %s %s" %
-                               (native_arch, self.archive, pocket, components))
-                sources.append("deb-src %s %s %s" %
-                               (self.archive, pocket, components))
+                               (arch, mirror, pocket, components))
+        # write source lines
+        for pocket in pockets:
+            sources.append("deb-src %s %s %s" %
+                           (self.archive, pocket, components))
+
         return sources
 
     @property

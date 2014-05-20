@@ -132,9 +132,10 @@ class ClickChroot:
             series = framework_series[self.framework_base]
         self.series = series
         self.session = session
-        self.native_arch = subprocess.check_output(
+        system_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
+        self.native_arch = self._get_native_arch(system_arch, self.target_arch)
         self.chroots_dir = "/var/lib/schroot/chroots"
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
@@ -148,6 +149,24 @@ class ClickChroot:
         else:
             self.user = pwd.getpwuid(os.getuid()).pw_name
         self.dpkg_architecture = self._dpkg_architecture()
+
+    def _get_native_arch(self, system_arch, target_arch):
+        """Determine the proper native architecture for a chroot.
+
+        Some combinations of system and target architecture do not require
+        cross-building, so in these cases we just create a chroot suitable
+        for native building.
+        """
+        if (system_arch, target_arch) in (
+                ("amd64", "i386"),
+                # This will only work if the system is running a 64-bit
+                # kernel; but there's no alternative since no i386-to-amd64
+                # cross-compiler is available in the Ubuntu archive.
+                ("i386", "amd64"),
+                ):
+            return target_arch
+        else:
+            return system_arch
 
     def _dpkg_architecture(self):
         dpkg_architecture = {}
@@ -171,7 +190,10 @@ class ClickChroot:
             pockets.append('%s-%s' % (series, pocket))
         sources = []
         # write binary lines
-        for arch in (target_arch, native_arch):
+        arches = [target_arch]
+        if native_arch != target_arch:
+            arches.append(native_arch)
+        for arch in arches:
             if arch not in primary_arches:
                 mirror = ports_mirror
             else:
@@ -211,6 +233,13 @@ class ClickChroot:
         mode = stat.S_IMODE(os.stat(path).st_mode)
         os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
+    def _make_cross_package(self, prefix):
+        if self.native_arch == self.target_arch:
+            return prefix
+        else:
+            target_tuple = self.dpkg_architecture["DEB_HOST_GNU_TYPE"]
+            return "%s-%s" % (prefix, target_tuple)
+
     def create(self, keep_broken_chroot_on_fail=False):
         if self.exists():
             raise ClickChrootAlreadyExistsException(
@@ -224,11 +253,10 @@ class ClickChroot:
             proxy = subprocess.check_output(
                 'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
                 shell=True, universal_newlines=True).strip()
-        target_tuple = self.dpkg_architecture["DEB_HOST_GNU_TYPE"]
         build_pkgs = [
             "build-essential", "fakeroot",
-            "apt-utils", "g++-%s" % target_tuple,
-            "pkg-config-%s" % target_tuple, "cmake",
+            "apt-utils", self._make_cross_package("g++"),
+            self._make_cross_package("pkg-config"), "cmake",
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
         for package in extra_packages.get(self.framework_base, []):

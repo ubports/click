@@ -30,6 +30,18 @@ from click.chroot import (
 
 
 class TestClickChroot(TestCase):
+    def test_get_native_arch_amd64_to_amd64(self):
+        chroot = ClickChroot("amd64", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("amd64", chroot._get_native_arch("amd64", "amd64"))
+
+    def test_get_native_arch_amd64_to_armhf(self):
+        chroot = ClickChroot("armhf", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("amd64", chroot._get_native_arch("amd64", "armhf"))
+
+    def test_get_native_arch_amd64_to_i386(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("i386", chroot._get_native_arch("amd64", "i386"))
+
     def test_gen_sources_archive_only(self):
         chroot = ClickChroot("amd64", "ubuntu-sdk-13.10", series="trusty")
         chroot.native_arch = "i386"
@@ -83,3 +95,29 @@ class TestClickChroot(TestCase):
             'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
         ], sources)
+
+    def test_gen_sources_native(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
+        chroot.native_arch = "i386"
+        sources = chroot._generate_sources(
+            chroot.series, chroot.native_arch, chroot.target_arch,
+            "main")
+        self.assertEqual([
+            'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty main',
+            'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-updates main',
+            'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-security main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
+        ], sources)
+
+    def test_make_cross_package_native(self):
+        chroot = ClickChroot("amd64", "ubuntu-sdk-14.04", series="trusty")
+        chroot.native_arch = "amd64"
+        self.assertEqual("g++", chroot._make_cross_package("g++"))
+
+    def test_make_cross_package_cross(self):
+        chroot = ClickChroot("armhf", "ubuntu-sdk-14.04", series="trusty")
+        chroot.native_arch = "amd64"
+        self.assertEqual(
+            "g++-arm-linux-gnueabihf", chroot._make_cross_package("g++"))

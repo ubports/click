@@ -21,6 +21,11 @@ click (0.4.23) UNRELEASED; urgency=medium
   * click chroot creation depends on dpkg-architecture, so recommend
     dpkg-dev.
 
+  [ Colin Watson ]
+  * chroot: Handle the case where we can execute binaries for the target
+    architecture directly and thus don't need a cross-compiler
+    (LP: #1319153).
+
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 May 2014 17:10:58 +0100
 
 click (0.4.22) utopic; urgency=medium

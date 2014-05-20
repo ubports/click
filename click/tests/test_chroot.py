@@ -38,17 +38,14 @@ class TestClickChroot(TestCase):
             "main")
         self.assertEqual([
             'deb [arch=amd64] http://archive.ubuntu.com/ubuntu trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=amd64] http://archive.ubuntu.com/ubuntu trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=amd64] http://archive.ubuntu.com/ubuntu trusty-security main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-security main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main'
+            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
         ], sources)
 
     def test_gen_sources_mixed_archive_ports(self):
@@ -59,17 +56,14 @@ class TestClickChroot(TestCase):
             "main")
         self.assertEqual([
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-security main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty-security main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main'
+            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
         ], sources)
 
     def test_gen_sources_ports_only(self):
@@ -80,15 +74,12 @@ class TestClickChroot(TestCase):
             "main")
         self.assertEqual([
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-security main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
             'deb [arch=armel] http://ports.ubuntu.com/ubuntu-ports trusty main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
             'deb [arch=armel] http://ports.ubuntu.com/ubuntu-ports trusty-updates main',
-            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb [arch=armel] http://ports.ubuntu.com/ubuntu-ports trusty-security main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty main',
+            'deb-src http://archive.ubuntu.com/ubuntu trusty-updates main',
             'deb-src http://archive.ubuntu.com/ubuntu trusty-security main',
         ], sources)

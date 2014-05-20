@@ -28,7 +28,7 @@ all_commands = (
     "info",
     "install",
     "list",
-    "list-frameworks",
+    "framework",
     "pkgdir",
     "register",
     "unregister",

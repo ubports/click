@@ -17,19 +17,26 @@
 
 from __future__ import print_function
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from gi.repository import Click
 
 
-def list_frameworks(options):
-    all_frameworks = Click.Framework.get_frameworks()
-    return all_frameworks
+def list(parser, args):
+    for framework in Click.Framework.get_frameworks():
+        print("%s" % framework.props.name)
+    return 0
 
 
 def run(argv):
-    parser = OptionParser("%prog list-frameworks [options]")
-    options, _ = parser.parse_args(argv)
-    for framework in list_frameworks(options):
-        print("%s" % framework.props.name)
-    return 0
+    parser = ArgumentParser("click framework")
+    subparsers = parser.add_subparsers()
+    list_parser = subparsers.add_parser(
+        "list",
+        help="list available frameworks")
+    list_parser.set_defaults(func=list)
+    args = parser.parse_args(argv)
+    if not hasattr(args, "func"):
+        parser.print_help()
+        return 1
+    return args.func(parser, args)

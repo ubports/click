@@ -173,6 +173,12 @@ class ClickChroot:
         command = ["dpkg-architecture", "-a%s" % self.target_arch]
         env = dict(os.environ)
         env["CC"] = "true"
+        # Force dpkg-architecture to recalculate everything rather than
+        # picking up values from the environment, which will be present when
+        # running the test suite under dpkg-buildpackage.
+        for key in list(env):
+            if key.startswith("DEB_BUILD_") or key.startswith("DEB_HOST_"):
+                del env[key]
         lines = subprocess.check_output(
             command, env=env, universal_newlines=True).splitlines()
         for line in lines:

@@ -1,3 +1,11 @@
+click (0.4.23.1) UNRELEASED; urgency=medium
+
+  * chroot: Force dpkg-architecture to recalculate everything rather than
+    picking up values from the environment, to avoid the test suite getting
+    confused by environment variables exported by dpkg-buildpackage.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 20 May 2014 14:12:17 +0100
+
 click (0.4.23) utopic; urgency=medium
 
   [ Michael Vogt ]

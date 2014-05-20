@@ -64,7 +64,7 @@ def create(parser, args):
     chroot = ClickChroot(args.architecture, args.framework, series=args.series)
     with message_on_error(
             ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
-        return chroot.create(parser.keep_broken_chroot_on_fail)
+        return chroot.create(parser.keep_broken_chroot)
     # if we reach this point there was a error so return exit_status 1
     return 1
 

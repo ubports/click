@@ -29,6 +29,7 @@ __all__ = [
 
 
 import contextlib
+from functools import wraps
 import os
 import re
 import shutil
@@ -43,6 +44,19 @@ except ImportError:
 from gi.repository import Click, GLib
 
 from click.tests import gimock
+
+
+def disable_logging(func):
+    """Decorator to disable logging e.g. during a test"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        import logging
+        logging.disable(logging.CRITICAL)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            logging.disable(logging.NOTSET)
+    return wrapper
 
 
 class TestCase(gimock.GIMockTestCase):
@@ -107,6 +121,14 @@ class TestCase(gimock.GIMockTestCase):
     def assertRaisesUserError(self, code, callableObj, *args, **kwargs):
         self.assertRaisesGError(
             "click_user_error-quark", code, callableObj, *args, **kwargs)
+
+    def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
+        frameworks_dir = self._create_mock_framework_dir(frameworks_dir)
+        shutil.rmtree(frameworks_dir, ignore_errors=True)
+        for framework in frameworks:
+            self._create_mock_framework_file(framework)
+        preloads["click_get_frameworks_dir"].side_effect = (
+            lambda: self.make_string(frameworks_dir))
 
     def _create_mock_framework_dir(self, frameworks_dir=None):
         if frameworks_dir is None:

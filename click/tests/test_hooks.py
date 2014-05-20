@@ -95,6 +95,9 @@ class TestClickPatternFormatter(TestCase):
 
 
 class TestClickHookBase(TestCase):
+
+    TEST_USER = "test-user"
+
     def setUp(self):
         super(TestClickHookBase, self).setUp()
         self.use_temp_dir()
@@ -102,11 +105,33 @@ class TestClickHookBase(TestCase):
         self.db.add(self.temp_dir)
         self.spawn_calls = []
 
+    def _make_installed_click(self, package="test-1",version="1.0",
+                              json_data={},
+                              make_current=True,
+                              all_users=False):
+        with mkfile_utf8(os.path.join(
+                self.temp_dir, package, version, ".click", "info",
+                "%s.manifest" % package)) as f:
+            json.dump(json_data, f, ensure_ascii=False)
+        if make_current:
+            os.symlink(version, os.path.join(self.temp_dir, package, "current"))
+        if all_users:
+            db = Click.User.for_all_users(self.db)
+        else:
+            db = Click.User.for_user(self.db, self.TEST_USER)
+        db.set_version(package, version)
+
+    def _make_hook_file(self, content, hookname="test"):
+        hook_file = os.path.join(self.hooks_dir, "%s.hook" % hookname)
+        with mkfile(hook_file) as f:
+            print(content, file=f)
+
     def _setup_hooks_dir(self, preloads, hooks_dir=None):
         if hooks_dir is None:
             hooks_dir = self.temp_dir
         preloads["click_get_hooks_dir"].side_effect = (
             lambda: self.make_string(hooks_dir))
+        self.hooks_dir = hooks_dir
 
     def g_spawn_sync_side_effect(self, status_map, working_directory, argv,
                                  envp, flags, child_setup, user_data,
@@ -126,13 +151,12 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print(dedent("""\
+            self._make_hook_file(dedent("""\
                     Pattern: /usr/share/test/${id}.test
                     # Comment
                     Exec: test-update
                     User: root
-                    """), file=f)
+                    """))
             hook = Click.Hook.open(self.db, "test")
             self.assertCountEqual(
                 ["pattern", "exec", "user"], hook.get_fields())
@@ -146,8 +170,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: /usr/share/test/${id}.test", file=f)
+            self._make_hook_file(
+                "Pattern: /usr/share/test/${id}.test")
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("test", hook.get_hook_name())
 
@@ -156,9 +180,10 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: /usr/share/test/${id}.test", file=f)
-                print("Hook-Name: other", file=f)
+            self._make_hook_file(dedent("""\
+                Pattern: /usr/share/test/${id}.test
+                Hook-Name: other""")
+            )
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("other", hook.get_hook_name())
 
@@ -167,13 +192,12 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print(dedent("""\
+            self._make_hook_file(dedent("""\
                     Pattern: /usr/share/test/${id}.test
                     # Comment
                     Exec: test-update
                     User: root
-                    """), file=f)
+            """))
             hook = Click.Hook.open(self.db, "test")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
@@ -187,8 +211,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: /usr/share/test/${short-id}.test", file=f)
+            self._make_hook_file(
+                "Pattern: /usr/share/test/${short-id}.test")
             hook = Click.Hook.open(self.db, "test")
             # It would perhaps be better if unrecognised $-expansions raised
             # KeyError, but they don't right now.
@@ -201,9 +225,9 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: /usr/share/test/${short-id}.test", file=f)
-                print("Single-Version: yes", file=f)
+            self._make_hook_file(dedent("""\
+                Pattern: /usr/share/test/${short-id}.test
+                Single-Version: yes"""))
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual(
                 "/usr/share/test/package_app-name.test",
@@ -231,8 +255,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(
+                "Pattern: %s/${id}.test" % self.temp_dir)
             os.makedirs(
                 os.path.join(self.temp_dir, "org.example.package", "1.0"))
             hook = Click.Hook.open(self.db, "test")
@@ -251,8 +275,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: %s/${id}/" % self.temp_dir, file=f)
+            self._make_hook_file(
+                "Pattern: %s/${id}/" % self.temp_dir)
             os.makedirs(
                 os.path.join(self.temp_dir, "org.example.package", "1.0"))
             hook = Click.Hook.open(self.db, "test")
@@ -276,8 +300,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(
+                "Pattern: %s/${id}.test" % self.temp_dir)
             underlay = os.path.join(self.temp_dir, "underlay")
             overlay = os.path.join(self.temp_dir, "overlay")
             db = Click.DB()
@@ -304,8 +328,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(
+                "Pattern: %s/${id}.test" % self.temp_dir)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
@@ -325,8 +349,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(
+                "Pattern: %s/${id}.test" % self.temp_dir)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
@@ -341,28 +365,20 @@ class TestClickHookSystemLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
-            with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
-                print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
-            with mkfile_utf8(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({
+            self._make_hook_file(
+                "Pattern: %s/${id}.new" % self.temp_dir,
+                hookname="new")
+            self._make_installed_click("test-1", "1.0", json_data={
                     "maintainer":
                         b"Unic\xc3\xb3de <unicode@example.org>".decode(
                             "UTF-8"),
-                    "hooks": {"test1-app": {"new": "target-1"}},
-                }, f, ensure_ascii=False)
-            os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
-            with mkfile_utf8(os.path.join(
-                    self.temp_dir, "test-2", "2.0", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({
+                    "hooks": {"test1-app": {"new": "target-1"}}})
+            self._make_installed_click("test-2", "2.0", json_data={
                     "maintainer":
                         b"Unic\xc3\xb3de <unicode@example.org>".decode(
                             "UTF-8"),
                     "hooks": {"test1-app": {"new": "target-2"}},
-                }, f, ensure_ascii=False)
-            os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
+                })
             hook = Click.Hook.open(self.db, "new")
             hook.install(user_name=None)
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.new")
@@ -382,22 +398,17 @@ class TestClickHookSystemLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
-            with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
-                print("Pattern: %s/${id}.old" % self.temp_dir, file=f)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({"hooks": {"test1-app": {"old": "target-1"}}}, f)
-            os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+            self._make_hook_file(
+                "Pattern: %s/${id}.old" % self.temp_dir,
+                hookname="old")
+            self._make_installed_click("test-1", "1.0", json_data={
+                "hooks": {"test1-app": {"old": "target-1"}}})
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.old")
             os.symlink(
                 os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
                 path_1)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-2", "2.0", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({"hooks": {"test2-app": {"old": "target-2"}}}, f)
-            os.symlink("2.0", os.path.join(self.temp_dir, "test-2", "current"))
+            self._make_installed_click("test-2", "2.0", json_data={
+                "hooks": {"test2-app": {"old": "target-2"}}})
             path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
             os.symlink(
                 os.path.join(self.temp_dir, "test-2", "2.0", "target-2"),
@@ -413,23 +424,14 @@ class TestClickHookSystemLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
-            with mkfile(os.path.join(
-                    self.temp_dir, "hooks", "test.hook")) as f:
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
-            os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-2", "1.0", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-2", "1.1", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
-            os.symlink("1.1", os.path.join(self.temp_dir, "test-2", "current"))
+            self._make_hook_file(
+                "Pattern: %s/${id}.test" % self.temp_dir)
+            self._make_installed_click("test-1", "1.0", json_data={
+                "hooks": {"test1-app": {"test": "target-1"}}})
+            self._make_installed_click("test-2", "1.0", make_current=False,
+                json_data={"hooks": {"test2-app": {"test": "target-2"}}})
+            self._make_installed_click("test-2", "1.1", json_data={
+                "hooks": {"test2-app": {"test": "target-2"}}})
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.test")
             os.symlink(
                 os.path.join(self.temp_dir, "test-1", "1.0", "target-1"),
@@ -465,13 +467,12 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print(dedent("""\
+            self._make_hook_file(dedent("""\
                     User-Level: yes
                     Pattern: ${home}/.local/share/test/${id}.test
                     # Comment
                     Exec: test-update
-                    """), file=f)
+                    """))
             hook = Click.Hook.open(self.db, "test")
             self.assertCountEqual(
                 ["user-level", "pattern", "exec"], hook.get_fields())
@@ -486,9 +487,10 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: ${home}/.local/share/test/${id}.test", file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: ${home}/.local/share/test/${id}.test""")
+            )
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("test", hook.get_hook_name())
 
@@ -497,10 +499,11 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: ${home}/.local/share/test/${id}.test", file=f)
-                print("Hook-Name: other", file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: ${home}/.local/share/test/${id}.test
+                Hook-Name: other""")
+            )
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("other", hook.get_hook_name())
 
@@ -509,13 +512,12 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir") as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print(dedent("""\
+            self._make_hook_file(dedent("""\
                     User-Level: yes
                     Pattern: ${home}/.local/share/test/${id}.test
                     # Comment
-                    Exec: test-update
-                    """), file=f)
+                    Exec: test-update""")
+            )
             hook = Click.Hook.open(self.db, "test")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
@@ -531,11 +533,10 @@ class TestClickHookUserLevel(TestClickHookBase):
             self._setup_hooks_dir(preloads)
             preloads["getpwnam"].side_effect = (
                 lambda name: self.make_pointer(Passwd(pw_dir=b"/mock")))
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print(
-                    "Pattern: ${home}/.local/share/test/${short-id}.test",
-                    file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: ${home}/.local/share/test/${short-id}.test
+            """))
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual(
                 "/mock/.local/share/test/package_app-name.test",
@@ -554,8 +555,8 @@ class TestClickHookUserLevel(TestClickHookBase):
                 print("Exec: test-update", file=f)
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual(
-                "test-user", hook.get_run_commands_user(user_name="test-user"))
-            hook.run_commands(user_name="test-user")
+                self.TEST_USER, hook.get_run_commands_user(user_name=self.TEST_USER))
+            hook.run_commands(user_name=self.TEST_USER)
             self.assertEqual(
                 [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
 
@@ -568,19 +569,20 @@ class TestClickHookUserLevel(TestClickHookBase):
             preloads["click_get_user_home"].return_value = "/home/test-user"
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
-            user_db = Click.User.for_user(self.db, "test-user")
+            user_db = Click.User.for_user(self.db, self.TEST_USER)
             user_db.set_version("org.example.package", "1.0")
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: %s/${id}.test""") % self.temp_dir
+            )
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             target_path = os.path.join(
-                self.temp_dir, ".click", "users", "test-user",
+                self.temp_dir, ".click", "users", self.TEST_USER,
                 "org.example.package", "foo", "bar")
             self.assertTrue(os.path.islink(symlink_path))
             self.assertEqual(target_path, os.readlink(symlink_path))
@@ -594,19 +596,20 @@ class TestClickHookUserLevel(TestClickHookBase):
             preloads["click_get_user_home"].return_value = "/home/test-user"
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
-            user_db = Click.User.for_user(self.db, "test-user")
+            user_db = Click.User.for_user(self.db, self.TEST_USER)
             user_db.set_version("org.example.package", "1.0")
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: %s/${id}/" % self.temp_dir, file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: %s/${id}/""") % self.temp_dir
+            )
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0")
             target_path = os.path.join(
-                self.temp_dir, ".click", "users", "test-user",
+                self.temp_dir, ".click", "users", self.TEST_USER,
                 "org.example.package", "foo")
             self.assertTrue(os.path.islink(symlink_path))
             self.assertEqual(target_path, os.readlink(symlink_path))
@@ -622,18 +625,19 @@ class TestClickHookUserLevel(TestClickHookBase):
                 self.temp_dir, "org.example.package", "1.0"))
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.1"))
-            user_db = Click.User.for_user(self.db, "test-user")
+            user_db = Click.User.for_user(self.db, self.TEST_USER)
             user_db.set_version("org.example.package", "1.0")
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: %s/${id}.test""") % self.temp_dir
+            )
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             hook.install_package(
                 "org.example.package", "1.1", "test-app", "foo/bar",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             old_symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             symlink_path = os.path.join(
@@ -641,7 +645,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             self.assertFalse(os.path.islink(old_symlink_path))
             self.assertTrue(os.path.islink(symlink_path))
             target_path = os.path.join(
-                self.temp_dir, ".click", "users", "test-user",
+                self.temp_dir, ".click", "users", self.TEST_USER,
                 "org.example.package", "foo", "bar")
             self.assertEqual(target_path, os.readlink(symlink_path))
 
@@ -657,17 +661,18 @@ class TestClickHookUserLevel(TestClickHookBase):
             os.symlink("old-target", symlink_path)
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
-            user_db = Click.User.for_user(self.db, "test-user")
+            user_db = Click.User.for_user(self.db, self.TEST_USER)
             user_db.set_version("org.example.package", "1.0")
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: %s/${id}.test""") % self.temp_dir
+            )
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             target_path = os.path.join(
-                self.temp_dir, ".click", "users", "test-user",
+                self.temp_dir, ".click", "users", self.TEST_USER,
                 "org.example.package", "foo", "bar")
             self.assertTrue(os.path.islink(symlink_path))
             self.assertEqual(target_path, os.readlink(symlink_path))
@@ -679,16 +684,17 @@ class TestClickHookUserLevel(TestClickHookBase):
             enter()
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
-            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
-                print("User-Level: yes", file=f)
-                print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
+            self._make_hook_file(dedent("""\
+                User-Level: yes
+                Pattern: %s/${id}.test""") % self.temp_dir
+            )
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
             hook = Click.Hook.open(self.db, "test")
             hook.remove_package(
                 "org.example.package", "1.0", "test-app",
-                user_name="test-user")
+                user_name=self.TEST_USER)
             self.assertFalse(os.path.exists(symlink_path))
 
     def test_install(self):
@@ -696,32 +702,26 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
+            # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
-            user_db = Click.User.for_user(self.db, "test-user")
-            with mkfile_utf8(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({
+            self._make_installed_click("test-1", "1.0", json_data={
                     "maintainer":
                         b"Unic\xc3\xb3de <unicode@example.org>".decode(
                             "UTF-8"),
                     "hooks": {"test1-app": {"new": "target-1"}},
-                }, f, ensure_ascii=False)
-            user_db.set_version("test-1", "1.0")
-            with mkfile_utf8(os.path.join(
-                    self.temp_dir, "test-2", "2.0", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({
+            })
+            self._make_installed_click("test-2", "2.0", json_data={
                     "maintainer":
                         b"Unic\xc3\xb3de <unicode@example.org>".decode(
                             "UTF-8"),
                     "hooks": {"test1-app": {"new": "target-2"}},
-                }, f, ensure_ascii=False)
-            user_db.set_version("test-2", "2.0")
+                })
+            # Now tell click about the hooks directory and make sure it
+            # catches up correctly.
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "new")
@@ -730,14 +730,14 @@ class TestClickHookUserLevel(TestClickHookBase):
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-1",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-1",
                     "target-1"),
                 os.readlink(path_1))
             path_2 = os.path.join(self.temp_dir, "test-2_test1-app_2.0.new")
             self.assertTrue(os.path.lexists(path_2))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-2",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-2",
                     "target-2"),
                 os.readlink(path_2))
 
@@ -747,17 +747,17 @@ class TestClickHookUserLevel(TestClickHookBase):
             self.assertFalse(os.path.lexists(path_1))
             self.assertFalse(os.path.lexists(path_2))
 
-            hook.install(user_name="test-user")
+            hook.install(user_name=self.TEST_USER)
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-1",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-1",
                     "target-1"),
                 os.readlink(path_1))
             self.assertTrue(os.path.lexists(path_2))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-2",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-2",
                     "target-2"),
                 os.readlink(path_2))
 
@@ -766,29 +766,25 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
+            # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.old" % self.temp_dir, file=f)
-            user_db = Click.User.for_user(self.db, "test-user")
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({"hooks": {"test1-app": {"old": "target-1"}}}, f)
-            user_db.set_version("test-1", "1.0")
-            os.symlink("1.0", os.path.join(self.temp_dir, "test-1", "current"))
+            user_db = Click.User.for_user(self.db, self.TEST_USER)
+            self._make_installed_click("test-1", "1.0", json_data={
+                "hooks": {"test1-app": {"old": "target-1"}}})
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.old")
             os.symlink(
                 os.path.join(user_db.get_path("test-1"), "target-1"), path_1)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-2", "2.0", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({"hooks": {"test2-app": {"old": "target-2"}}}, f)
-            user_db.set_version("test-2", "2.0")
+            self._make_installed_click("test-2", "2.0", json_data={
+                "hooks": {"test2-app": {"old": "target-2"}}})
             path_2 = os.path.join(self.temp_dir, "test-2_test2-app_2.0.old")
             os.symlink(
                 os.path.join(user_db.get_path("test-2"), "target-2"), path_2)
+            # Now tell click about the hooks directory and make sure it
+            # catches up correctly.
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "old")
@@ -807,44 +803,37 @@ class TestClickHookUserLevel(TestClickHookBase):
                     os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
-            user_db = Click.User.for_user(self.db, "test-user")
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-1", "1.0", ".click", "info",
-                    "test-1.manifest")) as f:
-                json.dump({"hooks": {"test1-app": {"test": "target-1"}}}, f)
-            user_db.set_version("test-1", "1.0")
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-2", "1.1", ".click", "info",
-                    "test-2.manifest")) as f:
-                json.dump({"hooks": {"test2-app": {"test": "target-2"}}}, f)
-            user_db.set_version("test-2", "1.1")
+            self._make_installed_click("test-1", "1.0", json_data={
+                "hooks": {"test1-app": {"test": "target-1"}}})
+            self._make_installed_click("test-2", "1.1", json_data={
+                "hooks": {"test2-app": {"test": "target-2"}}})
             path_1 = os.path.join(self.temp_dir, "test-1_test1-app_1.0.test")
             os.symlink(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-1",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-1",
                     "target-1"),
                 path_1)
             path_2 = os.path.join(self.temp_dir, "test-2_test2-app_1.1.test")
             path_3 = os.path.join(self.temp_dir, "test-3_test3-app_1.0.test")
             os.symlink(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-3",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-3",
                     "target-3"),
                 path_3)
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "test")
-            hook.sync(user_name="test-user")
+            hook.sync(user_name=self.TEST_USER)
             self.assertTrue(os.path.lexists(path_1))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-1",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-1",
                     "target-1"),
                 os.readlink(path_1))
             self.assertTrue(os.path.lexists(path_2))
             self.assertEqual(
                 os.path.join(
-                    self.temp_dir, ".click", "users", "test-user", "test-2",
+                    self.temp_dir, ".click", "users", self.TEST_USER, "test-2",
                     "target-2"),
                 os.readlink(path_2))
             self.assertFalse(os.path.lexists(path_3))
@@ -859,18 +848,15 @@ class TestClickHookUserLevel(TestClickHookBase):
                     os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
-            with mkfile(os.path.join(
-                    self.temp_dir, "test-package", "1.0", ".click", "info",
-                    "test-package.manifest")) as f:
-                json.dump({"hooks": {"test-app": {"test": "target"}}}, f)
-            all_users_db = Click.User.for_all_users(self.db)
-            all_users_db.set_version("test-package", "1.0")
+            self._make_installed_click(
+                "test-package", "1.0", all_users=True, json_data={
+                    "hooks": {"test-app": {"test": "target"}}})
             self._setup_hooks_dir(
                 preloads, hooks_dir=os.path.join(self.temp_dir, "hooks"))
             hook = Click.Hook.open(self.db, "test")
-            hook.sync(user_name="test-user")
+            hook.sync(user_name=self.TEST_USER)
             self.assertFalse(os.path.exists(os.path.join(
-                self.temp_dir, ".click", "users", "test-user",
+                self.temp_dir, ".click", "users", self.TEST_USER,
                 "test-package")))
 
     def test_sync_uses_deepest_copy(self):
@@ -911,7 +897,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             underlay_user_link = os.path.join(
                 underlay, ".click", "users", "@all", "test-package")
             overlay_user_link = os.path.join(
-                overlay, ".click", "users", "test-user", "test-package")
+                overlay, ".click", "users", self.TEST_USER, "test-package")
             Click.ensuredir(os.path.dirname(underlay_user_link))
             os.symlink(underlay_unpacked, underlay_user_link)
             Click.ensuredir(os.path.dirname(overlay_user_link))
@@ -922,7 +908,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             overlay_target_path = os.path.join(overlay_user_link, "foo")
             os.symlink(overlay_target_path, symlink_path)
             hook = Click.Hook.open(db, "test")
-            hook.sync(user_name="test-user")
+            hook.sync(user_name=self.TEST_USER)
             self.assertTrue(os.path.islink(underlay_user_link))
             self.assertEqual(
                 underlay_unpacked, os.readlink(underlay_user_link))
@@ -962,17 +948,9 @@ class TestPackageInstallHooks(TestClickHookBase):
             yelp_other_path = os.path.join(
                 self.temp_dir, "yelp", "other-test_app_1.0.txt")
             os.symlink("dummy", yelp_other_path)
-            package_dir = os.path.join(self.temp_dir, "test")
-            with mkfile(os.path.join(
-                    package_dir, "1.0", ".click", "info",
-                    "test.manifest")) as f:
-                json.dump(
-                    {"hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}},
-                    f)
-            with mkfile(os.path.join(
-                    package_dir, "1.1", ".click", "info",
-                    "test.manifest")) as f:
-                json.dump({}, f)
+            self._make_installed_click("test", "1.0", make_current=False, json_data={
+                "hooks": {"app": {"yelp": "foo.txt", "unity": "foo.scope"}}})
+            self._make_installed_click("test", "1.1", json_data={})
             Click.package_install_hooks(
                 self.db, "test", "1.0", "1.1", user_name=None)
             self.assertFalse(os.path.lexists(unity_path))
@@ -995,15 +973,10 @@ class TestPackageInstallHooks(TestClickHookBase):
                 print("Hook-Name: b", file=f)
             os.mkdir(os.path.join(self.temp_dir, "a"))
             os.mkdir(os.path.join(self.temp_dir, "b"))
-            package_dir = os.path.join(self.temp_dir, "test")
-            with mkfile(os.path.join(
-                    package_dir, "1.0", ".click", "info",
-                    "test.manifest")) as f:
-                json.dump({"hooks": {}}, f)
-            with mkfile(os.path.join(
-                    package_dir, "1.1", ".click", "info",
-                    "test.manifest")) as f:
-                json.dump({"hooks": {"app": {"a": "foo.a", "b": "foo.b"}}}, f)
+            self._make_installed_click("test", "1.0", make_current=False,
+                                json_data={"hooks": {}})
+            self._make_installed_click("test", "1.1", json_data={
+                "hooks": {"app": {"a": "foo.a", "b": "foo.b"}}})
             Click.package_install_hooks(
                 self.db, "test", "1.0", "1.1", user_name=None)
             self.assertTrue(os.path.lexists(
@@ -1113,3 +1086,95 @@ class TestPackageRemoveHooks(TestClickHookBase):
             self.assertFalse(os.path.lexists(unity_path))
             self.assertFalse(os.path.lexists(yelp_docs_path))
             self.assertFalse(os.path.lexists(yelp_other_path))
+
+
+class TestPackageHooksValidateFramework(TestClickHookBase):
+
+    def _setup_test_env(self, preloads):
+        preloads["click_get_user_home"].return_value = "/home/test-user"
+        self._setup_hooks_dir(
+            preloads, os.path.join(self.temp_dir, "hooks"))
+        self._make_hook_file(dedent("""\
+                           User-Level: yes
+                           Pattern: %s/${id}.test
+        """) % self.temp_dir)
+        self.hook_symlink_path = os.path.join(
+            self.temp_dir, "test-1_test1-app_1.0.test")
+
+    def test_links_are_kept_on_validate_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(
+                preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            self._make_installed_click(json_data={
+                "framework": "ubuntu-sdk-13.10",
+                "hooks": {
+                    "test1-app": {"test": "target-1"}
+                },
+            })
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name=self.TEST_USER)
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+
+    def test_links_are_kept_multiple_frameworks(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(
+                preloads, frameworks=["ubuntu-sdk-14.04", "ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            self._make_installed_click(json_data={
+                "framework": "ubuntu-sdk-13.10",
+                "hooks": {
+                    "test1-app": {"test": "target-1"}
+                },
+            })
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name=self.TEST_USER)
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+
+    def test_links_are_removed_on_missing_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(preloads, frameworks=["missing"])
+            self._setup_test_env(preloads)
+            self._make_installed_click(json_data={
+                "framework": "ubuntu-sdk-13.10",
+                "hooks": {
+                    "test1-app": {"test": "target-1"}
+                },
+            })
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name=self.TEST_USER)
+            self.assertFalse(os.path.lexists(self.hook_symlink_path))
+
+    def test_links_are_removed_on_missing_multiple_framework(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_frameworks_dir",
+                ) as (enter, preloads):
+            enter()
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            self._setup_test_env(preloads)
+            self._make_installed_click(json_data={
+                "framework": "ubuntu-sdk-13.10, ubuntu-sdk-13.10-html",
+                "hooks": {
+                    "test1-app": {"test": "target-1"}
+                },
+            })
+            self.assertTrue(os.path.lexists(self.hook_symlink_path))
+            # run the hooks
+            Click.run_user_hooks(self.db, user_name=self.TEST_USER)
+            self.assertFalse(os.path.lexists(self.hook_symlink_path))

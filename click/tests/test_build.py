@@ -33,7 +33,12 @@ from textwrap import dedent
 
 from click.build import ClickBuildError, ClickBuilder, ClickSourceBuilder
 from click.preinst import static_preinst
-from click.tests.helpers import TestCase, mkfile, touch
+from click.tests.helpers import (
+    disable_logging,
+    mkfile,
+    TestCase,
+    touch,
+)
 
 
 # BAW 2013-04-15: Some tests require umask 022.  Use this decorator to
@@ -118,6 +123,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             ["dpkg-deb", "-f", path, name],
             universal_newlines=True).rstrip("\n")
 
+    @disable_logging
     @umask(0o22)
     def test_build(self):
         self.use_temp_dir()
@@ -199,6 +205,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         self.assertEqual(
             "foo", os.readlink(os.path.join(extract_path, "bin", "bar")))
 
+    @disable_logging
     def test_build_excludes_dot_click(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
@@ -218,6 +225,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual([], os.listdir(extract_path))
 
+    @disable_logging
     def test_build_multiple_architectures(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
@@ -246,6 +254,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             self.assertEqual(source_json, target_json)
 
     # FIXME: DRY violation with test_build_multiple_architectures etc
+    @disable_logging
     def test_build_multiple_frameworks(self):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")

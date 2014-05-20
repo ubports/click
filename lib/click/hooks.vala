@@ -56,9 +56,57 @@ public errordomain HooksError {
 	INCOMPLETE
 }
 
+
+/* vala implementation of click.framework.validate_framework()
+ * 
+ * Note that the required_frameworks string has the form
+ *      framework1, framework2, ...
+ * See doc/file-format.rst for details.
+ */
+private bool
+validate_framework (string required_frameworks)
+{
+	// valid framework names, cf. debian policy §5.6.1
+	Regex valid_framework_re;
+	try {
+		valid_framework_re = new Regex ("^[a-z][a-z0-9.+-]+");
+	} catch (RegexError e) {
+		error ("Could not compile regex /^[a-z][a-z0-9.+-]+/: %s",
+		       e.message);
+	}
+	var base_version = "";
+	foreach (var framework_name in required_frameworks.split (","))
+	{
+		framework_name = framework_name.strip ();
+		if (!valid_framework_re.match (framework_name))
+			return false;
+		Framework framework;
+		// now check the base-version
+		try {
+			framework = Framework.open (framework_name);
+		} catch (FrameworkError e) {
+			return false;
+		}
+		if (base_version == "")
+			base_version = framework.get_base_version ();
+		if (base_version != framework.get_base_version ())
+			return false;
+	}
+	return true;
+}
+
+private bool
+validate_framework_for_package (DB db, string package, string? version)
+{
+	var manifest = read_manifest (db, package, version);
+	if (!manifest.has_member ("framework"))
+		return true;
+	var required_frameworks = manifest.get_string_member ("framework");
+	return validate_framework (required_frameworks);
+}
+
 private Json.Object
-read_manifest_hooks (DB db, string package, string? version)
-	throws DatabaseError
+read_manifest (DB db, string package, string? version)
 {
 	if (version == null)
 		return new Json.Object ();
@@ -69,13 +117,20 @@ read_manifest_hooks (DB db, string package, string? version)
 			 @"$package.manifest");
 		parser.load_from_file (manifest_path);
 		var manifest = parser.get_root ().get_object ();
-		if (! manifest.has_member ("hooks"))
-			return new Json.Object ();
-		var hooks = manifest.get_object_member ("hooks");
-		return hooks.ref ();
+		return manifest.ref ();
 	} catch (Error e) {
 		return new Json.Object ();
 	}
+}
+
+private Json.Object
+read_manifest_hooks (DB db, string package, string? version)
+{
+	var manifest = read_manifest (db, package, version);
+	if (! manifest.has_member ("hooks"))
+		return new Json.Object ();
+	var hooks = manifest.get_object_member ("hooks");
+	return hooks.ref ();
 }
 
 private class PreviousEntry : Object, Gee.Hashable<PreviousEntry> {
@@ -889,10 +944,16 @@ public class Hook : Object {
 		var ret = new List<RelevantApp> ();
 		var hook_name = get_hook_name ();
 		foreach (var unpacked in get_all_packages (user_name)) {
-			var manifest = read_manifest_hooks
+			// if the app is not using a valid framework (anymore)
+			// we don't consider it relevant (anymore)
+			if (!validate_framework_for_package 
+				    (db, unpacked.package, unpacked.version))
+				continue;
+
+			var manifest_hooks = read_manifest_hooks
 				(db, unpacked.package, unpacked.version);
-			foreach (var app_name in manifest.get_members ()) {
-				var hooks = manifest.get_object_member
+			foreach (var app_name in manifest_hooks.get_members ()) {
+				var hooks = manifest_hooks.get_object_member
 					(app_name);
 				if (hooks.has_member (hook_name)) {
 					var relative_path = hooks.get_string_member
@@ -960,6 +1021,7 @@ public class Hook : Object {
 			unowned string package = app.package;
 			unowned string version = app.version;
 			unowned string app_name = app.app_name;
+
 			seen.add (@"$(package)_$(app_name)_$(version)");
 			if (is_user_level) {
 				var user_db = new User.for_user
@@ -1016,7 +1078,7 @@ get_app_hooks (Json.Object manifest)
  * @new_version: The new version of the package.
  * @user_name: (allow-none): A user name, or null.
  *
- * Run hooks following removal of a Click package.
+ * Run hooks following install of a Click package.
  *
  * If @user_name is null, only run system-level hooks.  If @user_name is not
  * null, only run user-level hooks for that user.

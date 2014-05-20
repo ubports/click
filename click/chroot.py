@@ -22,6 +22,8 @@ __metaclass__ = type
 __all__ = [
     "ClickChroot",
     "ClickChrootException",
+    "ClickChrootAlreadyExistsException",
+    "ClickChrootDoesNotExistException",
     ]
 
 
@@ -72,6 +74,7 @@ extra_packages = {
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
+        "libunity-scopes-dev:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -104,6 +107,17 @@ def shell_escape(command):
 
 
 class ClickChrootException(Exception):
+    """A generic issue with the chroot"""
+    pass
+
+
+class ClickChrootAlreadyExistsException(ClickChrootException):
+    """The chroot already exists"""
+    pass
+
+
+class ClickChrootDoesNotExistException(ClickChrootException):
+    """A chroot with that name does not exist yet"""
     pass
 
 
@@ -118,9 +132,10 @@ class ClickChroot:
             series = framework_series[self.framework_base]
         self.series = series
         self.session = session
-        self.native_arch = subprocess.check_output(
+        system_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
+        self.native_arch = self._get_native_arch(system_arch, self.target_arch)
         self.chroots_dir = "/var/lib/schroot/chroots"
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
@@ -135,11 +150,35 @@ class ClickChroot:
             self.user = pwd.getpwuid(os.getuid()).pw_name
         self.dpkg_architecture = self._dpkg_architecture()
 
+    def _get_native_arch(self, system_arch, target_arch):
+        """Determine the proper native architecture for a chroot.
+
+        Some combinations of system and target architecture do not require
+        cross-building, so in these cases we just create a chroot suitable
+        for native building.
+        """
+        if (system_arch, target_arch) in (
+                ("amd64", "i386"),
+                # This will only work if the system is running a 64-bit
+                # kernel; but there's no alternative since no i386-to-amd64
+                # cross-compiler is available in the Ubuntu archive.
+                ("i386", "amd64"),
+                ):
+            return target_arch
+        else:
+            return system_arch
+
     def _dpkg_architecture(self):
         dpkg_architecture = {}
         command = ["dpkg-architecture", "-a%s" % self.target_arch]
         env = dict(os.environ)
         env["CC"] = "true"
+        # Force dpkg-architecture to recalculate everything rather than
+        # picking up values from the environment, which will be present when
+        # running the test suite under dpkg-buildpackage.
+        for key in list(env):
+            if key.startswith("DEB_BUILD_") or key.startswith("DEB_HOST_"):
+                del env[key]
         lines = subprocess.check_output(
             command, env=env, universal_newlines=True).splitlines()
         for line in lines:
@@ -156,18 +195,23 @@ class ClickChroot:
         for pocket in ['updates', 'security']:
             pockets.append('%s-%s' % (series, pocket))
         sources = []
-        if target_arch not in primary_arches:
+        # write binary lines
+        arches = [target_arch]
+        if native_arch != target_arch:
+            arches.append(native_arch)
+        for arch in arches:
+            if arch not in primary_arches:
+                mirror = ports_mirror
+            else:
+                mirror = self.archive
             for pocket in pockets:
                 sources.append("deb [arch=%s] %s %s %s" %
-                               (target_arch, ports_mirror, pocket, components))
-                sources.append("deb-src %s %s %s" %
-                               (ports_mirror, pocket, components))
-        if native_arch in primary_arches:
-            for pocket in pockets:
-                sources.append("deb [arch=%s] %s %s %s" %
-                               (native_arch, self.archive, pocket, components))
-                sources.append("deb-src %s %s %s" %
-                               (self.archive, pocket, components))
+                               (arch, mirror, pocket, components))
+        # write source lines
+        for pocket in pockets:
+            sources.append("deb-src %s %s %s" %
+                           (self.archive, pocket, components))
+
         return sources
 
     @property
@@ -195,9 +239,16 @@ class ClickChroot:
         mode = stat.S_IMODE(os.stat(path).st_mode)
         os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    def create(self):
+    def _make_cross_package(self, prefix):
+        if self.native_arch == self.target_arch:
+            return prefix
+        else:
+            target_tuple = self.dpkg_architecture["DEB_HOST_GNU_TYPE"]
+            return "%s-%s" % (prefix, target_tuple)
+
+    def create(self, keep_broken_chroot_on_fail=False):
         if self.exists():
-            raise ClickChrootException(
+            raise ClickChrootAlreadyExistsException(
                 "Chroot %s already exists" % self.full_name)
         components = ["main", "restricted", "universe", "multiverse"]
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
@@ -208,11 +259,10 @@ class ClickChroot:
             proxy = subprocess.check_output(
                 'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
                 shell=True, universal_newlines=True).strip()
-        target_tuple = self.dpkg_architecture["DEB_HOST_GNU_TYPE"]
         build_pkgs = [
             "build-essential", "fakeroot",
-            "apt-utils", "g++-%s" % target_tuple,
-            "pkg-config-%s" % target_tuple, "cmake",
+            "apt-utils", self._make_cross_package("g++"),
+            self._make_cross_package("pkg-config"), "cmake",
             "dpkg-cross", "libc-dev:%s" % self.target_arch
             ]
         for package in extra_packages.get(self.framework_base, []):
@@ -312,11 +362,18 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             print("apt-get clean", file=finish)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
-        return self.maint(*command)
+        ret_code = self.maint(*command)
+        if ret_code != 0 and not keep_broken_chroot_on_fail:
+            # cleanup on failure
+            self.destroy()
+            raise ClickChrootException(
+                "Failed to create chroot '{}' (exit status {})".format(
+                    self.full_name, ret_code))
+        return ret_code
 
     def run(self, *args):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c"]
         if self.session:
@@ -353,7 +410,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def install(self, *pkgs):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         ret = self.update()
         if ret != 0:
@@ -375,7 +432,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def upgrade(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         ret = self.update()
         if ret != 0:
@@ -388,7 +445,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def destroy(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
         os.remove(chroot_config)
@@ -398,7 +455,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def begin_session(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_name, "--begin-session",
                    "--session-name", self.full_session_name]
@@ -407,7 +464,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
 
     def end_session(self):
         if not self.exists():
-            raise ClickChrootException(
+            raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
         command = ["schroot", "-c", self.full_session_name, "--end-session"]
         subprocess.check_call(command)

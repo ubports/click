@@ -35,6 +35,7 @@ COMMAND OVERVIEW
     click buildsource DIRECTORY
     click chroot
     click contents PATH
+    click framework list
     click hook install HOOK
     click hook remove HOOK
     click hook run-system
@@ -147,6 +148,11 @@ click contents PATH
 -------------------
 
 Display the contents of the Click package in PATH as a file listing.
+
+click framework list
+--------------------
+
+Display a list of available frameworks as one framework per line.
 
 click hook install HOOK
 -----------------------

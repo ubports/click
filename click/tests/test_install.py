@@ -43,7 +43,13 @@ from click.install import (
     ClickInstallerPermissionDenied,
 )
 from click.preinst import static_preinst
-from click.tests.helpers import TestCase, mkfile, mock, touch
+from click.tests.helpers import (
+    disable_logging,
+    mkfile,
+    mock,
+    TestCase,
+    touch,
+)
 
 
 @contextmanager
@@ -102,14 +108,6 @@ class TestClickInstaller(TestCase):
         ClickBuilder()._pack(
             self.temp_dir, control_dir, data_dir, package_path)
         return package_path
-
-    def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
-        frameworks_dir = self._create_mock_framework_dir(frameworks_dir)
-        shutil.rmtree(frameworks_dir, ignore_errors=True)
-        for framework in frameworks:
-            self._create_mock_framework_file(framework)
-        preloads["click_get_frameworks_dir"].side_effect = (
-            lambda: self.make_string(frameworks_dir))
 
     def test_audit_no_click_version(self):
         path = self.make_fake_package()
@@ -234,6 +232,7 @@ class TestClickInstaller(TestCase):
                 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
 
+    @disable_logging
     def test_audit_missing_framework_force(self):
         with self.run_in_subprocess(
                 "click_get_frameworks_dir") as (enter, preloads):
@@ -659,6 +658,7 @@ class TestClickInstaller(TestCase):
             self.assertTrue(
                 os.path.exists(os.path.join(root, "test-package", "current")))
 
+    @disable_logging
     def test_reinstall_preinstalled(self):
         # Attempting to reinstall a preinstalled version shouldn't actually
         # reinstall it in an overlay database (which would cause

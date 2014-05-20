@@ -1,3 +1,41 @@
+click (0.4.23.1) UNRELEASED; urgency=medium
+
+  * chroot: Force dpkg-architecture to recalculate everything rather than
+    picking up values from the environment, to avoid the test suite getting
+    confused by environment variables exported by dpkg-buildpackage.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 20 May 2014 14:12:17 +0100
+
+click (0.4.23) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Show human-readable error message when a click chroot subcommand fails
+    because of existing or non-existing chroots (LP: #1296820).
+  * Selectively disable logging on some tests to avoid message spam during
+    the test runs.
+  * When running hooks, remove hook symlinks if framework requirements are
+    not met (LP: #1271944).
+  * Cleanup the chroot if "click chroot create" fails (unless 
+    --keep-broken-chroot is used)
+  * Fix sources.list generation when native_arch and target_arch are on the
+    same archive server (part of LP #1319153).
+  * Add "click framework list" command to list available frameworks
+    (LP: #1294659).
+
+  [ Pete Woods ]
+  * Add libunity-scopes-dev package to chroot (LP: #1320786).
+
+  [ Sergio Schvezov ]
+  * click chroot creation depends on dpkg-architecture, so recommend
+    dpkg-dev.
+
+  [ Colin Watson ]
+  * chroot: Handle the case where we can execute binaries for the target
+    architecture directly and thus don't need a cross-compiler
+    (LP: #1319153).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 20 May 2014 14:10:11 +0100
+
 click (0.4.22) utopic; urgency=medium
 
   [ Michael Vogt ]

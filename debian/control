@@ -28,7 +28,7 @@ Package: click-dev
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
-Recommends: debootstrap, schroot
+Recommends: debootstrap, schroot, dpkg-dev
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

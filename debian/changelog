@@ -7,6 +7,8 @@ click (0.4.23) UNRELEASED; urgency=medium
     the test runs.
   * When running hooks, remove hook symlinks if framework requirements are
     not met (LP: #1271944).
+  * Cleanup the chroot if "click chroot create" fails (unless 
+    --keep-broken-chroot is used)
 
   [ Pete Woods ]
   * Add libunity-scopes-dev package to chroot (LP: #1320786).

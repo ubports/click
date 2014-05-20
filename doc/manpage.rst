@@ -42,6 +42,7 @@ COMMAND OVERVIEW
     click info PATH
     click install PACKAGE-FILE
     click list
+    click list-frameworks
     click pkgdir {PACKAGE-NAME|PATH}
     click register PACKAGE-NAME VERSION
     click unregister PACKAGE-NAME [VERSION]
@@ -262,6 +263,11 @@ Options:
 --user=USER                 List packages registered by USER (if you have
                             permission).
 --manifest                  Format output as a JSON array of manifests.
+
+click list-frameworks
+---------------------
+
+Display a list of available frameworks as one framework per line.
 
 click pkgdir {PACKAGE-NAME|PATH}
 --------------------------------

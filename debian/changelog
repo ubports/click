@@ -11,6 +11,8 @@ click (0.4.23) UNRELEASED; urgency=medium
     --keep-broken-chroot is used)
   * Fix sources.list generation when native_arch and target_arch are on the
     same archive server (part of LP #1319153).
+  * Add "click framework list" command to list available frameworks
+    (LP: #1294659).
 
   [ Pete Woods ]
   * Add libunity-scopes-dev package to chroot (LP: #1320786).

@@ -64,7 +64,7 @@ def create(parser, args):
     chroot = ClickChroot(args.architecture, args.framework, series=args.series)
     with message_on_error(
             ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
-        return chroot.create()
+        return chroot.create(parser.keep_broken_chroot_on_fail)
     # if we reach this point there was a error so return exit_status 1
     return 1
 
@@ -163,6 +163,10 @@ def run(argv):
     create_parser = subparsers.add_parser(
         "create",
         help="create a chroot of the provided architecture")
+    create_parser.add_argument(
+        "-k", "--keep-broken-chroot", default=False, action="store_true",
+        help="Keep the chroot even if creating it fails (default is to delete "
+              "it)")
     create_parser.set_defaults(func=create)
     destroy_parser = subparsers.add_parser(
         "destroy",

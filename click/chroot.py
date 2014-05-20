@@ -326,7 +326,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
         ret_code = self.maint(*command)
-        if ret_code != 0 and keep_broken_chroot_on_fail is False:
+        if ret_code != 0 and not keep_broken_chroot_on_fail:
             # cleanup on failure
             self.destroy()
             raise ClickChrootException(

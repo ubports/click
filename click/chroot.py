@@ -44,9 +44,9 @@ framework_base = {
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
     }
 
 

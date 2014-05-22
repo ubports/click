@@ -72,9 +72,10 @@ class TestClickFramework(TestCase):
             enter()
             self._setup_frameworks(
                 preloads,
-                frameworks={"ubuntu-sdk-13.10": {}, "ubuntu-sdk-14.04": {}})
+                frameworks={"ubuntu-sdk-13.10": {}, "ubuntu-sdk-14.04": {},
+                            "ubuntu-sdk-14.10": {}})
             self.assertEqual(
-                ["ubuntu-sdk-13.10", "ubuntu-sdk-14.04"],
+                ["ubuntu-sdk-13.10", "ubuntu-sdk-14.04", "ubuntu-sdk-14.10"],
                 sorted(
                     f.props.name for f in Click.Framework.get_frameworks ()))
 

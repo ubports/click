@@ -125,18 +125,21 @@ class TestClickSingleDB(TestCase):
             self.db.get_manifest_as_string, "a", "1.1")
 
     def test_app_running(self):
-        with self.run_in_subprocess("g_spawn_sync") as (enter, preloads):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
             enter()
+            preloads["click_find_on_path"].return_value = True
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
             self.assertTrue(self.db.app_running("foo", "bar", "1.0"))
             self.assertEqual(
-                [[b"upstart-app-pid", b"foo_bar_1.0"]], self.spawn_calls)
+                [[b"ubuntu-app-pid", b"foo_bar_1.0"]], self.spawn_calls)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 1 << 8})
             self.assertFalse(self.db.app_running("foo", "bar", "1.0"))
 
-    def test_any_app_running(self):
+    def test_any_app_running_ubuntu_app_pid(self):
         with self.run_in_subprocess(
                 "click_find_on_path", "g_spawn_sync",
                 ) as (enter, preloads):
@@ -145,16 +148,49 @@ class TestClickSingleDB(TestCase):
                 self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
             with mkfile(manifest_path) as manifest:
                 json.dump({"hooks": {"a-app": {}}}, manifest)
+            preloads["click_find_on_path"].side_effect = (
+                lambda command: command == b"ubuntu-app-pid")
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
+            self.assertTrue(self.db.any_app_running("a", "1.0"))
+            self.assertEqual(
+                [[b"ubuntu-app-pid", b"a_a-app_1.0"]], self.spawn_calls)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 1 << 8})
+            self.assertFalse(self.db.any_app_running("a", "1.0"))
+
+    def test_any_app_running_upstart_app_pid(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            manifest_path = os.path.join(
+                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            preloads["click_find_on_path"].side_effect = (
+                lambda command: command == b"upstart-app-pid")
             preloads["g_spawn_sync"].side_effect = partial(
                 self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
-            preloads["click_find_on_path"].return_value = False
-            self.assertFalse(self.db.any_app_running("a", "1.0"))
-            preloads["click_find_on_path"].return_value = True
             self.assertTrue(self.db.any_app_running("a", "1.0"))
             self.assertEqual(
                 [[b"upstart-app-pid", b"a_a-app_1.0"]], self.spawn_calls)
             preloads["g_spawn_sync"].side_effect = partial(
                 self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+            self.assertFalse(self.db.any_app_running("a", "1.0"))
+
+    def test_any_app_running_no_app_pid_command(self):
+        with self.run_in_subprocess(
+                "click_find_on_path", "g_spawn_sync",
+                ) as (enter, preloads):
+            enter()
+            manifest_path = os.path.join(
+                self.temp_dir, "a", "1.0", ".click", "info", "a.manifest")
+            with mkfile(manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            preloads["click_find_on_path"].return_value = False
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
             self.assertFalse(self.db.any_app_running("a", "1.0"))
 
     def test_maybe_remove_registered(self):
@@ -172,7 +208,7 @@ class TestClickSingleDB(TestCase):
             os.makedirs(os.path.dirname(user_path))
             os.symlink(version_path, user_path)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
             preloads["click_find_on_path"].return_value = True
             self.db.maybe_remove("a", "1.0")
             self.assertTrue(os.path.exists(version_path))
@@ -189,7 +225,7 @@ class TestClickSingleDB(TestCase):
             with mkfile(manifest_path) as manifest:
                 json.dump({"hooks": {"a-app": {}}}, manifest)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 0})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
             preloads["click_find_on_path"].return_value = True
             self.db.maybe_remove("a", "1.0")
             gcinuse_path = os.path.join(
@@ -216,7 +252,7 @@ class TestClickSingleDB(TestCase):
             current_path = os.path.join(self.temp_dir, "a", "current")
             os.symlink("1.0", current_path)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 1 << 8})
             preloads["click_find_on_path"].return_value = True
             self.db.maybe_remove("a", "1.0")
             gcinuse_path = os.path.join(
@@ -254,7 +290,7 @@ class TestClickSingleDB(TestCase):
             os.makedirs(os.path.dirname(b_gcinuse_path))
             os.symlink(b_path, b_gcinuse_path)
             preloads["g_spawn_sync"].side_effect = partial(
-                self.g_spawn_sync_side_effect, {b"upstart-app-pid": 1 << 8})
+                self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 1 << 8})
             preloads["click_find_on_path"].return_value = True
             self.db.gc()
             self.assertTrue(os.path.exists(a_path))

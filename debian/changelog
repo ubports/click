@@ -3,6 +3,11 @@ click (0.4.24) UNRELEASED; urgency=medium
   [ Loïc Minier ]
   * Add 14.10 framework in places where all frameworks are listed.
 
+  [ Colin Watson ]
+  * Copy the pw_uid and pw_gid members from getpwnam's return value and
+    cache those separately, since getpwnam returns a pointer to a static
+    buffer so just caching its return value is not useful (LP: #1323998).
+
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 22 May 2014 10:52:18 +0100
 
 click (0.4.23.1) utopic; urgency=medium

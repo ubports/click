@@ -7,6 +7,8 @@ click (0.4.24) UNRELEASED; urgency=medium
   * Copy the pw_uid and pw_gid members from getpwnam's return value and
     cache those separately, since getpwnam returns a pointer to a static
     buffer so just caching its return value is not useful (LP: #1323998).
+  * Handle the renaming of upstart-app-launch to ubuntu-app-launch: we now
+    cope with both old and new names.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 22 May 2014 10:52:18 +0100
 

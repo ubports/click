@@ -427,8 +427,9 @@ class GIMockTestCase(unittest.TestCase):
                 os.set_inheritable(wfd, True)
             else:
                 fcntl.fcntl(rfd, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+            coverage_executable = sys.executable + "-coverage"
             args = [
-                "/usr/bin/python-coverage", "run", "-p", 
+                coverage_executable, "run", "-p",
                 "-m", "unittest",
                 "%s.%s.%s" % (
                     self.__class__.__module__, self.__class__.__name__,

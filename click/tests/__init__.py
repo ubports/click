@@ -26,6 +26,7 @@ if not hasattr(sys, "ps1"):
     if _append_env_path("GI_TYPELIB_PATH", _lib_click_dir):
         changed = True
     if changed:
+        coverage_executable = sys.executable+"-coverage"
         # We have to re-exec ourselves to get the dynamic loader to pick up
         # the new value of LD_LIBRARY_PATH.
         if "-m unittest" in sys.argv[0]:
@@ -33,7 +34,7 @@ if not hasattr(sys, "ps1"):
             # "usefulness", making the re-exec more painful than it needs to
             # be.
             os.execvp(
-                "python-coverage", ["python-coverage","run","-p", "-m", "unittest"] + sys.argv[1:])
+                coverage_executable, [coverage_executable,"run","-p", "-m", "unittest"] + sys.argv[1:])
         else:
-            os.execvp("python-coverage", ["python-coverage","run","-p"] + sys.argv)
+            os.execvp(coverage_executable, [coverage_executable,"run","-p"] + sys.argv)
         os._exit(1)

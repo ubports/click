@@ -9,6 +9,7 @@ Vcs-Browser: http://bazaar.launchpad.net/~ubuntu-managed-branches/click/click/fi
 X-Auto-Uploader: no-rewrite-version
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.2
+XS-Testsuite: autopkgtest
 
 Package: click
 Architecture: any

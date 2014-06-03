@@ -16,6 +16,14 @@ def _append_env_path(envname, value):
     return True
 
 
+def get_executable():
+    """Get python executable with coverage support (if available)"""
+    coverage_executable = sys.executable+"-coverage"
+    if not os.path.isfile(coverage_executable):
+        return [sys.executable]
+    return [coverage_executable, "run", "-p"]
+
+
 # Don't do any of this in interactive mode.
 if not hasattr(sys, "ps1"):
     _lib_click_dir = os.path.join(config.abs_top_builddir, "lib", "click")
@@ -26,7 +34,7 @@ if not hasattr(sys, "ps1"):
     if _append_env_path("GI_TYPELIB_PATH", _lib_click_dir):
         changed = True
     if changed:
-        coverage_executable = sys.executable+"-coverage"
+        coverage_executable = get_executable()
         # We have to re-exec ourselves to get the dynamic loader to pick up
         # the new value of LD_LIBRARY_PATH.
         if "-m unittest" in sys.argv[0]:
@@ -34,7 +42,7 @@ if not hasattr(sys, "ps1"):
             # "usefulness", making the re-exec more painful than it needs to
             # be.
             os.execvp(
-                coverage_executable, [coverage_executable,"run","-p", "-m", "unittest"] + sys.argv[1:])
+                coverage_executable[0], coverage_executable + ["-m", "unittest"] + sys.argv[1:])
         else:
-            os.execvp(coverage_executable, [coverage_executable,"run","-p"] + sys.argv)
+            os.execvp(coverage_executable[0], coverage_executable + sys.argv)
         os._exit(1)

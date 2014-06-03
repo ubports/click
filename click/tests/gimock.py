@@ -129,7 +129,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 from click.tests.gimock_types import Stat, Stat64
-
+from click.tests import get_executable
 
 # Borrowed from giscanner.girparser.
 CORE_NS = "http://www.gtk.org/introspection/core/1.0"
@@ -427,9 +427,7 @@ class GIMockTestCase(unittest.TestCase):
                 os.set_inheritable(wfd, True)
             else:
                 fcntl.fcntl(rfd, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
-            coverage_executable = sys.executable + "-coverage"
-            args = [
-                coverage_executable, "run", "-p",
+            args = get_executable() + [
                 "-m", "unittest",
                 "%s.%s.%s" % (
                     self.__class__.__module__, self.__class__.__name__,

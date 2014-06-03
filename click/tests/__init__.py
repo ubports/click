@@ -33,7 +33,7 @@ if not hasattr(sys, "ps1"):
             # "usefulness", making the re-exec more painful than it needs to
             # be.
             os.execvp(
-                sys.executable, [sys.executable, "-m", "unittest"] + sys.argv[1:])
+                "python-coverage", ["python-coverage","run","-p", "-m", "unittest"] + sys.argv[1:])
         else:
-            os.execvp(sys.executable, [sys.executable] + sys.argv)
+            os.execvp("python-coverage", ["python-coverage","run","-p"] + sys.argv)
         os._exit(1)

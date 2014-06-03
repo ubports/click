@@ -113,8 +113,8 @@ from functools import partial
 import os
 import pickle
 import shutil
-import subprocess
 import sys
+import subprocess
 import tempfile
 from textwrap import dedent
 import traceback
@@ -261,6 +261,7 @@ class GIMockTestCase(unittest.TestCase):
             "stdio.h",
             "stdint.h",
             "stdlib.h",
+            "string.h",
             "sys/types.h",
             "unistd.h",
             ])
@@ -292,6 +293,10 @@ class GIMockTestCase(unittest.TestCase):
                 conv["proto"] = ", ".join(
                     "%s %s" % pair for pair in zip(argtypes, argnames))
                 conv["args"] = ", ".join(argnames)
+                if conv["ret"] == "gchar*":
+                    conv["need_strdup"] = "strdup"
+                else:
+                    conv["need_strdup"] = ""
                 # The delegation scheme used here is needed because trying
                 # to pass pointers back and forward through ctypes is a
                 # recipe for having them truncated to 32 bits at the drop of
@@ -338,7 +343,7 @@ class GIMockTestCase(unittest.TestCase):
                                 delegate_%(name)s = 0;
                                 ret = (*ctypes_%(name)s) (%(args)s);
                                 if (! delegate_%(name)s)
-                                    return ret;
+                                    return %(need_strdup)s(ret);
                             }
                             return (*real_%(name)s) (%(args)s);
                         }
@@ -423,7 +428,8 @@ class GIMockTestCase(unittest.TestCase):
             else:
                 fcntl.fcntl(rfd, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
             args = [
-                sys.executable, "-m", "unittest",
+                "/usr/bin/python-coverage", "run", "-p", 
+                "-m", "unittest",
                 "%s.%s.%s" % (
                     self.__class__.__module__, self.__class__.__name__,
                     self._testMethodName)]
@@ -431,12 +437,16 @@ class GIMockTestCase(unittest.TestCase):
             env["GIMOCK_SUBPROCESS"] = str(wfd)
             if lib_path is not None:
                 env["LD_PRELOAD"] = lib_path
-            subp = subprocess.Popen(args, close_fds=False, env=env)
+            subp = subprocess.Popen(args, close_fds=False, env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
             os.close(wfd)
             reader = os.fdopen(rfd, "rb")
-            subp.communicate()
+            stdout, stderr = subp.communicate()
             exctype = pickle.load(reader)
             if exctype is not None and issubclass(exctype, AssertionError):
+                print(stdout, file=sys.stdout)
+                print(stderr, file=sys.stderr)
                 raise AssertionError("Subprocess failed a test!")
             elif exctype is not None or subp.returncode != 0:
                 raise Exception("Subprocess returned an error!")
@@ -450,7 +460,7 @@ class GIMockTestCase(unittest.TestCase):
                 writer = os.fdopen(wfd, "wb")
                 pickle.dump(None, writer)
                 writer.flush()
-                os._exit(0)
+                return
         except ParentProcess:
             pass
         except Exception as e:

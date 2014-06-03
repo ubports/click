@@ -7,6 +7,7 @@ import json
 import os
 import os.path
 import random
+import re
 import shutil
 import string
 import subprocess
@@ -53,15 +54,34 @@ class TestClickInfo(unittest.TestCase):
             }""" % (name, version))
         with open(os.path.join(clickdir, "README"), "w") as f:
             f.write("hello world!")
-        with chdir(tmpdir):
-            subprocess.call(["click", "build", clickdir])
+        with chdir(tmpdir), open(os.devnull, "w") as devnull:
+            subprocess.call(["click", "build", clickdir], stdout=devnull)
         generated_clicks = glob.glob(os.path.join(tmpdir, "*.click"))
         self.assertEqual(len(generated_clicks), 1)
         return generated_clicks[0]
+
+    def test_build(self):
+        path_to_click = self._make_click()
+        self.assertTrue(os.path.exists(path_to_click))
 
     def test_info(self):
         name = "com.ubuntu.foo"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
-            self.click_binary, "info", path_to_click],)
+            self.click_binary, "info", path_to_click])
         self.assertEqual(json.loads(output)["name"], name)
+
+    def test_verify_ok(self):
+        name = "com.ubuntu.verify-ok"
+        path_to_click = self._make_click(name)
+        output = subprocess.check_output([
+            self.click_binary, "verify", path_to_click])
+        self.assertEqual(output, "")
+
+    def test_contents(self):
+        name = "com.ubuntu.contents"
+        path_to_click = self._make_click(name)
+        output = subprocess.check_output([
+            self.click_binary, "contents", path_to_click])
+        self.assertTrue(re.search(
+            r'-rw-rw-r-- root/root\s+[0-9]+\s+[0-9-]+ [0-9:]+ ./README', output))

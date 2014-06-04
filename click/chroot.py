@@ -41,12 +41,19 @@ framework_base = {
     "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
+    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
     }
 
 
 framework_series = {
     "ubuntu-sdk-13.10": "saucy",
     "ubuntu-sdk-14.04": "trusty",
+    "ubuntu-sdk-14.10": "utopic",
     }
 
 
@@ -70,6 +77,24 @@ extra_packages = {
         "qttools5-dev:TARGET",
         ],
     "ubuntu-sdk-14.04": [
+        "cmake",
+        "libqt5svg5-dev:TARGET",
+        "libqt5webkit5-dev:TARGET",
+        "libqt5xmlpatterns5-dev:TARGET",
+        "libunity-scopes-dev:TARGET",
+        "qt3d5-dev:TARGET",
+        "qt5-default:TARGET",
+        "qtbase5-dev:TARGET",
+        "qtdeclarative5-dev:TARGET",
+        "qtdeclarative5-dev-tools",
+        "qtlocation5-dev:TARGET",
+        "qtmultimedia5-dev:TARGET",
+        "qtscript5-dev:TARGET",
+        "qtsensors5-dev:TARGET",
+        "qttools5-dev:TARGET",
+        "qttools5-dev-tools:TARGET",
+        ],
+    "ubuntu-sdk-14.10": [
         "cmake",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",

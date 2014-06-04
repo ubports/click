@@ -14,7 +14,7 @@ Package: click
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (= ${binary:Version}), adduser
-Recommends: click-apparmor, upstart-app-launch-tools
+Recommends: click-apparmor, ubuntu-app-launch-tools | upstart-app-launch-tools
 Conflicts: click-package
 Replaces: click-package
 Provides: click-package

@@ -1,4 +1,4 @@
 User-Level: yes
 Pattern: ${home}/.local/share/click/hooks/desktop/${id}.desktop
-Exec: [ -e /usr/share/click/hooks/upstart-app-launch-desktop.hook ] || click desktophook
+Exec: [ -e /usr/share/click/hooks/ubuntu-app-launch-desktop.hook ] || [ -e /usr/share/click/hooks/upstart-app-launch-desktop.hook ] || click desktophook
 Hook-Name: desktop

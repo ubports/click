@@ -1,9 +1,9 @@
-click (0.4.25) UNRELEASED; urgency=medium
+click (0.4.25) utopic; urgency=medium
 
   [ Ted Gould ]
   * Check for ubuntu-app-launch-desktop hook (LP: #1326694).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 05 Jun 2014 18:42:36 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 05 Jun 2014 18:18:50 +0000
 
 click (0.4.24) utopic; urgency=medium
 

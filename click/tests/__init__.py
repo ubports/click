@@ -17,11 +17,11 @@ def _append_env_path(envname, value):
 
 
 def get_executable():
-    """Get python executable with coverage support (if available)"""
+    """Get python executable (respecting if python-coverage was used)"""
     coverage_executable = sys.executable+"-coverage"
-    if not os.path.isfile(coverage_executable):
-        return [sys.executable]
-    return [coverage_executable, "run", "-p"]
+    if "coverage" in sys.modules and os.path.isfile(coverage_executable):
+        return [coverage_executable, "run", "-p"]
+    return [sys.executable]
 
 
 # Don't do any of this in interactive mode.

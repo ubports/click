@@ -113,8 +113,8 @@ from functools import partial
 import os
 import pickle
 import shutil
-import sys
 import subprocess
+import sys
 import tempfile
 from textwrap import dedent
 import traceback

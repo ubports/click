@@ -188,6 +188,11 @@ class GIMockTestCase(unittest.TestCase):
         self._composite_refs = []
         self._delegate_funcs = {}
 
+    def doCleanups(self):
+        # we do not want to run the cleanups twice, just run it in the parent
+        if "GIMOCK_SUBPROCESS" not in os.environ:
+            return super(GIMockTestCase, self).doCleanups()
+
     def _gir_get_type(self, obj):
         ret = {}
         arrayinfo = obj.find(_corens("array"))
@@ -443,12 +448,18 @@ class GIMockTestCase(unittest.TestCase):
             reader = os.fdopen(rfd, "rb")
             stdout, stderr = subp.communicate()
             exctype = pickle.load(reader)
-            if exctype is not None and issubclass(exctype, AssertionError):
+            # "normal" exit
+            if exctype is not None and issubclass(exctype, SystemExit):
+                pass
+            elif exctype is not None and issubclass(exctype, AssertionError):
                 print(stdout, file=sys.stdout)
                 print(stderr, file=sys.stderr)
                 raise AssertionError("Subprocess failed a test!")
             elif exctype is not None or subp.returncode != 0:
-                raise Exception("Subprocess returned an error!")
+                print(stdout, file=sys.stdout)
+                print(stderr, file=sys.stderr)
+                raise Exception("Subprocess returned an error! (%s, %s)" % (
+                    exctype, subp.returncode))
             reader.close()
             raise ParentProcess()
 
@@ -457,9 +468,11 @@ class GIMockTestCase(unittest.TestCase):
             if "GIMOCK_SUBPROCESS" in os.environ:
                 wfd = int(os.environ["GIMOCK_SUBPROCESS"])
                 writer = os.fdopen(wfd, "wb")
-                pickle.dump(None, writer)
+                # a sys.ext will generate a SystemExit exception, so we
+                # push it into the pipe so that the parent knows whats going on
+                pickle.dump(SystemExit, writer)
                 writer.flush()
-                return
+                sys.exit(0)
         except ParentProcess:
             pass
         except Exception as e:

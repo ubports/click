@@ -24,7 +24,6 @@ __all__ = [
 
 
 import os
-import subprocess
 from textwrap import dedent
 
 from click.tests.helpers import TestCase

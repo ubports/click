@@ -129,7 +129,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 from click.tests.gimock_types import Stat, Stat64
-
+from click.tests import get_executable
 
 # Borrowed from giscanner.girparser.
 CORE_NS = "http://www.gtk.org/introspection/core/1.0"
@@ -187,6 +187,11 @@ class GIMockTestCase(unittest.TestCase):
         self._preload_func_refs = []
         self._composite_refs = []
         self._delegate_funcs = {}
+
+    def doCleanups(self):
+        # we do not want to run the cleanups twice, just run it in the parent
+        if "GIMOCK_SUBPROCESS" not in os.environ:
+            return super(GIMockTestCase, self).doCleanups()
 
     def _gir_get_type(self, obj):
         ret = {}
@@ -261,6 +266,7 @@ class GIMockTestCase(unittest.TestCase):
             "stdio.h",
             "stdint.h",
             "stdlib.h",
+            "string.h",
             "sys/types.h",
             "unistd.h",
             ])
@@ -292,6 +298,10 @@ class GIMockTestCase(unittest.TestCase):
                 conv["proto"] = ", ".join(
                     "%s %s" % pair for pair in zip(argtypes, argnames))
                 conv["args"] = ", ".join(argnames)
+                if conv["ret"] == "gchar*":
+                    conv["need_strdup"] = "strdup"
+                else:
+                    conv["need_strdup"] = ""
                 # The delegation scheme used here is needed because trying
                 # to pass pointers back and forward through ctypes is a
                 # recipe for having them truncated to 32 bits at the drop of
@@ -338,7 +348,7 @@ class GIMockTestCase(unittest.TestCase):
                                 delegate_%(name)s = 0;
                                 ret = (*ctypes_%(name)s) (%(args)s);
                                 if (! delegate_%(name)s)
-                                    return ret;
+                                    return %(need_strdup)s(ret);
                             }
                             return (*real_%(name)s) (%(args)s);
                         }
@@ -422,8 +432,8 @@ class GIMockTestCase(unittest.TestCase):
                 os.set_inheritable(wfd, True)
             else:
                 fcntl.fcntl(rfd, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
-            args = [
-                sys.executable, "-m", "unittest",
+            args = get_executable() + [
+                "-m", "unittest",
                 "%s.%s.%s" % (
                     self.__class__.__module__, self.__class__.__name__,
                     self._testMethodName)]
@@ -431,15 +441,25 @@ class GIMockTestCase(unittest.TestCase):
             env["GIMOCK_SUBPROCESS"] = str(wfd)
             if lib_path is not None:
                 env["LD_PRELOAD"] = lib_path
-            subp = subprocess.Popen(args, close_fds=False, env=env)
+            subp = subprocess.Popen(args, close_fds=False, env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
             os.close(wfd)
             reader = os.fdopen(rfd, "rb")
-            subp.communicate()
+            stdout, stderr = subp.communicate()
             exctype = pickle.load(reader)
-            if exctype is not None and issubclass(exctype, AssertionError):
+            # "normal" exit
+            if exctype is not None and issubclass(exctype, SystemExit):
+                pass
+            elif exctype is not None and issubclass(exctype, AssertionError):
+                print(stdout, file=sys.stdout)
+                print(stderr, file=sys.stderr)
                 raise AssertionError("Subprocess failed a test!")
             elif exctype is not None or subp.returncode != 0:
-                raise Exception("Subprocess returned an error!")
+                print(stdout, file=sys.stdout)
+                print(stderr, file=sys.stderr)
+                raise Exception("Subprocess returned an error! (%s, %s)" % (
+                    exctype, subp.returncode))
             reader.close()
             raise ParentProcess()
 
@@ -448,9 +468,11 @@ class GIMockTestCase(unittest.TestCase):
             if "GIMOCK_SUBPROCESS" in os.environ:
                 wfd = int(os.environ["GIMOCK_SUBPROCESS"])
                 writer = os.fdopen(wfd, "wb")
-                pickle.dump(None, writer)
+                # a sys.ext will generate a SystemExit exception, so we
+                # push it into the pipe so that the parent knows whats going on
+                pickle.dump(SystemExit, writer)
                 writer.flush()
-                os._exit(0)
+                sys.exit(0)
         except ParentProcess:
             pass
         except Exception as e:

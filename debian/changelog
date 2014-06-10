@@ -2,6 +2,7 @@ click (0.4.26) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Add basic integration tests, run via autopkgtest.
+  * Add coverage testing.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 09 Jun 2014 11:02:39 +0100
 

@@ -90,6 +90,13 @@ or::
 
   $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
 
+If you have python-coverage installed, you can get a test coverage report 
+by typing:
+
+  $ python-coverage combine
+  $ python-coverage report
+
+This works also for python3-coverage.
 
 
 Documentation

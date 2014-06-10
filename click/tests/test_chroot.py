@@ -23,6 +23,9 @@ __all__ = [
     ]
 
 
+import os
+from textwrap import dedent
+
 from click.tests.helpers import TestCase
 from click.chroot import (
     ClickChroot,
@@ -30,6 +33,18 @@ from click.chroot import (
 
 
 class TestClickChroot(TestCase):
+    def set_dpkg_native_architecture(self, arch):
+        """Fool dpkg-architecture into selecting a given native arch."""
+        self.use_temp_dir()
+        dpkg_script_path = os.path.join(self.temp_dir, "dpkg")
+        with open(dpkg_script_path, "w") as dpkg_script:
+            print(dedent("""\
+                #! /bin/sh
+                echo %s
+                """) % arch, file=dpkg_script)
+        os.chmod(dpkg_script_path, 0o755)
+        os.environ["PATH"] = "%s:%s" % (self.temp_dir, os.environ["PATH"])
+
     def test_get_native_arch_amd64_to_amd64(self):
         chroot = ClickChroot("amd64", "ubuntu-sdk-14.04", series="trusty")
         self.assertEqual("amd64", chroot._get_native_arch("amd64", "amd64"))
@@ -41,6 +56,24 @@ class TestClickChroot(TestCase):
     def test_get_native_arch_amd64_to_i386(self):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
         self.assertEqual("i386", chroot._get_native_arch("amd64", "i386"))
+
+    def test_dpkg_architecture_amd64_to_armhf(self):
+        self.set_dpkg_native_architecture("amd64")
+        chroot = ClickChroot("armhf", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("amd64", chroot.dpkg_architecture["DEB_BUILD_ARCH"])
+        self.assertEqual("armhf", chroot.dpkg_architecture["DEB_HOST_ARCH"])
+
+    def test_dpkg_architecture_i386_to_armhf(self):
+        self.set_dpkg_native_architecture("i386")
+        chroot = ClickChroot("armhf", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("i386", chroot.dpkg_architecture["DEB_BUILD_ARCH"])
+        self.assertEqual("armhf", chroot.dpkg_architecture["DEB_HOST_ARCH"])
+
+    def test_dpkg_architecture_amd64_to_i386(self):
+        self.set_dpkg_native_architecture("amd64")
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("i386", chroot.dpkg_architecture["DEB_BUILD_ARCH"])
+        self.assertEqual("i386", chroot.dpkg_architecture["DEB_HOST_ARCH"])
 
     def test_gen_sources_archive_only(self):
         chroot = ClickChroot("amd64", "ubuntu-sdk-13.10", series="trusty")

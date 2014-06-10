@@ -1,4 +1,5 @@
 __pycache__
+./.coverage
 ./aclocal.m4
 ./autom4te.cache
 ./click.egg-info
@@ -7,6 +8,7 @@ __pycache__
 ./config.log
 ./config.status
 ./configure
+./coverage.xml
 ./libtool
 ./setup.py
 ./stamp-h1

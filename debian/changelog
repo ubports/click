@@ -1,8 +1,9 @@
-click (0.4.26.1) UNRELEASED; urgency=medium
+click (0.4.26.1) utopic; urgency=medium
 
+  [ Colin Watson ]
   * Fix a pyflakes complaint.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 10 Jun 2014 19:02:57 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 10 Jun 2014 18:04:12 +0000
 
 click (0.4.26) utopic; urgency=medium
 

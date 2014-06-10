@@ -55,8 +55,8 @@ class TestCase(unittest.TestCase):
 
     def _make_click(self, name=None, version=1.0):
         if name is None:
-            name = "com.ubuntu.%s" % "".join(random.choice(string.lowercase) 
-                                             for i in range(10))
+            name = "com.ubuntu.%s" % "".join(
+                random.choice(string.ascii_lowercase) for i in range(10))
         tmpdir = tempfile.mkdtemp()
         self.addCleanup(lambda: shutil.rmtree(tmpdir))
         clickdir = os.path.join(tmpdir, name)
@@ -89,7 +89,7 @@ class TestInfo(TestCase):
         name = "com.ubuntu.foo"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
-            self.click_binary, "info", path_to_click])
+            self.click_binary, "info", path_to_click], universal_newlines=True)
         self.assertEqual(json.loads(output)["name"], name)
 
 
@@ -99,7 +99,7 @@ class TestVerify(TestCase):
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "verify", "--force-missing-framework",
-            path_to_click])
+            path_to_click], universal_newlines=True)
         self.assertEqual(output, "")
 
 
@@ -108,7 +108,8 @@ class TestContents(TestCase):
         name = "com.ubuntu.contents"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
-            self.click_binary, "contents", path_to_click])
+            self.click_binary, "contents", path_to_click],
+            universal_newlines=True)
         self.assertTrue(re.search(
             r'-rw-r[-w]-r-- root/root\s+[0-9]+\s+[0-9-]+ [0-9:]+ ./README', output))
 
@@ -123,7 +124,7 @@ class TestChroot(TestCase):
     def setUpClass(cls):
         super(TestChroot, cls).setUpClass()
         cls.arch = subprocess.check_output(
-            ["dpkg", "--print-architecture"]).strip()
+            ["dpkg", "--print-architecture"], universal_newlines=True).strip()
         subprocess.check_call([
             cls.click_binary, 
             "chroot", "-a", cls.arch,
@@ -149,12 +150,12 @@ class TestChroot(TestCase):
     def test_run(self):
         output = subprocess.check_output([
             self.click_binary, "chroot", "-a", self.arch,
-            "run", "echo", "hello world"])
+            "run", "echo", "hello world"], universal_newlines=True)
         self.assertEqual(output, "hello world\n")
 
     def test_maint(self):
         output = subprocess.check_output([
             self.click_binary, "chroot", "-a", self.arch,
-            "maint", "id"])
+            "maint", "id"], universal_newlines=True)
         self.assertEqual(output, "uid=0(root) gid=0(root) groups=0(root)\n")
 

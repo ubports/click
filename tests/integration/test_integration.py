@@ -117,7 +117,8 @@ class TestContents(TestCase):
 @unittest.skipIf(
     os.getuid() != 0, "This tests needs to run as root")
 @unittest.skipIf(
-    subprocess.call(["ping", "-c1", "archive.ubuntu.com"]) != 0, "Need network")
+    subprocess.call(
+        ["ping", "-c1", "archive.ubuntu.com"]) != 0, "Need network")
 class TestChroot(TestCase):
 
     @classmethod
@@ -126,7 +127,7 @@ class TestChroot(TestCase):
         cls.arch = subprocess.check_output(
             ["dpkg", "--print-architecture"], universal_newlines=True).strip()
         subprocess.check_call([
-            cls.click_binary, 
+            cls.click_binary,
             "chroot", "-a", cls.arch,
             "create"])
 
@@ -146,7 +147,7 @@ class TestChroot(TestCase):
         subprocess.check_call([
             self.click_binary, "chroot", "-a", self.arch,
             "install", "apt-utils"])
-    
+
     def test_run(self):
         output = subprocess.check_output([
             self.click_binary, "chroot", "-a", self.arch,
@@ -158,4 +159,3 @@ class TestChroot(TestCase):
             self.click_binary, "chroot", "-a", self.arch,
             "maint", "id"], universal_newlines=True)
         self.assertEqual(output, "uid=0(root) gid=0(root) groups=0(root)\n")
-

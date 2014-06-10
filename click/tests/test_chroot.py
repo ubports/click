@@ -23,6 +23,8 @@ __all__ = [
     ]
 
 
+import subprocess
+
 from click.tests.helpers import TestCase
 from click.chroot import (
     ClickChroot,
@@ -41,6 +43,28 @@ class TestClickChroot(TestCase):
     def test_get_native_arch_amd64_to_i386(self):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
         self.assertEqual("i386", chroot._get_native_arch("amd64", "i386"))
+
+    def test_dpkg_architecture_to_armhf(self):
+        chroot = ClickChroot("armhf", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("armhf", chroot.dpkg_architecture["DEB_HOST_ARCH"])
+        system_arch = subprocess.check_output(
+            ["dpkg", "--print-architecture"],
+            universal_newlines=True).strip()
+        self.assertEqual(
+            system_arch, chroot.dpkg_architecture["DEB_BUILD_ARCH"])
+
+    def test_dpkg_architecture_to_i386(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
+        self.assertEqual("i386", chroot.dpkg_architecture["DEB_HOST_ARCH"])
+        system_arch = subprocess.check_output(
+            ["dpkg", "--print-architecture"],
+            universal_newlines=True).strip()
+        if system_arch == "amd64":
+            self.assertEqual(
+                "i386", chroot.dpkg_architecture["DEB_BUILD_ARCH"])
+        else:
+            self.assertEqual(
+                system_arch, chroot.dpkg_architecture["DEB_BUILD_ARCH"])
 
     def test_gen_sources_archive_only(self):
         chroot = ClickChroot("amd64", "ubuntu-sdk-13.10", series="trusty")

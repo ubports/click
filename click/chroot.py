@@ -212,6 +212,14 @@ class ClickChroot:
             except ValueError:
                 continue
             dpkg_architecture[key] = value
+        if self.native_arch == self.target_arch:
+            # We may have overridden the native architecture (see
+            # _get_native_arch above), so we need to force DEB_BUILD_* to
+            # match.
+            for key in list(dpkg_architecture):
+                if key.startswith("DEB_HOST_"):
+                    new_key = "DEB_BUILD_" + key[len("DEB_HOST_"):]
+                    dpkg_architecture[new_key] = dpkg_architecture[key]
         return dpkg_architecture
 
     def _generate_sources(self, series, native_arch, target_arch, components):

@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.click_binary = "/usr/bin/click"
 
-    def _make_click(self, name=None, version=1.0):
+    def _make_click(self, name=None, version=1.0, framework="ubuntu-sdk-13.10"):
         if name is None:
             name = "com.ubuntu.%s" % "".join(
                 random.choice(string.ascii_lowercase) for i in range(10))
@@ -54,8 +54,8 @@ class TestCase(unittest.TestCase):
             "version": "%s",
             "maintainer": "Foo Bar <foo@example.org>",
             "title": "test title",
-            "framework": "ubuntu-sdk-13.10"
-            }""" % (name, version))
+            "framework": "%s"
+            }""" % (name, version, framework))
         with open(os.path.join(clickdir, "README"), "w") as f:
             f.write("hello world!")
         with chdir(tmpdir), open(os.devnull, "w") as devnull:

@@ -1,3 +1,10 @@
+click (0.4.27) UNRELEASED; urgency=medium
+
+  [ Michael Vogt ]
+  * Fix failing autopkgtests.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 16 Jun 2014 13:48:04 +0100
+
 click (0.4.26.1) utopic; urgency=medium
 
   [ Colin Watson ]

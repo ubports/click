@@ -15,7 +15,6 @@
 
 """Integration tests for the click CLI interface."""
 
-import copy
 import contextlib
 import glob
 import json
@@ -25,7 +24,6 @@ import re
 import shutil
 import string
 import subprocess
-import sys
 import tempfile
 import unittest
 
@@ -42,16 +40,7 @@ class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.click_binary = os.path.abspath(
-            os.path.join(sys.argv[0], "..", "bin", "click"))
-
-    def setUp(self):
-        self.saved_env = copy.copy(os.environ)
-        os.environ["PYTHONPATH"] = os.path.abspath(
-            os.path.join(sys.argv[0], ".."))
-
-    def tearDown(self):
-        os.environ = self.saved_env
+        cls.click_binary = "/usr/bin/click"
 
     def _make_click(self, name=None, version=1.0):
         if name is None:

@@ -239,22 +239,27 @@ class ClickChroot:
         return dpkg_architecture
 
     def _generate_chroot_config(self, mount):
+        admin_user = "root"
+        users = []
+        for key in ("users", "root-users", "source-root-users"):
+            users.append("%s=%s,%s" % (key, admin_user, self.user))
         with open(self.chroot_config, "w") as target:
-            admin_user = "root"
-            print("[%s]" % self.full_name, file=target)
-            print("description=Build chroot for click packages on %s" %
-                  self.target_arch, file=target)
-            for key in ("users", "root-users", "source-root-users"):
-                print("%s=%s,%s" % (key, admin_user, self.user), file=target)
-            print("type=directory", file=target)
-            print("profile=default", file=target)
-            print("setup.fstab=click/fstab", file=target)
-            print("# Not protocols or services see ", file=target)
-            print("# debian bug 557730", file=target)
-            print("setup.nssdatabases=sbuild/nssdatabases",
-                file=target)
-            print("union-type=overlayfs", file=target)
-            print("directory=%s" % mount, file=target)
+            target.write(dedent("""
+            [{full_name}]
+            description=Build chroot for click packages on {target_arch}
+            {users}
+            type=directory
+            profile=default
+            setup.fstab=click/fstab
+            # Not protocols or services see 
+            # debian bug 557730
+            setup.nssdatabases=sbuild/nssdatabases
+            union-type=overlayfs
+            directory={mount}
+            """).lstrip().format(full_name=self.full_name,
+                                 target_arch=self.target_arch,
+                                 users="\n".join(users),
+                                 mount=mount))
 
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"

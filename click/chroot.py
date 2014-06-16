@@ -225,6 +225,24 @@ class ClickChroot:
                     dpkg_architecture[new_key] = dpkg_architecture[key]
         return dpkg_architecture
 
+    def _generate_chroot_config(self, mount):
+        with open(self.chroot_config, "w") as target:
+            admin_user = "root"
+            print("[%s]" % self.full_name, file=target)
+            print("description=Build chroot for click packages on %s" %
+                  self.target_arch, file=target)
+            for key in ("users", "root-users", "source-root-users"):
+                print("%s=%s,%s" % (key, admin_user, self.user), file=target)
+            print("type=directory", file=target)
+            print("profile=default", file=target)
+            print("setup.fstab=click/fstab", file=target)
+            print("# Not protocols or services see ", file=target)
+            print("# debian bug 557730", file=target)
+            print("setup.nssdatabases=sbuild/nssdatabases",
+                file=target)
+            print("union-type=overlayfs", file=target)
+            print("directory=%s" % mount, file=target)
+
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
         pockets = ['%s' % series]
@@ -329,22 +347,7 @@ class ClickChroot:
                 print(line, file=sources_list)
         shutil.copy2("/etc/localtime", "%s/etc/" % mount)
         shutil.copy2("/etc/timezone", "%s/etc/" % mount)
-        with open(self.chroot_config, "w") as target:
-            admin_user = "root"
-            print("[%s]" % self.full_name, file=target)
-            print("description=Build chroot for click packages on %s" %
-                  self.target_arch, file=target)
-            for key in ("users", "root-users", "source-root-users"):
-                print("%s=%s,%s" % (key, admin_user, self.user), file=target)
-            print("type=directory", file=target)
-            print("profile=default", file=target)
-            print("setup.fstab=click/fstab", file=target)
-            print("# Not protocols or services see ", file=target)
-            print("# debian bug 557730", file=target)
-            print("setup.nssdatabases=sbuild/nssdatabases",
-                file=target)
-            print("union-type=overlayfs", file=target)
-            print("directory=%s" % mount, file=target)
+        self._generate_chroot_config(mount)
         daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
         with open(daemon_policy, "w") as policy:
             print("#!/bin/sh", file=policy)

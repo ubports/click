@@ -196,6 +196,31 @@ class TestClickChroot(TestCase):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
         self.assertEqual(chroot.full_name, "click-ubuntu-sdk-14.04-i386")
 
+    def test_chroot_create_chroot_config(self):
+        self.use_temp_dir()
+        chroot = FakeClickChroot(
+            "i386", "ubuntu-sdk-14.04", temp_dir=self.temp_dir)
+        with patch.object(chroot, "user", new="meep"):
+            chroot._generate_chroot_config(self.temp_dir)
+            with open(chroot.chroot_config) as f:
+                content = f.read()
+            self.assertEqual(
+                content, dedent("""
+                [click-ubuntu-sdk-14.04-i386]
+                description=Build chroot for click packages on i386
+                users=root,{user}
+                root-users=root,{user}
+                source-root-users=root,{user}
+                type=directory
+                profile=default
+                setup.fstab=click/fstab
+                # Not protocols or services see 
+                # debian bug 557730
+                setup.nssdatabases=sbuild/nssdatabases
+                union-type=overlayfs
+                directory={temp_dir}
+                """).lstrip().format(user="meep", temp_dir=self.temp_dir))
+
     def test_chroot_create_mocked(self):
         self.use_temp_dir()
         os.environ["http_proxy"] = "http://proxy.example.com/"

@@ -287,19 +287,28 @@ class ClickChroot:
             policy.write(self.DAEMON_POLICY)
         return daemon_policy
 
-    def _generate_finish_script(self, mount, proxy, build_pkgs):
+    def _generate_apt_proxy_file(self, mount, proxy):
+        apt_conf_d = os.path.join(mount, "etc", "apt", "apt.conf.d")
+        if not os.path.exists(apt_conf_d):
+            os.makedirs(apt_conf_d)
+        apt_conf_f = os.path.join(apt_conf_d, "99-click-chroot-proxy")
+        if proxy:
+            with open(apt_conf_f, "w") as f:
+                f.write(dedent("""
+                // proxy settings copied by click chroot
+                Acquire { 
+                    HTTP { 
+                        Proxy "%s";
+                    };
+                };
+                """.lstrip()) % proxy)
+        return apt_conf_f
+
+    def _generate_finish_script(self, mount, build_pkgs):
         finish_script = "%s/finish.sh" % mount
         with open(finish_script, 'w') as finish:
             print("#!/bin/bash", file=finish)
             print("set -e", file=finish)
-            if proxy:
-                print("mkdir -p /etc/apt/apt.conf.d", file=finish)
-                print("cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF",
-                      file=finish)
-                print("// proxy settings copied by click chroot", file=finish)
-                print('Acquire { HTTP { Proxy "%s"; }; };' % proxy,
-                      file=finish)
-                print("EOF", file=finish)
             print("# Configure target arch", file=finish)
             print("dpkg --add-architecture %s" % self.target_arch,
                   file=finish)
@@ -417,7 +426,8 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
-        finish_script = self._generate_finish_script(mount, proxy, build_pkgs)
+        self._generate_apt_proxy_file(mount, proxy)
+        finish_script = self._generate_finish_script(mount, build_pkgs)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
         ret_code = self.maint(*command)
@@ -451,9 +461,6 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             return ret
 
     def maint(self, *args):
-        if not self.exists():
-            raise ClickChrootDoesNotExistException(
-                "Chroot %s does not exist" % self.full_name)
         command = [ "schroot", "-u", "root", "-c" ]
         if self.session:
             command.extend([self.full_session_name, "--run-session"])

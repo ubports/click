@@ -23,6 +23,7 @@ __all__ = [
     ]
 
 from mock import patch
+import re
 import os
 from textwrap import dedent
 
@@ -213,17 +214,12 @@ class TestClickChroot(TestCase):
         self.use_temp_dir()
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
         finish_script = chroot._generate_finish_script(
-            self.temp_dir, "http://proxy.example.com",
+            self.temp_dir,
             ["build-pkg-1", "build-pkg-2"])
         with open(finish_script) as f:
             self.assertEqual(f.read(),dedent("""
             #!/bin/bash
             set -e
-            mkdir -p /etc/apt/apt.conf.d
-            cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF
-            // proxy settings copied by click chroot
-            Acquire { HTTP { Proxy "http://proxy.example.com"; }; };
-            EOF
             # Configure target arch
             dpkg --add-architecture i386
             # Reload package lists
@@ -246,6 +242,23 @@ class TestClickChroot(TestCase):
             rm /finish.sh
             apt-get clean
             """).lstrip())
+
+    def test_chroot_generate_apt_conf_d_empty(self):
+        self.use_temp_dir()
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        apt_conf_f = chroot._generate_apt_proxy_file(self.temp_dir, "")
+        self.assertFalse(os.path.exists(apt_conf_f))
+
+    def test_chroot_generate_apt_conf_d(self):
+        self.use_temp_dir()
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        apt_conf_f = chroot._generate_apt_proxy_file(
+            self.temp_dir, "http://proxy.example.com")
+        with open(apt_conf_f) as f:
+            self.assertEqual(
+                re.sub(r'\s+', ' ', f.read()),
+                '// proxy settings copied by click chroot '\
+                'Acquire { HTTP { Proxy "http://proxy.example.com"; }; }; ')
 
     def test_chroot_generate_chroot_config(self):
         self.use_temp_dir()

@@ -22,7 +22,7 @@ __all__ = [
     'TestClickChroot',
     ]
 
-
+from mock import patch
 import os
 from textwrap import dedent
 
@@ -30,6 +30,31 @@ from click.tests.helpers import TestCase
 from click.chroot import (
     ClickChroot,
 )
+
+class FakeClickChroot(ClickChroot):
+
+    def __init__(self, *args, **kwargs):
+        self.temp_dir = kwargs.pop("temp_dir")
+        super(FakeClickChroot, self).__init__(*args, **kwargs)
+        self._exists = False
+
+    def exists(self):
+        return self._exists
+
+    def _debootstrap(self, components, mount):
+        os.makedirs(os.path.join(mount, "etc", "apt"))
+        os.makedirs(os.path.join(mount, "usr", "sbin"))
+        os.makedirs(os.path.join(mount, "sbin"))
+        with open(os.path.join(mount, "sbin", "initctl"), "w"):
+            pass
+        self._exists = True
+
+    @property
+    def chroot_config(self):
+        p = self.temp_dir + super(FakeClickChroot, self).chroot_config
+        if not os.path.exists(os.path.dirname(p)):
+            os.makedirs(os.path.dirname(p))
+        return p
 
 
 class TestClickChroot(TestCase):
@@ -154,3 +179,43 @@ class TestClickChroot(TestCase):
         chroot.native_arch = "amd64"
         self.assertEqual(
             "g++-arm-linux-gnueabihf", chroot._make_cross_package("g++"))
+
+    def test_framework_base_base(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04-papi")
+        self.assertEqual(chroot.framework_base, "ubuntu-sdk-14.04")
+
+    def test_framework_base_series(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        self.assertEqual(chroot.framework_base, "ubuntu-sdk-14.04")
+
+    def test_chroot_series(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        self.assertEqual(chroot.series, "trusty")
+
+    def test_chroot_full_name(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        self.assertEqual(chroot.full_name, "click-ubuntu-sdk-14.04-i386")
+
+    def test_chroot_create_mocked(self):
+        self.use_temp_dir()
+        os.environ["http_proxy"] = "http://proxy.example.com/"
+        target = "ubuntu-sdk-14.04"
+        chroot = FakeClickChroot(
+            "i386", target, chroots_dir=self.temp_dir, temp_dir=self.temp_dir)
+        with patch.object(chroot, "maint") as mock_maint:
+            mock_maint.return_value = 0
+            chroot.create()
+            mock_maint.assert_called_with("/finish.sh")
+            # ensure the following files where created inside the chroot
+            for in_chroot in ["etc/localtime",
+                              "etc/timezone",
+                              "etc/apt/sources.list",
+                              "usr/sbin/policy-rc.d"]:
+                full_path = os.path.join(
+                    self.temp_dir, chroot.full_name, in_chroot)
+                self.assertTrue(os.path.exists(full_path))
+            # ensure the schroot/chroot.d file was created and looks valid
+            schroot_d = os.path.join(
+                self.temp_dir, "etc", "schroot", "chroot.d", chroot.full_name)
+            self.assertTrue(os.path.exists(schroot_d))
+

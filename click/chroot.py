@@ -147,7 +147,8 @@ class ClickChrootDoesNotExistException(ClickChrootException):
 
 
 class ClickChroot:
-    def __init__(self, target_arch, framework, name=None, series=None, session=None):
+    def __init__(self, target_arch, framework, name=None, series=None, 
+                 session=None, chroots_dir=None):
         self.target_arch = target_arch
         self.framework = framework
         if name is None:
@@ -161,7 +162,9 @@ class ClickChroot:
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
         self.native_arch = self._get_native_arch(system_arch, self.target_arch)
-        self.chroots_dir = "/var/lib/schroot/chroots"
+        if chroots_dir is None:
+            "/var/lib/schroot/chroots"
+        self.chroots_dir = chroots_dir
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
             self.archive = os.environ['DEBOOTSTRAP_MIRROR']
@@ -247,6 +250,17 @@ class ClickChroot:
 
         return sources
 
+    def _debootstrap(self, components, mount):
+        subprocess.check_call([
+            "debootstrap",
+            "--arch", self.native_arch,
+            "--variant=buildd",
+            "--components=%s" % ','.join(components),
+            self.series,
+            mount,
+            self.archive
+            ])
+
     @property
     def framework_base(self):
         if self.framework in framework_base:
@@ -261,6 +275,10 @@ class ClickChroot:
     @property
     def full_session_name(self):
         return "%s-%s" % (self.full_name, self.session)
+
+    @property
+    def chroot_config(self):
+        return "/etc/schroot/chroot.d/%s" % self.full_name
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]
@@ -302,15 +320,7 @@ class ClickChroot:
             package = package.replace(":TARGET", ":%s" % self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)
-        subprocess.check_call([
-            "debootstrap",
-            "--arch", self.native_arch,
-            "--variant=buildd",
-            "--components=%s" % ','.join(components),
-            self.series,
-            mount,
-            self.archive
-            ])
+        self._debootstrap(components, mount)
         sources = self._generate_sources(self.series, self.native_arch,
                                          self.target_arch,
                                          ' '.join(components))
@@ -319,8 +329,7 @@ class ClickChroot:
                 print(line, file=sources_list)
         shutil.copy2("/etc/localtime", "%s/etc/" % mount)
         shutil.copy2("/etc/timezone", "%s/etc/" % mount)
-        chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
-        with open(chroot_config, "w") as target:
+        with open(self.chroot_config, "w") as target:
             admin_user = "root"
             print("[%s]" % self.full_name, file=target)
             print("description=Build chroot for click packages on %s" %
@@ -480,8 +489,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
-        chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
-        os.remove(chroot_config)
+        os.remove(self.chroot_config)
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
         shutil.rmtree(mount)
         return 0

@@ -34,7 +34,7 @@ import shutil
 import stat
 import subprocess
 import sys
-
+from textwrap import dedent
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
@@ -147,6 +147,19 @@ class ClickChrootDoesNotExistException(ClickChrootException):
 
 
 class ClickChroot:
+
+    DAEMON_POLICY = dedent("""
+    #!/bin/sh
+    while true; do
+        case "$1" in
+          -*) shift ;;
+          makedev) exit 0;;
+          x11-common) exit 0;;
+          *) exit 101;;
+        esac
+    done
+    """).strip()
+
     def __init__(self, target_arch, framework, name=None, series=None, 
                  session=None, chroots_dir=None):
         self.target_arch = target_arch
@@ -268,6 +281,12 @@ class ClickChroot:
 
         return sources
 
+    def _generate_daemon_policy(self, mount):
+        daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
+        with open(daemon_policy, "w") as policy:
+            policy.write(self.DAEMON_POLICY)
+        return daemon_policy
+
     def _debootstrap(self, components, mount):
         subprocess.check_call([
             "debootstrap",
@@ -348,17 +367,7 @@ class ClickChroot:
         shutil.copy2("/etc/localtime", "%s/etc/" % mount)
         shutil.copy2("/etc/timezone", "%s/etc/" % mount)
         self._generate_chroot_config(mount)
-        daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
-        with open(daemon_policy, "w") as policy:
-            print("#!/bin/sh", file=policy)
-            print("while true; do", file=policy)
-            print('    case "$1" in', file=policy)
-            print("      -*) shift ;;", file=policy)
-            print("      makedev) exit 0;;", file=policy)
-            print("      x11-common) exit 0;;", file=policy)
-            print("      *) exit 101;;", file=policy)
-            print("    esac", file=policy)
-            print("done", file=policy)
+        daemon_policy = self._generate_daemon_policy(mount)
         self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)

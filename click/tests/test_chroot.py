@@ -196,7 +196,15 @@ class TestClickChroot(TestCase):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
         self.assertEqual(chroot.full_name, "click-ubuntu-sdk-14.04-i386")
 
-    def test_chroot_create_chroot_config(self):
+    def test_chroot_generate_daemon_config(self):
+        self.use_temp_dir()
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        os.makedirs(os.path.join(self.temp_dir, "usr", "sbin"))
+        daemon_policy = chroot._generate_daemon_policy(self.temp_dir)
+        with open(daemon_policy) as f:
+            self.assertEqual(f.read(), chroot.DAEMON_POLICY)
+
+    def test_chroot_generate_chroot_config(self):
         self.use_temp_dir()
         chroot = FakeClickChroot(
             "i386", "ubuntu-sdk-14.04", temp_dir=self.temp_dir)

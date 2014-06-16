@@ -176,7 +176,7 @@ class ClickChroot:
             universal_newlines=True).strip()
         self.native_arch = self._get_native_arch(system_arch, self.target_arch)
         if chroots_dir is None:
-            "/var/lib/schroot/chroots"
+            chroots_dir = "/var/lib/schroot/chroots"
         self.chroots_dir = chroots_dir
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:

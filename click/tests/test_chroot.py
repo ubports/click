@@ -41,6 +41,11 @@ class FakeClickChroot(ClickChroot):
     def exists(self):
         return self._exists
 
+    def maint(self, *args, **kwargs):
+        self._maint_args = args
+        self._maint_kwargs = kwargs
+        return 0
+
     def _debootstrap(self, components, mount):
         os.makedirs(os.path.join(mount, "etc", "apt"))
         os.makedirs(os.path.join(mount, "usr", "sbin"))
@@ -300,3 +305,14 @@ class TestClickChroot(TestCase):
                 "-c", "source:"+chroot.full_name,
                 "--", 
                 "foo", "bar"])
+
+    def test_chroot_destroy(self):
+        self.use_temp_dir()
+        chroot = FakeClickChroot(
+            "i386", "ubuntu-sdk-14.04",
+            chroots_dir=self.temp_dir, temp_dir=self.temp_dir)
+        chroot.create()
+        chroot_path = os.path.join(self.temp_dir, chroot.full_name)
+        self.assertTrue(os.path.exists(chroot_path))
+        chroot.destroy()
+        self.assertFalse(os.path.exists(chroot_path))

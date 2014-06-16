@@ -278,7 +278,7 @@ class TestClickChroot(TestCase):
                 type=directory
                 profile=default
                 setup.fstab=click/fstab
-                # Not protocols or services see 
+                # Not protocols or services see
                 # debian bug 557730
                 setup.nssdatabases=sbuild/nssdatabases
                 union-type=overlayfs
@@ -314,9 +314,9 @@ class TestClickChroot(TestCase):
             mock_call.return_value = 0
             chroot.maint("foo", "bar")
             mock_call.assert_called_with([
-                "schroot", "-u", "root", 
+                "schroot", "-u", "root",
                 "-c", "source:"+chroot.full_name,
-                "--", 
+                "--",
                 "foo", "bar"])
 
     def test_chroot_destroy(self):

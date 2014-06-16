@@ -160,7 +160,7 @@ class ClickChroot:
     done
     """).strip()
 
-    def __init__(self, target_arch, framework, name=None, series=None, 
+    def __init__(self, target_arch, framework, name=None, series=None,
                  session=None, chroots_dir=None):
         self.target_arch = target_arch
         self.framework = framework
@@ -251,7 +251,7 @@ class ClickChroot:
             type=directory
             profile=default
             setup.fstab=click/fstab
-            # Not protocols or services see 
+            # Not protocols or services see
             # debian bug 557730
             setup.nssdatabases=sbuild/nssdatabases
             union-type=overlayfs
@@ -301,8 +301,8 @@ class ClickChroot:
             with open(apt_conf_f, "w") as f:
                 f.write(dedent("""
                 // proxy settings copied by click chroot
-                Acquire { 
-                    HTTP { 
+                Acquire {
+                    HTTP {
                         Proxy "%s";
                     };
                 };

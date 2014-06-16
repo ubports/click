@@ -307,39 +307,32 @@ class ClickChroot:
     def _generate_finish_script(self, mount, build_pkgs):
         finish_script = "%s/finish.sh" % mount
         with open(finish_script, 'w') as finish:
-            print("#!/bin/bash", file=finish)
-            print("set -e", file=finish)
-            print("# Configure target arch", file=finish)
-            print("dpkg --add-architecture %s" % self.target_arch,
-                  file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Pull down signature requirements", file=finish)
-            print("apt-get -y --force-yes install \
-gnupg ubuntu-keyring", file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Disable debconf questions so that automated \
-builds won't prompt", file=finish)
-            print("echo set debconf/frontend Noninteractive | \
-debconf-communicate", file=finish)
-            print("echo set debconf/priority critical | \
-debconf-communicate", file=finish)
-            print("apt-get -y --force-yes dist-upgrade", file=finish)
-            print("# Install basic build tool set to match buildd",
-                  file=finish)
-            print("apt-get -y --force-yes install %s"
-                  % ' '.join(build_pkgs), file=finish)
-            print("# Set up expected /dev entries", file=finish)
-            print("if [ ! -r /dev/stdin ];  \
-then ln -s /proc/self/fd/0 /dev/stdin;  fi", file=finish)
-            print("if [ ! -r /dev/stdout ]; \
-then ln -s /proc/self/fd/1 /dev/stdout; fi", file=finish)
-            print("if [ ! -r /dev/stderr ]; \
-then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
-            print("# Clean up", file=finish)
-            print("rm /finish.sh", file=finish)
-            print("apt-get clean", file=finish)
+            finish.write(dedent("""
+            #!/bin/bash
+            set -e
+            # Configure target arch
+            dpkg --add-architecture {target_arch}
+            # Reload package lists
+            apt-get update || true
+            # Pull down signature requirements
+            apt-get -y --force-yes install gnupg ubuntu-keyring
+            # Reload package lists
+            apt-get update || true
+            # Disable debconf questions so that automated builds won't prompt
+            echo set debconf/frontend Noninteractive | debconf-communicate
+            echo set debconf/priority critical | debconf-communicate
+            apt-get -y --force-yes dist-upgrade
+            # Install basic build tool set to match buildd
+            apt-get -y --force-yes install {build_pkgs}
+            # Set up expected /dev entries
+            if [ ! -r /dev/stdin ];  then ln -s /proc/self/fd/0 /dev/stdin;  fi
+            if [ ! -r /dev/stdout ]; then ln -s /proc/self/fd/1 /dev/stdout; fi
+            if [ ! -r /dev/stderr ]; then ln -s /proc/self/fd/2 /dev/stderr; fi
+            # Clean up
+            rm /finish.sh
+            apt-get clean
+            """).lstrip().format(target_arch=self.target_arch,
+                                 build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
     def _debootstrap(self, components, mount):

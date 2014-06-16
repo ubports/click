@@ -290,3 +290,13 @@ class TestClickChroot(TestCase):
                 self.temp_dir, "etc", "schroot", "chroot.d", chroot.full_name)
             self.assertTrue(os.path.exists(schroot_d))
 
+    def test_chroot_maint(self):
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        with patch("subprocess.call") as mock_call:
+            mock_call.return_value = 0
+            chroot.maint("foo", "bar")
+            mock_call.assert_called_with([
+                "schroot", "-u", "root", 
+                "-c", "source:"+chroot.full_name,
+                "--", 
+                "foo", "bar"])

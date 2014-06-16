@@ -451,6 +451,9 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             return ret
 
     def maint(self, *args):
+        if not self.exists():
+            raise ClickChrootDoesNotExistException(
+                "Chroot %s does not exist" % self.full_name)
         command = [ "schroot", "-u", "root", "-c" ]
         if self.session:
             command.extend([self.full_session_name, "--run-session"])

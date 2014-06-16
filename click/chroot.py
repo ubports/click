@@ -287,6 +287,52 @@ class ClickChroot:
             policy.write(self.DAEMON_POLICY)
         return daemon_policy
 
+    def _generate_finish_script(self, mount, proxy, build_pkgs):
+        finish_script = "%s/finish.sh" % mount
+        with open(finish_script, 'w') as finish:
+            print("#!/bin/bash", file=finish)
+            print("set -e", file=finish)
+            if proxy:
+                print("mkdir -p /etc/apt/apt.conf.d", file=finish)
+                print("cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF",
+                      file=finish)
+                print("// proxy settings copied by click chroot", file=finish)
+                print('Acquire { HTTP { Proxy "%s"; }; };' % proxy,
+                      file=finish)
+                print("EOF", file=finish)
+            print("# Configure target arch", file=finish)
+            print("dpkg --add-architecture %s" % self.target_arch,
+                  file=finish)
+            print("# Reload package lists", file=finish)
+            print("apt-get update || true", file=finish)
+            print("# Pull down signature requirements", file=finish)
+            print("apt-get -y --force-yes install \
+gnupg ubuntu-keyring", file=finish)
+            print("# Reload package lists", file=finish)
+            print("apt-get update || true", file=finish)
+            print("# Disable debconf questions so that automated \
+builds won't prompt", file=finish)
+            print("echo set debconf/frontend Noninteractive | \
+debconf-communicate", file=finish)
+            print("echo set debconf/priority critical | \
+debconf-communicate", file=finish)
+            print("apt-get -y --force-yes dist-upgrade", file=finish)
+            print("# Install basic build tool set to match buildd",
+                  file=finish)
+            print("apt-get -y --force-yes install %s"
+                  % ' '.join(build_pkgs), file=finish)
+            print("# Set up expected /dev entries", file=finish)
+            print("if [ ! -r /dev/stdin ];  \
+then ln -s /proc/self/fd/0 /dev/stdin;  fi", file=finish)
+            print("if [ ! -r /dev/stdout ]; \
+then ln -s /proc/self/fd/1 /dev/stdout; fi", file=finish)
+            print("if [ ! -r /dev/stderr ]; \
+then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
+            print("# Clean up", file=finish)
+            print("rm /finish.sh", file=finish)
+            print("apt-get clean", file=finish)
+        return finish_script
+
     def _debootstrap(self, components, mount):
         subprocess.check_call([
             "debootstrap",
@@ -371,49 +417,7 @@ class ClickChroot:
         self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
-        finish_script = "%s/finish.sh" % mount
-        with open(finish_script, 'w') as finish:
-            print("#!/bin/bash", file=finish)
-            print("set -e", file=finish)
-            if proxy:
-                print("mkdir -p /etc/apt/apt.conf.d", file=finish)
-                print("cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF",
-                      file=finish)
-                print("// proxy settings copied by click chroot", file=finish)
-                print('Acquire { HTTP { Proxy "%s"; }; };' % proxy,
-                      file=finish)
-                print("EOF", file=finish)
-            print("# Configure target arch", file=finish)
-            print("dpkg --add-architecture %s" % self.target_arch,
-                  file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Pull down signature requirements", file=finish)
-            print("apt-get -y --force-yes install \
-gnupg ubuntu-keyring", file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Disable debconf questions so that automated \
-builds won't prompt", file=finish)
-            print("echo set debconf/frontend Noninteractive | \
-debconf-communicate", file=finish)
-            print("echo set debconf/priority critical | \
-debconf-communicate", file=finish)
-            print("apt-get -y --force-yes dist-upgrade", file=finish)
-            print("# Install basic build tool set to match buildd",
-                  file=finish)
-            print("apt-get -y --force-yes install %s"
-                  % ' '.join(build_pkgs), file=finish)
-            print("# Set up expected /dev entries", file=finish)
-            print("if [ ! -r /dev/stdin ];  \
-then ln -s /proc/self/fd/0 /dev/stdin;  fi", file=finish)
-            print("if [ ! -r /dev/stdout ]; \
-then ln -s /proc/self/fd/1 /dev/stdout; fi", file=finish)
-            print("if [ ! -r /dev/stderr ]; \
-then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
-            print("# Clean up", file=finish)
-            print("rm /finish.sh", file=finish)
-            print("apt-get clean", file=finish)
+        finish_script = self._generate_finish_script(mount, proxy, build_pkgs)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
         ret_code = self.maint(*command)

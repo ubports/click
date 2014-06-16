@@ -204,6 +204,44 @@ class TestClickChroot(TestCase):
         with open(daemon_policy) as f:
             self.assertEqual(f.read(), chroot.DAEMON_POLICY)
 
+    def test_chroot_generate_finish_script(self):
+        self.use_temp_dir()
+        chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
+        finish_script = chroot._generate_finish_script(
+            self.temp_dir, "http://proxy.example.com",
+            ["build-pkg-1", "build-pkg-2"])
+        with open(finish_script) as f:
+            self.assertEqual(f.read(),dedent("""
+            #!/bin/bash
+            set -e
+            mkdir -p /etc/apt/apt.conf.d
+            cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF
+            // proxy settings copied by click chroot
+            Acquire { HTTP { Proxy "http://proxy.example.com"; }; };
+            EOF
+            # Configure target arch
+            dpkg --add-architecture i386
+            # Reload package lists
+            apt-get update || true
+            # Pull down signature requirements
+            apt-get -y --force-yes install gnupg ubuntu-keyring
+            # Reload package lists
+            apt-get update || true
+            # Disable debconf questions so that automated builds won't prompt
+            echo set debconf/frontend Noninteractive | debconf-communicate
+            echo set debconf/priority critical | debconf-communicate
+            apt-get -y --force-yes dist-upgrade
+            # Install basic build tool set to match buildd
+            apt-get -y --force-yes install build-pkg-1 build-pkg-2
+            # Set up expected /dev entries
+            if [ ! -r /dev/stdin ];  then ln -s /proc/self/fd/0 /dev/stdin;  fi
+            if [ ! -r /dev/stdout ]; then ln -s /proc/self/fd/1 /dev/stdout; fi
+            if [ ! -r /dev/stderr ]; then ln -s /proc/self/fd/2 /dev/stderr; fi
+            # Clean up
+            rm /finish.sh
+            apt-get clean
+            """).lstrip())
+
     def test_chroot_generate_chroot_config(self):
         self.use_temp_dir()
         chroot = FakeClickChroot(

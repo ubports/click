@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.click_binary = "/usr/bin/click"
+        cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
 
     def _make_click(self, name=None, version=1.0, framework="ubuntu-sdk-13.10"):
         if name is None:

@@ -19,7 +19,7 @@ import json
 import os
 import re
 import subprocess
-
+import unittest
 
 from .helpers import TestCase
 
@@ -58,3 +58,15 @@ class TestContents(TestCase):
             universal_newlines=True)
         self.assertTrue(re.search(
             r'-rw-r[-w]-r-- root/root\s+[0-9]+\s+[0-9-]+ [0-9:]+ ./README', output))
+
+@unittest.skipIf(
+    (not os.path.exists("/usr/share/click/frameworks") or 
+     not os.listdir("/usr/share/click/frameworks")),
+    "Please install ubuntu-sdk-libs")
+class TestFrameworks(TestCase):
+    def test_framework_list(self):
+        output = subprocess.check_output([
+            self.click_binary, "framework", "list"], universal_newlines=True)
+        self.assertTrue("ubuntu-sdk-" in output)
+
+

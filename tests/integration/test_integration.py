@@ -68,5 +68,3 @@ class TestFrameworks(TestCase):
         output = subprocess.check_output([
             self.click_binary, "framework", "list"], universal_newlines=True)
         self.assertTrue("ubuntu-sdk-" in output)
-
-

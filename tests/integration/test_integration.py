@@ -18,10 +18,16 @@
 import json
 import os
 import re
+import shutil
 import subprocess
+import tarfile
+import tempfile
 import unittest
 
-from .helpers import TestCase
+from .helpers import (
+    chdir,
+    TestCase,
+)
 
 
 class TestBuild(TestCase):
@@ -68,3 +74,27 @@ class TestFrameworks(TestCase):
         output = subprocess.check_output([
             self.click_binary, "framework", "list"], universal_newlines=True)
         self.assertTrue("ubuntu-sdk-" in output)
+
+
+class TestBuildSource(TestCase):
+    def test_buildsource(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, temp_dir)
+        with chdir(temp_dir):
+            with open(os.path.join(temp_dir, "README"), "w") as f:
+                f.write("I'm a source package")
+            os.mkdir(os.path.join(temp_dir, ".git"))
+            os.mkdir(os.path.join(temp_dir, ".bzr"))
+            os.mkdir(os.path.join(temp_dir, ".normal"))
+            self._create_manifest(os.path.join(temp_dir, "manifest.json"),
+                                  "srcfoo", "1.2", "ubuntu-sdk-13.10")
+            subprocess.check_call(
+                [self.click_binary, "buildsource", temp_dir],
+                universal_newlines=True)
+            # ensure we have the content we expect
+            source_file = "srcfoo_1.2.tar.gz"
+            tar = tarfile.open(source_file)
+            self.assertEqual(
+                sorted(tar.getnames()),
+                sorted([".", "./.normal", "./manifest.json", "./README"]))
+

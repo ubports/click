@@ -15,67 +15,19 @@
 
 """Integration tests for the click CLI interface."""
 
-import copy
-import contextlib
-import glob
 import json
 import os
-import random
 import re
 import shutil
-import string
 import subprocess
-import sys
+import tarfile
 import tempfile
 import unittest
 
-
-@contextlib.contextmanager
-def chdir(target):
-    curdir = os.getcwd()
-    os.chdir(target)
-    yield
-    os.chdir(curdir)
-
-
-class TestCase(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.click_binary = os.path.abspath(
-            os.path.join(sys.argv[0], "..", "bin", "click"))
-
-    def setUp(self):
-        self.saved_env = copy.copy(os.environ)
-        os.environ["PYTHONPATH"] = os.path.abspath(
-            os.path.join(sys.argv[0], ".."))
-
-    def tearDown(self):
-        os.environ = self.saved_env
-
-    def _make_click(self, name=None, version=1.0):
-        if name is None:
-            name = "com.ubuntu.%s" % "".join(
-                random.choice(string.ascii_lowercase) for i in range(10))
-        tmpdir = tempfile.mkdtemp()
-        self.addCleanup(lambda: shutil.rmtree(tmpdir))
-        clickdir = os.path.join(tmpdir, name)
-        os.makedirs(clickdir)
-        with open(os.path.join(clickdir, "manifest.json"), "w") as f:
-            f.write("""{
-            "name": "%s",
-            "version": "%s",
-            "maintainer": "Foo Bar <foo@example.org>",
-            "title": "test title",
-            "framework": "ubuntu-sdk-13.10"
-            }""" % (name, version))
-        with open(os.path.join(clickdir, "README"), "w") as f:
-            f.write("hello world!")
-        with chdir(tmpdir), open(os.devnull, "w") as devnull:
-            subprocess.call(["click", "build", clickdir], stdout=devnull)
-        generated_clicks = glob.glob(os.path.join(tmpdir, "*.click"))
-        self.assertEqual(len(generated_clicks), 1)
-        return generated_clicks[0]
+from .helpers import (
+    chdir,
+    TestCase,
+)
 
 
 class TestBuild(TestCase):
@@ -113,49 +65,36 @@ class TestContents(TestCase):
         self.assertTrue(re.search(
             r'-rw-r[-w]-r-- root/root\s+[0-9]+\s+[0-9-]+ [0-9:]+ ./README', output))
 
-
 @unittest.skipIf(
-    os.getuid() != 0, "This tests needs to run as root")
-@unittest.skipIf(
-    subprocess.call(
-        ["ping", "-c1", "archive.ubuntu.com"]) != 0, "Need network")
-class TestChroot(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestChroot, cls).setUpClass()
-        cls.arch = subprocess.check_output(
-            ["dpkg", "--print-architecture"], universal_newlines=True).strip()
-        subprocess.check_call([
-            cls.click_binary,
-            "chroot", "-a", cls.arch,
-            "create"])
-
-    @classmethod
-    def tearDownClass(cls):
-        subprocess.check_call([
-            cls.click_binary,
-            "chroot", "-a", cls.arch,
-            "destroy"])
-
-    def test_upgrade(self):
-        subprocess.check_call([
-            self.click_binary, "chroot", "-a", self.arch,
-            "upgrade"])
-
-    def test_install(self):
-        subprocess.check_call([
-            self.click_binary, "chroot", "-a", self.arch,
-            "install", "apt-utils"])
-
-    def test_run(self):
+    (not os.path.exists("/usr/share/click/frameworks") or 
+     not os.listdir("/usr/share/click/frameworks")),
+    "Please install ubuntu-sdk-libs")
+class TestFrameworks(TestCase):
+    def test_framework_list(self):
         output = subprocess.check_output([
-            self.click_binary, "chroot", "-a", self.arch,
-            "run", "echo", "hello world"], universal_newlines=True)
-        self.assertEqual(output, "hello world\n")
+            self.click_binary, "framework", "list"], universal_newlines=True)
+        self.assertTrue("ubuntu-sdk-" in output)
 
-    def test_maint(self):
-        output = subprocess.check_output([
-            self.click_binary, "chroot", "-a", self.arch,
-            "maint", "id"], universal_newlines=True)
-        self.assertEqual(output, "uid=0(root) gid=0(root) groups=0(root)\n")
+
+class TestBuildSource(TestCase):
+    def test_buildsource(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, temp_dir)
+        with chdir(temp_dir):
+            with open(os.path.join(temp_dir, "README"), "w") as f:
+                f.write("I'm a source package")
+            os.mkdir(os.path.join(temp_dir, ".git"))
+            os.mkdir(os.path.join(temp_dir, ".bzr"))
+            os.mkdir(os.path.join(temp_dir, ".normal"))
+            self._create_manifest(os.path.join(temp_dir, "manifest.json"),
+                                  "srcfoo", "1.2", "ubuntu-sdk-13.10")
+            subprocess.check_call(
+                [self.click_binary, "buildsource", temp_dir],
+                universal_newlines=True)
+            # ensure we have the content we expect
+            source_file = "srcfoo_1.2.tar.gz"
+            tar = tarfile.open(source_file)
+            self.assertEqual(
+                sorted(tar.getnames()),
+                sorted([".", "./.normal", "./manifest.json", "./README"]))
+

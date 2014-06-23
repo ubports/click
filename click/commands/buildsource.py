@@ -35,6 +35,8 @@ def run(argv):
     directory = args[0]
     if not os.path.isdir(directory):
         parser.error('directory "%s" does not exist' % directory)
+    if not options.manifest:
+        options.manifest = os.path.join(directory, "manifest.json")
     if os.path.isdir(os.path.join(directory, options.manifest)):
         options.manifest = os.path.join(options.manifest, "manifest.json")
     if not os.path.exists(os.path.join(directory, options.manifest)):

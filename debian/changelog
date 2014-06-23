@@ -7,6 +7,9 @@ click (0.4.27) UNRELEASED; urgency=medium
     https://wiki.ubuntu.com/Process/Merges/TestPlan/click.
   * Add integration tests for buildsource, pkgdir and framework.
 
+  [ Dimitri John Ledkov ]
+  * Handle renaming of qtsensors5-dev to libqt5sensors5-dev in Qt 5.3.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 16 Jun 2014 13:48:04 +0100
 
 click (0.4.26.1) utopic; urgency=medium

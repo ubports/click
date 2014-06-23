@@ -108,7 +108,7 @@ extra_packages = {
         "qtlocation5-dev:TARGET",
         "qtmultimedia5-dev:TARGET",
         "qtscript5-dev:TARGET",
-        "qtsensors5-dev:TARGET",
+        "libqt5sensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         "qttools5-dev-tools:TARGET",
         ],

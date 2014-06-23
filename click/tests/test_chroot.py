@@ -22,7 +22,7 @@ __all__ = [
     'TestClickChroot',
     ]
 
-from mock import patch
+from click.tests.helpers import mock
 import re
 import os
 from textwrap import dedent
@@ -217,7 +217,7 @@ class TestClickChroot(TestCase):
             self.temp_dir,
             ["build-pkg-1", "build-pkg-2"])
         with open(finish_script) as f:
-            self.assertEqual(f.read(),dedent("""
+            self.assertEqual(f.read(),dedent("""\
             #!/bin/bash
             set -e
             # Configure target arch
@@ -241,7 +241,7 @@ class TestClickChroot(TestCase):
             # Clean up
             rm /finish.sh
             apt-get clean
-            """).lstrip())
+            """))
 
     def test_chroot_generate_apt_conf_d_empty(self):
         self.use_temp_dir()
@@ -264,12 +264,12 @@ class TestClickChroot(TestCase):
         self.use_temp_dir()
         chroot = FakeClickChroot(
             "i386", "ubuntu-sdk-14.04", temp_dir=self.temp_dir)
-        with patch.object(chroot, "user", new="meep"):
+        with mock.patch.object(chroot, "user", new="meep"):
             chroot._generate_chroot_config(self.temp_dir)
             with open(chroot.chroot_config) as f:
                 content = f.read()
             self.assertEqual(
-                content, dedent("""
+                content, dedent("""\
                 [click-ubuntu-sdk-14.04-i386]
                 description=Build chroot for click packages on i386
                 users=root,{user}
@@ -283,7 +283,7 @@ class TestClickChroot(TestCase):
                 setup.nssdatabases=sbuild/nssdatabases
                 union-type=overlayfs
                 directory={temp_dir}
-                """).lstrip().format(user="meep", temp_dir=self.temp_dir))
+                """).format(user="meep", temp_dir=self.temp_dir))
 
     def test_chroot_create_mocked(self):
         self.use_temp_dir()
@@ -291,7 +291,7 @@ class TestClickChroot(TestCase):
         target = "ubuntu-sdk-14.04"
         chroot = FakeClickChroot(
             "i386", target, chroots_dir=self.temp_dir, temp_dir=self.temp_dir)
-        with patch.object(chroot, "maint") as mock_maint:
+        with mock.patch.object(chroot, "maint") as mock_maint:
             mock_maint.return_value = 0
             chroot.create()
             mock_maint.assert_called_with("/finish.sh")
@@ -310,7 +310,7 @@ class TestClickChroot(TestCase):
 
     def test_chroot_maint(self):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04")
-        with patch("subprocess.call") as mock_call:
+        with mock.patch("subprocess.call") as mock_call:
             mock_call.return_value = 0
             chroot.maint("foo", "bar")
             mock_call.assert_called_with([

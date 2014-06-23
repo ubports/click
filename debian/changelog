@@ -1,9 +1,10 @@
-click (0.4.28) UNRELEASED; urgency=medium
+click (0.4.28) utopic; urgency=medium
 
+  [ Colin Watson ]
   * Revert change in 0.4.27 to raise an error if no databases are added;
     this makes most of libclick unusable if click is not installed.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 17:00:00 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 23 Jun 2014 16:07:37 +0000
 
 click (0.4.27) utopic; urgency=medium
 

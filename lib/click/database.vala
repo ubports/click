@@ -616,9 +616,6 @@ public class DB : Object {
 			assert (root != null);
 			add (root);
 		}
-		if (db.size == 0)
-			throw new FileError.FAILED(
-				"Can not find a single database provider in %s", real_db_dir);
 	}
 
 	public int size { get { return db.size; } }

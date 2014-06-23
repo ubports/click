@@ -22,15 +22,15 @@ __all__ = [
     'TestClickChroot',
     ]
 
-from click.tests.helpers import mock
-import re
 import os
+import re
 from textwrap import dedent
 
-from click.tests.helpers import TestCase
 from click.chroot import (
     ClickChroot,
 )
+from click.tests.helpers import TestCase, mock
+
 
 class FakeClickChroot(ClickChroot):
 
@@ -217,7 +217,7 @@ class TestClickChroot(TestCase):
             self.temp_dir,
             ["build-pkg-1", "build-pkg-2"])
         with open(finish_script) as f:
-            self.assertEqual(f.read(),dedent("""\
+            self.assertEqual(f.read(), dedent("""\
             #!/bin/bash
             set -e
             # Configure target arch
@@ -257,7 +257,7 @@ class TestClickChroot(TestCase):
         with open(apt_conf_f) as f:
             self.assertEqual(
                 re.sub(r'\s+', ' ', f.read()),
-                '// proxy settings copied by click chroot '\
+                '// proxy settings copied by click chroot '
                 'Acquire { HTTP { Proxy "http://proxy.example.com"; }; }; ')
 
     def test_chroot_generate_chroot_config(self):

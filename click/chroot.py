@@ -26,7 +26,6 @@ __all__ = [
     "ClickChrootDoesNotExistException",
     ]
 
-
 import os
 import pwd
 import re
@@ -35,6 +34,7 @@ import stat
 import subprocess
 import sys
 from textwrap import dedent
+
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
@@ -337,7 +337,7 @@ class ClickChroot:
             rm /finish.sh
             apt-get clean
             """).format(target_arch=self.target_arch,
-                                 build_pkgs=' '.join(build_pkgs)))
+                        build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
     def _debootstrap(self, components, mount):
@@ -459,7 +459,7 @@ class ClickChroot:
             return ret
 
     def maint(self, *args):
-        command = [ "schroot", "-u", "root", "-c" ]
+        command = ["schroot", "-u", "root", "-c"]
         if self.session:
             command.extend([self.full_session_name, "--run-session"])
         else:

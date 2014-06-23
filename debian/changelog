@@ -3,6 +3,9 @@ click (0.4.29) UNRELEASED; urgency=medium
   [ Michael Vogt ]
   * Refactor click/chroot.py and improve tests.
 
+  [ Colin Watson ]
+  * Various adjustments for improved PEP-8 compliance.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
 
 click (0.4.28) utopic; urgency=medium

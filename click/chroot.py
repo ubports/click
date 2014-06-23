@@ -148,7 +148,7 @@ class ClickChrootDoesNotExistException(ClickChrootException):
 
 class ClickChroot:
 
-    DAEMON_POLICY = dedent("""
+    DAEMON_POLICY = dedent("""\
     #!/bin/sh
     while true; do
         case "$1" in
@@ -158,7 +158,7 @@ class ClickChroot:
           *) exit 101;;
         esac
     done
-    """).strip()
+    """)
 
     def __init__(self, target_arch, framework, name=None, series=None,
                  session=None, chroots_dir=None):
@@ -244,7 +244,7 @@ class ClickChroot:
         for key in ("users", "root-users", "source-root-users"):
             users.append("%s=%s,%s" % (key, admin_user, self.user))
         with open(self.chroot_config, "w") as target:
-            target.write(dedent("""
+            target.write(dedent("""\
             [{full_name}]
             description=Build chroot for click packages on {target_arch}
             {users}
@@ -256,10 +256,10 @@ class ClickChroot:
             setup.nssdatabases=sbuild/nssdatabases
             union-type=overlayfs
             directory={mount}
-            """).lstrip().format(full_name=self.full_name,
-                                 target_arch=self.target_arch,
-                                 users="\n".join(users),
-                                 mount=mount))
+            """).format(full_name=self.full_name,
+                        target_arch=self.target_arch,
+                        users="\n".join(users),
+                        mount=mount))
 
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -299,20 +299,20 @@ class ClickChroot:
         apt_conf_f = os.path.join(apt_conf_d, "99-click-chroot-proxy")
         if proxy:
             with open(apt_conf_f, "w") as f:
-                f.write(dedent("""
+                f.write(dedent("""\
                 // proxy settings copied by click chroot
                 Acquire {
                     HTTP {
                         Proxy "%s";
                     };
                 };
-                """.lstrip()) % proxy)
+                """) % proxy)
         return apt_conf_f
 
     def _generate_finish_script(self, mount, build_pkgs):
         finish_script = "%s/finish.sh" % mount
         with open(finish_script, 'w') as finish:
-            finish.write(dedent("""
+            finish.write(dedent("""\
             #!/bin/bash
             set -e
             # Configure target arch
@@ -336,7 +336,7 @@ class ClickChroot:
             # Clean up
             rm /finish.sh
             apt-get clean
-            """).lstrip().format(target_arch=self.target_arch,
+            """).format(target_arch=self.target_arch,
                                  build_pkgs=' '.join(build_pkgs)))
         return finish_script
 

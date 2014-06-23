@@ -5,6 +5,7 @@ click (0.4.27) UNRELEASED; urgency=medium
   * Refactor the integration tests to be more modular.  Add installation
     integration tests based on
     https://wiki.ubuntu.com/Process/Merges/TestPlan/click.
+  * Add integration tests for buildsource, pkgdir and framework.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 16 Jun 2014 13:48:04 +0100
 

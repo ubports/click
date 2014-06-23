@@ -92,3 +92,22 @@ class TestClickInstall(TestCase):
                 universal_newlines=True)
             self.assertEqual(output, "foo-2\t1.0\n")
 
+    def test_pkgdir_after_install(self):
+        click_pkg = self._make_click(name="foo-2", version="1.2", framework="")
+        subprocess.check_call(
+            [self.click_binary, "install", "--all-users",  click_pkg],
+            universal_newlines=True)
+        self.addCleanup(self.click_unregister, "@all", "foo-2")
+        # from the path
+        output = subprocess.check_output(
+            [self.click_binary, "pkgdir",
+             "/opt/click.ubuntu.com/foo-2/1.2/README"],
+            universal_newlines=True).strip()
+        self.assertEqual(output, "/opt/click.ubuntu.com/foo-2/1.2")
+        # now test from the click package name
+        output = subprocess.check_output(
+            [self.click_binary, "pkgdir", "foo-2"],
+            universal_newlines=True).strip()
+        # note that this is different from above
+        self.assertEqual(
+            output, "/opt/click.ubuntu.com/.click/users/@all/foo-2")

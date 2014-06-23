@@ -30,15 +30,27 @@ import unittest
 def chdir(target):
     curdir = os.getcwd()
     os.chdir(target)
-    yield
-    os.chdir(curdir)
+    try:
+        yield
+    finally:
+        os.chdir(curdir)
 
 
 class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.click_binary = "/usr/bin/click"
+        cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
+
+    def _create_manifest(self, target, name, version, framework):
+        with open(target, "w") as f:
+            f.write("""{
+            "name": "%s",
+            "version": "%s",
+            "maintainer": "Foo Bar <foo@example.org>",
+            "title": "test title",
+            "framework": "%s"
+            }""" % (name, version, framework))
 
     def _make_click(self, name=None, version=1.0, framework="ubuntu-sdk-13.10"):
         if name is None:
@@ -48,14 +60,8 @@ class TestCase(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(tmpdir))
         clickdir = os.path.join(tmpdir, name)
         os.makedirs(clickdir)
-        with open(os.path.join(clickdir, "manifest.json"), "w") as f:
-            f.write("""{
-            "name": "%s",
-            "version": "%s",
-            "maintainer": "Foo Bar <foo@example.org>",
-            "title": "test title",
-            "framework": "%s"
-            }""" % (name, version, framework))
+        self._create_manifest(os.path.join(clickdir, "manifest.json"),
+                              name, version, framework)
         with open(os.path.join(clickdir, "README"), "w") as f:
             f.write("hello world!")
         with chdir(tmpdir), open(os.devnull, "w") as devnull:

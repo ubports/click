@@ -25,10 +25,12 @@ __all__ = [
 
 import json
 import os
+import shutil
 
 from gi.repository import Click
 
 from click.json_helpers import json_array_to_python, json_object_to_python
+from click.tests.gimock_types import Passwd
 from click.tests.helpers import TestCase, mkfile
 
 
@@ -94,6 +96,50 @@ class TestClickUser(TestCase):
         self.assertEqual(
             os.path.join(self.temp_dir, ".click", "users", "user"),
             Click.User.for_user(self.db, "user").get_overlay_db())
+
+    def test_ensure_db_ownership(self):
+        # getpwnam results are cached properly, in a way that doesn't fail
+        # due to confusion with getpwnam returning a pointer to a static
+        # buffer.
+        with self.run_in_subprocess(
+                "chown", "geteuid", "getpwnam") as (enter, preloads):
+            enter()
+            preloads["geteuid"].return_value = 0
+            getpwnam_result = Passwd()
+
+            def getpwnam_side_effect(name):
+                if name == b"clickpkg":
+                    getpwnam_result.pw_uid = 1
+                    getpwnam_result.pw_gid = 1
+                else:
+                    getpwnam_result.pw_uid = 2
+                    getpwnam_result.pw_gid = 2
+                return self.make_pointer(getpwnam_result)
+
+            preloads["getpwnam"].side_effect = getpwnam_side_effect
+            registry = Click.User.for_user(self.db, "user")
+            os.makedirs(os.path.join(self.temp_dir, "a", "1.0"))
+            click_dir = os.path.join(self.temp_dir, ".click")
+
+            registry.set_version("a", "1.0")
+            self.assertEqual(3, preloads["chown"].call_count)
+            preloads["chown"].assert_any_call(click_dir.encode(), 1, 1)
+            preloads["chown"].assert_any_call(
+                os.path.join(click_dir, "users").encode(), 1, 1)
+            preloads["chown"].assert_any_call(
+                os.path.join(click_dir, "users", "user").encode(), 2, 2)
+
+            # Try again, now that both password file entries should be
+            # cached.
+            shutil.rmtree(os.path.join(self.temp_dir, ".click"))
+            preloads["chown"].reset_mock()
+            registry.set_version("a", "1.0")
+            self.assertEqual(3, preloads["chown"].call_count)
+            preloads["chown"].assert_any_call(click_dir.encode(), 1, 1)
+            preloads["chown"].assert_any_call(
+                os.path.join(click_dir, "users").encode(), 1, 1)
+            preloads["chown"].assert_any_call(
+                os.path.join(click_dir, "users", "user").encode(), 2, 2)
 
     def test_get_package_names_missing(self):
         db = Click.DB()

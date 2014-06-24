@@ -63,8 +63,8 @@ class TestClickFramework(TestCase):
                 "click_get_frameworks_dir") as (enter, preloads):
             enter()
             self._setup_frameworks(preloads, frameworks={"framework-1": {}})
-            self.assertTrue(Click.Framework.has_framework ("framework-1"));
-            self.assertFalse(Click.Framework.has_framework ("framework-2"));
+            self.assertTrue(Click.Framework.has_framework("framework-1"))
+            self.assertFalse(Click.Framework.has_framework("framework-2"))
 
     def test_get_frameworks(self):
         with self.run_in_subprocess(
@@ -72,11 +72,11 @@ class TestClickFramework(TestCase):
             enter()
             self._setup_frameworks(
                 preloads,
-                frameworks={"ubuntu-sdk-13.10": {}, "ubuntu-sdk-14.04": {}})
+                frameworks={"ubuntu-sdk-13.10": {}, "ubuntu-sdk-14.04": {},
+                            "ubuntu-sdk-14.10": {}})
             self.assertEqual(
-                ["ubuntu-sdk-13.10", "ubuntu-sdk-14.04"],
-                sorted(
-                    f.props.name for f in Click.Framework.get_frameworks ()))
+                ["ubuntu-sdk-13.10", "ubuntu-sdk-14.04", "ubuntu-sdk-14.10"],
+                sorted(f.props.name for f in Click.Framework.get_frameworks()))
 
     def test_fields(self):
         with self.run_in_subprocess(

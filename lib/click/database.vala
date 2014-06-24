@@ -37,6 +37,25 @@ public errordomain DatabaseError {
 	BAD_MANIFEST
 }
 
+private string? app_pid_command = null;
+
+private unowned string? get_app_pid_command ()
+{
+	if (app_pid_command == null) {
+		if (find_on_path ("ubuntu-app-pid"))
+			app_pid_command = "ubuntu-app-pid";
+		else if (find_on_path ("upstart-app-pid"))
+			app_pid_command = "upstart-app-pid";
+		else
+			app_pid_command = "";
+	}
+
+	if (app_pid_command == "")
+		return null;
+	else
+		return app_pid_command;
+}
+
 public class InstalledPackage : Object, Gee.Hashable<InstalledPackage> {
 	public string package { get; construct; }
 	public string version { get; construct; }
@@ -257,9 +276,10 @@ public class SingleDB : Object {
 	app_running (string package, string app_name, string version)
 	{
 		string[] command = {
-			"upstart-app-pid",
+			get_app_pid_command (),
 			@"$(package)_$(app_name)_$(version)"
 		};
+		assert (command[0] != null);
 		try {
 			int exit_status;
 			Process.spawn_sync
@@ -284,7 +304,7 @@ public class SingleDB : Object {
 	public bool
 	any_app_running (string package, string version) throws DatabaseError
 	{
-		if (! find_on_path ("upstart-app-pid"))
+		if (get_app_pid_command () == null)
 			return false;
 
 		var manifest_path = Path.build_filename

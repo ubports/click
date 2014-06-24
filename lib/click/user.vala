@@ -110,10 +110,22 @@ try_create (string path) throws UserError
 			 path, strerror (errno));
 }
 
+private class CachedPasswd : Object {
+	public Posix.uid_t uid;
+	public Posix.gid_t gid;
+
+	public
+	CachedPasswd (Posix.uid_t uid, Posix.gid_t gid)
+	{
+		this.uid = uid;
+		this.gid = gid;
+	}
+}
+
 private void
-try_chown (string path, Posix.Passwd pw) throws UserError
+try_chown (string path, CachedPasswd pw) throws UserError
 {
-	if (Posix.chown (path, pw.pw_uid, pw.pw_gid) < 0)
+	if (Posix.chown (path, pw.uid, pw.gid) < 0)
 		throw new UserError.CHOWN_DB
 			("Cannot set ownership of database directory %s: %s",
 			 path, strerror (errno));
@@ -121,7 +133,7 @@ try_chown (string path, Posix.Passwd pw) throws UserError
 
 public class Users : Object {
 	public DB db { private get; construct; }
-	private unowned Posix.Passwd? click_pw;
+	private CachedPasswd? click_pw;
 
 	public Users (DB db)
 	{
@@ -134,16 +146,17 @@ public class Users : Object {
 	 *
 	 * Returns: The password file entry for the `clickpkg` user.
 	 */
-	private unowned Posix.Passwd
+	private CachedPasswd
 	get_click_pw () throws UserError
 	{
 		if (click_pw == null) {
 			errno = 0;
-			click_pw = Posix.getpwnam ("clickpkg");
-			if (click_pw == null)
+			unowned Posix.Passwd pw = Posix.getpwnam ("clickpkg");
+			if (pw == null)
 				throw new UserError.GETPWNAM
 					("Cannot get password file entry " +
 					 "for clickpkg: %s", strerror (errno));
+			click_pw = new CachedPasswd (pw.pw_uid, pw.pw_gid);
 		}
 		return click_pw;
 	}
@@ -221,7 +234,7 @@ public class User : Object {
 	public string name { private get; construct; }
 
 	private Users? users;
-	private unowned Posix.Passwd? user_pw;
+	private CachedPasswd? user_pw;
 	private int dropped_privileges_count;
 	private Posix.mode_t? old_umask;
 
@@ -273,18 +286,19 @@ public class User : Object {
 	 *
 	 * Returns: The password file entry for this user.
 	 */
-	private unowned Posix.Passwd
+	private CachedPasswd
 	get_user_pw () throws UserError
 	{
 		assert (! is_pseudo_user);
 
 		if (user_pw == null) {
 			errno = 0;
-			user_pw = Posix.getpwnam (name);
-			if (user_pw == null)
+			unowned Posix.Passwd pw = Posix.getpwnam (name);
+			if (pw == null)
 				throw new UserError.GETPWNAM
 				     ("Cannot get password file entry for " +
 				      "%s: %s", name, strerror (errno));
+			user_pw = new CachedPasswd (pw.pw_uid, pw.pw_gid);
 		}
 		return user_pw;
 	}
@@ -340,10 +354,10 @@ public class User : Object {
 			 * the user/group of created filesystem nodes to be
 			 * correct.
 			 */
-			unowned Posix.Passwd? pw = get_user_pw ();
-			if (PosixExtra.setegid (pw.pw_gid) < 0)
+			var pw = get_user_pw ();
+			if (PosixExtra.setegid (pw.gid) < 0)
 				priv_drop_failure ("setegid");
-			if (PosixExtra.seteuid (pw.pw_uid) < 0)
+			if (PosixExtra.seteuid (pw.uid) < 0)
 				priv_drop_failure ("seteuid");
 			old_umask = Posix.umask (get_umask () | Posix.S_IWOTH);
 		}

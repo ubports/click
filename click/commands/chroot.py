@@ -20,15 +20,39 @@
 from __future__ import print_function
 
 from argparse import ArgumentParser, REMAINDER
+from contextlib import contextmanager
 import os
 
-from click.chroot import ClickChroot
+from click.chroot import (
+    ClickChroot,
+    ClickChrootAlreadyExistsException,
+    ClickChrootDoesNotExistException,
+)
 from click import osextras
 
 
 def requires_root(parser):
     if os.getuid() != 0:
         parser.error("must be run as root; try sudo")
+
+
+@contextmanager
+def message_on_error(exc, msg):
+    """
+    Context Manager that prints the error message 'msg' on exception 'exc'
+    """
+    try:
+        yield
+    except exc:
+        print(msg)
+
+
+# FIXME: i18n(?)
+class ErrorMessages:
+    EXISTS = """A chroot for that name and architecture already exists.
+Please see the man-page how to use it."""
+    NOT_EXISTS = """A chroot for that name and architecture does not exist.
+Please use 'create' to create it."""
 
 
 def create(parser, args):
@@ -38,20 +62,32 @@ def create(parser, args):
             "debootstrap")
     requires_root(parser)
     chroot = ClickChroot(args.architecture, args.framework, series=args.series)
-    return chroot.create()
+    with message_on_error(
+            ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
+        return chroot.create(args.keep_broken_chroot)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def install(parser, args):
     packages = args.packages
     chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.install(*packages)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.install(*packages)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def destroy(parser, args):
     requires_root(parser)
     # ask for confirmation?
     chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.destroy()
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.destroy()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def execute(parser, args):
@@ -60,7 +96,11 @@ def execute(parser, args):
         program = ["/bin/bash"]
     chroot = ClickChroot(
         args.architecture, args.framework, session=args.session)
-    return chroot.run(*program)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.run(*program)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def maint(parser, args):
@@ -69,24 +109,40 @@ def maint(parser, args):
         program = ["/bin/bash"]
     chroot = ClickChroot(
         args.architecture, args.framework, session=args.session)
-    return chroot.maint(*program)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.maint(*program)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def upgrade(parser, args):
     chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.upgrade()
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.upgrade()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def begin_session(parser, args):
     chroot = ClickChroot(
         args.architecture, args.framework, session=args.session)
-    return chroot.begin_session()
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.begin_session()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def end_session(parser, args):
     chroot = ClickChroot(
         args.architecture, args.framework, session=args.session)
-    return chroot.end_session()
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.end_session()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def run(argv):
@@ -107,6 +163,10 @@ def run(argv):
     create_parser = subparsers.add_parser(
         "create",
         help="create a chroot of the provided architecture")
+    create_parser.add_argument(
+        "-k", "--keep-broken-chroot", default=False, action="store_true",
+        help="Keep the chroot even if creating it fails (default is to delete "
+              "it)")
     create_parser.set_defaults(func=create)
     destroy_parser = subparsers.add_parser(
         "destroy",

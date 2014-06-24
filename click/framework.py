@@ -44,8 +44,9 @@ def parse_deb822_file(filename):
         for line in f:
             line = line.strip()
             # from deb822.vala
-            field_re_posix = r'^([^:[:space:]]+)[[:space:]]*:[[:space:]]'\
-                       '([^[:space:]].*?)[[:space:]]*$'
+            field_re_posix = (
+                r'^([^:[:space:]]+)[[:space:]]*:[[:space:]]'
+                '([^[:space:]].*?)[[:space:]]*$')
             # python does not do posix char classes
             field_re = field_re_posix.replace("[:space:]", "\s")
             blank_re_posix = r'^[[:space:]]*$'
@@ -110,7 +111,7 @@ def validate_framework(framework_string, ignore_missing_frameworks=False):
             missing_frameworks.append(framework_name)
             continue
         framework_base_version = click_framework_get_base_version(
-                framework_name)
+            framework_name)
         framework_base_versions.add(framework_base_version)
 
     if not ignore_missing_frameworks:

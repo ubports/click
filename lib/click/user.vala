@@ -598,7 +598,7 @@ public class User : Object {
     stop_running_app (string package, string version)
 	{
 		var res = true;
-		if (! find_on_path ("upstart-app-stop"))
+		if (! find_on_path ("ubuntu-app-stop"))
 			return false;
 
 		Json.Object manifest;
@@ -619,7 +619,7 @@ public class User : Object {
 		{
 			// FIXME: move this into a "stop_single_app" helper
 			string[] command = {
-				"upstart-app-stop",
+				"ubuntu-app-stop",
 				@"$(package)_$(app_name)_$(version)"
 			};
 			try {

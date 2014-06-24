@@ -429,6 +429,18 @@ class TestClickDB(TestCase):
         db = Click.DB()
         self.assertEqual(0, db.props.size)
 
+    def test_no_db_conf_errors(self):
+        db = Click.DB()
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.INVALID, db.get, 0)
+        self.assertEqual(db.props.overlay, "")
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.INVALID, db.maybe_remove, "something", "1.0")
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.INVALID, db.gc)
+        self.assertRaisesDatabaseError(
+            Click.DatabaseError.INVALID, db.ensure_ownership)
+
     def test_add(self):
         db = Click.DB()
         self.assertEqual(0, db.props.size)

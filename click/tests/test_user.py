@@ -54,7 +54,7 @@ class TestClickUser(TestCase):
         a_1_0 = os.path.join(self.temp_dir, "custom", "a", "1.0")
         os.makedirs(a_1_0)
         with mkfile(os.path.join(a_1_0, ".click", "info", "a.manifest")) as m:
-            json.dump({"name": "a", "version": "1.0", 
+            json.dump({"name": "a", "version": "1.0",
                        "hooks": {"a-app": {}}}, m)
         b_2_0 = os.path.join(self.temp_dir, "custom", "b", "2.0")
         os.makedirs(b_2_0)
@@ -519,4 +519,3 @@ class TestClickUser(TestCase):
         # ensure that stop was called with the right app
         with open(fake_app_stop_output) as f:
             self.assertEqual("a_a-app_1.1", f.read().strip())
-        

@@ -19,7 +19,7 @@ import os
 import subprocess
 import unittest
 
-from .helpers import TestCase
+from .helpers import ClickTestCase
 
 
 @unittest.skipIf(
@@ -27,7 +27,7 @@ from .helpers import TestCase
 @unittest.skipIf(
     subprocess.call(
         ["ping", "-c1", "archive.ubuntu.com"]) != 0, "Need network")
-class TestChroot(TestCase):
+class TestChroot(ClickTestCase):
 
     @classmethod
     def setUpClass(cls):

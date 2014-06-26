@@ -36,7 +36,7 @@ def chdir(target):
         os.chdir(curdir)
 
 
-class TestCase(unittest.TestCase):
+class ClickTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):

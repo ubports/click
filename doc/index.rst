@@ -114,7 +114,7 @@ use:
     PYTHONPATH=$(pwd) \
     GI_TYPELIB_PATH=$(pwd)/lib/click \
     CLICK_BINARY=$(pwd)/bin/click \
-     python3 -m unittest discover tests.integration
+    python3 -m unittest discover tests.integration
 
 to run against the build tree.
 

@@ -57,7 +57,7 @@ class TestBuildCoreApps(TestCase):
 
     def test_build(self):
         for branch in self.TEST_BUILD_BRANCHES:
-            self._run_in_chroot(["bzr","branch", branch])
+            subprocess.check_call(["bzr","branch", branch])
             with chdir(branch[len("lp:"):]):
                 self.assertEqual(self._run_in_chroot(["cmake", "."]), 0)
                 self.assertEqual(self._run_in_chroot(["make"]), 0)

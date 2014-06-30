@@ -29,8 +29,8 @@ from .helpers import chdir, TestCase
 class TestBuildCoreApps(TestCase):
 
     ARCH = "armhf"
-    FRAMEWORK = "ubuntu-sdk-14.04"
-    TEST_BUILD_BRANCHES = ["lp:ubuntu-filemanager-app",
+    FRAMEWORK = "ubuntu-sdk-14.10"
+    TEST_BUILD_BRANCHES = ["lp:camera-app",
                           ]
 
     @classmethod
@@ -42,6 +42,16 @@ class TestBuildCoreApps(TestCase):
             "-a", cls.ARCH,
             "-f", cls.FRAMEWORK,
             "create"])
+        # bug #1316930(?)
+        subprocess.check_call([
+            cls.click_binary,
+            "chroot",
+            "-a", cls.ARCH,
+            "-f", cls.FRAMEWORK,
+            "maint",
+            "apt-get", "install", "python3",
+        ])
+
 
     @classmethod
     def tearDownClass(cls):
@@ -59,7 +69,12 @@ class TestBuildCoreApps(TestCase):
         for branch in self.TEST_BUILD_BRANCHES:
             subprocess.check_call(["bzr","branch", branch])
             with chdir(branch[len("lp:"):]):
-                self.assertEqual(self._run_in_chroot(["cmake", "."]), 0)
-                self.assertEqual(self._run_in_chroot(["make"]), 0)
+                self.assertEqual(self._run_in_chroot(
+                    ["cmake", ".", "-DCLICK_MODE=on"]), 0)
+                self.assertEqual(self._run_in_chroot(
+                    ["make", "DESTDIR=package", "install"]), 0)
+                subprocess.check_call(
+                    [self.click_binary, "build", "package"])
+                
 
                 

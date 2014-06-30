@@ -262,9 +262,11 @@ class TestClickSingleDB(TestCase):
 
     def test_gc(self):
         with self.run_in_subprocess(
-                "click_find_on_path", "g_spawn_sync",
+                "click_find_on_path", "g_spawn_sync", "getpwnam"
                 ) as (enter, preloads):
             enter()
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
             os.environ["TEST_QUIET"] = "1"
             a_path = os.path.join(self.temp_dir, "a", "1.0")
             a_manifest_path = os.path.join(
@@ -298,18 +300,24 @@ class TestClickSingleDB(TestCase):
             self.assertTrue(os.path.exists(c_path))
 
     def test_gc_ignores_non_directory(self):
-        a_path = os.path.join(self.temp_dir, "a", "1.0")
-        a_manifest_path = os.path.join(
-            a_path, ".click", "info", "a.manifest")
-        with mkfile(a_manifest_path) as manifest:
-            json.dump({"hooks": {"a-app": {}}}, manifest)
-        a_user_path = os.path.join(
-            self.temp_dir, ".click", "users", "test-user", "a")
-        os.makedirs(os.path.dirname(a_user_path))
-        os.symlink(a_path, a_user_path)
-        touch(os.path.join(self.temp_dir, "file"))
-        self.db.gc()
-        self.assertTrue(os.path.exists(a_path))
+        with self.run_in_subprocess(
+                "getpwnam"
+                ) as (enter, preloads):
+            enter()
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
+            a_path = os.path.join(self.temp_dir, "a", "1.0")
+            a_manifest_path = os.path.join(
+                a_path, ".click", "info", "a.manifest")
+            with mkfile(a_manifest_path) as manifest:
+                json.dump({"hooks": {"a-app": {}}}, manifest)
+            a_user_path = os.path.join(
+                self.temp_dir, ".click", "users", "test-user", "a")
+            os.makedirs(os.path.dirname(a_user_path))
+            os.symlink(a_path, a_user_path)
+            touch(os.path.join(self.temp_dir, "file"))
+            self.db.gc()
+            self.assertTrue(os.path.exists(a_path))
 
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")

@@ -54,9 +54,18 @@ def find_manifest(start_dir):
     return None
 
 
+class AddBranchTestFunctions(type):
+    """Metaclass that creates one test for each branch"""
+    def __new__(cls, name, bases, dct):
+        for branch in TEST_BUILD_BRANCHES:
+            name = "test_build_%s" % branch.split(":")[1].replace("-", "_")
+            dct[name] = lambda self: self._testbuild_branch(branch)
+        return type.__new__(cls, name, bases, dct)
+
+
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")
-class TestBuildCoreApps(TestCase):
+class TestBuildCoreApps(TestCase, metaclass=AddBranchTestFunctions):
 
     def _run_in_chroot(self, cmd):
         """Run the given cmd in a click chroot"""
@@ -93,8 +102,7 @@ class TestBuildCoreApps(TestCase):
         # we expect exactly one click
         self.assertEqual(len(glob("*.click")), 1)
 
-    def test_build_core_apps(self):
-        for branch in TEST_BUILD_BRANCHES:
+    def _testbuild_branch(self, branch):
             # get and parse
             branch_dir = branch[len("lp:"):]
             build_dir = os.path.join(branch_dir, "build-tree")

@@ -15,17 +15,17 @@
 
 """Integration tests for the click chroot feature."""
 
-import os
 import subprocess
 import unittest
 
-from .helpers import TestCase
+from .helpers import (
+    has_network,
+    is_root,
+    TestCase,
+)
 
-@unittest.skipIf(
-    os.getuid() != 0, "This tests needs to run as root")
-@unittest.skipIf(
-    subprocess.call(
-        ["ping", "-c1", "archive.ubuntu.com"]) != 0, "Need network")
+@unittest.skipIf(not is_root(), "This tests needs to run as root")
+@unittest.skipIf(not has_network(), "Need network")
 class TestChroot(TestCase):
 
     @classmethod

@@ -145,6 +145,15 @@ def end_session(parser, args):
     return 1
 
 
+def exists(parser, args):
+    chroot = ClickChroot(args.architecture, args.framework)
+    # return shell exit codes 0 on success, 1 on failure
+    if chroot.exists():
+        return 0
+    else:
+        return 1
+
+
 def run(argv):
     parser = ArgumentParser("click chroot")
     subparsers = parser.add_subparsers(
@@ -219,6 +228,10 @@ def run(argv):
         "session",
         help="session name to end")
     end_parser.set_defaults(func=end_session)
+    exists_parser = subparsers.add_parser(
+        "exists",
+        help="test if the given chroot exists")
+    exists_parser.set_defaults(func=exists)
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()

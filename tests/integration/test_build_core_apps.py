@@ -60,10 +60,7 @@ class TestBuildCoreApps(TestCase):
 
     def _run_in_chroot(self, cmd):
         """Run the given cmd in a click chroot"""
-        return subprocess.check_call([
-            self.click_binary, "chroot", 
-            "-a", self.arch, "-f", self.framework,
-            "run"] + cmd)
+        return subprocess.check_call(self.chroot_cmd + ["run"] + cmd)
 
     def _set_arch_and_framework_from_manifest(self, manifest):
         with open(manifest) as f:
@@ -74,26 +71,21 @@ class TestBuildCoreApps(TestCase):
         #     but chroot expects "ubuntu-sdk-14.04"
         self.framework = self.framework.rsplit("-", maxsplit=1)[0]
 
+    @property
+    def chroot_cmd(self):
+        return [
+            self.click_binary, "chroot", "-a", self.arch, "-f", self.framework]
+
     def _ensure_click_chroot(self):
-        # FIXME: we try bug^Wbut ignore the result (bad) 
-        #        because there is no "click chroot exists" (bad!)
-        subprocess.call([
-            self.click_binary,
-            "chroot",
-             "-a", self.arch,
-             "-f", self.framework,
-             "create"])
-        # FIXME:
-        # bug #1316930 - I guess we want this to be part of the default
-        #                dependencies for a click?
-        subprocess.call([
-            self.click_binary,
-            "chroot",
-            "-a", self.arch,
-            "-f", self.framework,
-            "maint",
-            "apt-get", "install", "-y", "python3",
-        ])
+        if subprocess.call(self.chroot_cmd + ["exists"]) != 0:
+            subprocess.check_call(self.chroot_cmd + ["create"])
+            # FIXME:
+            # bug #1316930 - I guess we want this to be part of the default
+            #                dependencies for a click?
+            subprocess.call(
+                self.chroot_cmd +
+                ["maint",
+                 "apt-get", "install", "-y", "python3"])
 
     def configure(self):
         self._run_in_chroot(CORE_APP_CONFIGURE_CMD)
@@ -111,14 +103,16 @@ class TestBuildCoreApps(TestCase):
         for branch in TEST_BUILD_BRANCHES:
             # get and parse
             branch_dir = branch[len("lp:"):]
-            build_dir = os.path.join(branch_dir, "build")
-            # always use a fresh checkout (to prevent pollution)
+            build_dir = os.path.join(branch_dir, "build-tree")
             if os.path.exists(branch_dir):
-                shutil.rmtree(branch_dir)
-            subprocess.check_call(["bzr","branch", branch])
+                subprocess.check_call(["bzr","pull"], cwd=branch_dir)
+            else:
+                subprocess.check_call(["bzr","branch", branch])
             manifest = find_manifest(branch_dir)
             # build it
             self._set_arch_and_framework_from_manifest(manifest)
+            if os.path.exists(build_dir):
+                shutil.rmtree(build_dir)
             os.makedirs(build_dir)
             with chdir(build_dir):
                 self._ensure_click_chroot()

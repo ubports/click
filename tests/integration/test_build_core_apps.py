@@ -79,13 +79,6 @@ class TestBuildCoreApps(TestCase):
     def _ensure_click_chroot(self):
         if subprocess.call(self.chroot_cmd + ["exists"]) != 0:
             subprocess.check_call(self.chroot_cmd + ["create"])
-            # FIXME:
-            # bug #1316930 - I guess we want this to be part of the default
-            #                dependencies for a click?
-            subprocess.call(
-                self.chroot_cmd +
-                ["maint",
-                 "apt-get", "install", "-y", "python3"])
 
     def configure(self):
         self._run_in_chroot(CORE_APP_CONFIGURE_CMD)

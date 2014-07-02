@@ -26,6 +26,14 @@ import tempfile
 import unittest
 
 
+def is_root():
+    return os.getuid() == 0
+
+def has_network():
+    return subprocess.call(
+        ["ping", "-c1", "archive.ubuntu.com"]) == 0
+
+
 @contextlib.contextmanager
 def chdir(target):
     curdir = os.getcwd()

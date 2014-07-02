@@ -38,15 +38,12 @@ from textwrap import dedent
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
-    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
     }
 
 
@@ -82,6 +79,8 @@ extra_packages = {
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -100,6 +99,8 @@ extra_packages = {
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -129,6 +130,11 @@ def shell_escape(command):
         else:
             escaped.append("'%s'" % arg.replace("'", "'\\''"))
     return " ".join(escaped)
+
+
+def strip_dev_series_from_framework(framework):
+    """Remove trailing -dev[0-9]+ from a framework name"""
+    return re.sub(r'^(.*)-dev[0-9]+$', r'\1', framework)
 
 
 class ClickChrootException(Exception):
@@ -163,7 +169,7 @@ class ClickChroot:
     def __init__(self, target_arch, framework, name=None, series=None,
                  session=None, chroots_dir=None):
         self.target_arch = target_arch
-        self.framework = framework
+        self.framework = strip_dev_series_from_framework(framework)
         if name is None:
             name = "click"
         self.name = name

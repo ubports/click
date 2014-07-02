@@ -38,18 +38,12 @@ from textwrap import dedent
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
-    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-dev2": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
     }
 
 
@@ -138,6 +132,11 @@ def shell_escape(command):
     return " ".join(escaped)
 
 
+def strip_dev_series_from_framework(framework):
+    """Remove trailing -dev[0-9]+ from a framework name"""
+    return re.sub(r'^(.*)-dev[0-9]+$', r'\1', framework)
+
+
 class ClickChrootException(Exception):
     """A generic issue with the chroot"""
     pass
@@ -170,7 +169,7 @@ class ClickChroot:
     def __init__(self, target_arch, framework, name=None, series=None,
                  session=None, chroots_dir=None):
         self.target_arch = target_arch
-        self.framework = framework
+        self.framework = strip_dev_series_from_framework(framework)
         if name is None:
             name = "click"
         self.name = name

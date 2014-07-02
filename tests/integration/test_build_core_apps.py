@@ -76,10 +76,6 @@ class TestBuildCoreApps(TestCase, metaclass=AddBranchTestFunctions):
             data = json.load(f)
         self.arch = data["architecture"]
         self.framework = data["framework"]
-        # ?!? the framework can be in the form "ubuntu-sdk-14.04-dev2"
-        #     but chroot expects "ubuntu-sdk-14.04" (without the -dev suffix)
-        if "-dev" in self.framework:
-            self.framework = self.framework.rsplit("-", maxsplit=1)[0]
 
     @property
     def chroot_cmd(self):

@@ -3,6 +3,7 @@
 import sys
 
 from setuptools import find_packages, setup
+from setuptools.command.test import test
 
 
 requirements = []
@@ -18,6 +19,24 @@ if sys.version < "3.3":
     require('mock')
 require('chardet')
 
+if "@GCOVR@":
+    require('coverage')
+
+
+class test_extra(test):
+    def run(self):
+        if "@GCOVR@":
+            coverage_executable = "python3-coverage"
+            self.spawn([
+                coverage_executable, "run", "-m", "unittest",
+                "discover", "-vv", "click.tests"])
+            self.spawn([coverage_executable, "combine"])
+            self.spawn([
+                coverage_executable, "xml", "-o", "coverage-python.xml"])
+            self.spawn([coverage_executable, "report"])
+        else:
+            test.run(self)
+
 
 setup(
     name="click",
@@ -29,5 +48,6 @@ setup(
     packages=find_packages(),
     scripts=['bin/click'],
     install_requires=requirements,
+    cmdclass={"test": test_extra},
     test_suite="click.tests",
     )

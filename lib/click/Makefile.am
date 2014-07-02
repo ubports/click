@@ -4,6 +4,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 	$(LIBCLICK_CFLAGS) \
 	$(VALA_CFLAGS) \
+	$(COVERAGE_CFLAGS) \
 	-Wno-unused-but-set-variable \
 	-Wno-unused-function \
 	-Wno-unused-variable
@@ -66,6 +67,7 @@ includeclick_HEADERS = \
 libclick_0_4_la_LIBADD = $(LIBCLICK_LIBS)
 
 libclick_0_4_la_LDFLAGS = \
+	$(COVERAGE_LDFLAGS) \
 	-export-dynamic \
 	-export-symbols $(srcdir)/click.sym \
 	-version-info 4:0:4

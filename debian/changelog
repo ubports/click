@@ -5,6 +5,8 @@ click (0.4.29) UNRELEASED; urgency=medium
 
   [ Colin Watson ]
   * Various adjustments for improved PEP-8 compliance.
+  * Produce coverage only on request via ./configure --enable-gcov.  Extend
+    it to cover C code as well, and produce a merged coverage.xml.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
 

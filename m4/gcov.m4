@@ -57,9 +57,7 @@ AC_DEFUN([AC_TDD_GCOV],
   # Check availability of gcovr
   AC_CHECK_PROG(GCOVR, gcovr, gcovr)
   if test -z "$GCOVR"; then
-    ac_cv_check_gcovr=no
-  else
-    ac_cv_check_gcovr=yes
+    AC_MSG_ERROR([To enable code coverage reporting you must have gcovr installed])
   fi
 
 fi

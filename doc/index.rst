@@ -90,13 +90,28 @@ or::
 
   $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
 
-If you have python-coverage installed, you can get a test coverage report 
-by typing:
+Test coverage
+-------------
+
+If you have python-coverage installed, you can get a Python test coverage
+report by typing:
 
   $ python-coverage combine
   $ python-coverage report
 
 This works also for python3-coverage.
+
+To get Vala/C coverage information, install the gcovr and lcov packages and
+run:
+
+  $ ./configure --enable-gcov
+  $ make coverage-html
+
+which will generate a "coveragereport/index.html" file for you.
+
+The combined coverage information can be obtained via:
+
+  $ make coverage.xml
 
 Integration Tests
 -----------------

@@ -11,6 +11,10 @@ click (0.4.29) UNRELEASED; urgency=medium
   * Produce coverage only on request via ./configure --enable-gcov.  Extend
     it to cover C code as well, and produce a merged coverage.xml.
 
+  [ Brendan Donegan ]
+  * Clean up integration tests - have one file per command and make some
+    things clearer.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
 
 click (0.4.28) utopic; urgency=medium

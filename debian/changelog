@@ -1,4 +1,4 @@
-click (0.4.29) UNRELEASED; urgency=medium
+click (0.4.29) utopic; urgency=medium
 
   [ Michael Vogt ]
   * Refactor click/chroot.py and improve tests.
@@ -19,7 +19,7 @@ click (0.4.29) UNRELEASED; urgency=medium
   [ Dimitri John Ledkov ]
   * Seed runtime target arch SDK app launcher, to enable remote debugging.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 03 Jul 2014 13:10:21 +0000
 
 click (0.4.28) utopic; urgency=medium
 

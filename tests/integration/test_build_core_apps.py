@@ -26,7 +26,7 @@ from .helpers import (
     chdir,
     has_network,
     is_root,
-    TestCase,
+    ClickTestCase,
 )
 
 # the branches we want to testbuild
@@ -65,7 +65,7 @@ class AddBranchTestFunctions(type):
 
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")
-class TestBuildCoreApps(TestCase, metaclass=AddBranchTestFunctions):
+class TestBuildCoreApps(ClickTestCase, metaclass=AddBranchTestFunctions):
 
     def _run_in_chroot(self, cmd):
         """Run the given cmd in a click chroot"""

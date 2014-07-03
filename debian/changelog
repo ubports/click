@@ -1,3 +1,26 @@
+click (0.4.29) UNRELEASED; urgency=medium
+
+  [ Michael Vogt ]
+  * Refactor click/chroot.py and improve tests.
+  * Test-build two ubuntu-system-apps in a click chroot as part of the
+    integration tests.
+  * Generalise handling of -devN frameworks in "click chroot".
+  * Add integration test for "click hook install".
+
+  [ Colin Watson ]
+  * Various adjustments for improved PEP-8 compliance.
+  * Produce coverage only on request via ./configure --enable-gcov.  Extend
+    it to cover C code as well, and produce a merged coverage.xml.
+
+  [ Brendan Donegan ]
+  * Clean up integration tests - have one file per command and make some
+    things clearer.
+
+  [ Dimitri John Ledkov ]
+  * Seed runtime target arch SDK app launcher, to enable remote debugging.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
+
 click (0.4.28) utopic; urgency=medium
 
   [ Colin Watson ]

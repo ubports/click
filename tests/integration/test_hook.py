@@ -13,19 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Integration tests for the click chroot feature."""
+"""Integration tests for the click hook feature."""
 
 import os
 import subprocess
 from textwrap import dedent
 import unittest
 
-from .helpers import TestCase
+from .helpers import (
+    is_root,
+    ClickTestCase,
+)
 
 
-@unittest.skipIf(
-    os.getuid() != 0, "This tests needs to run as root")
-class TestHook(TestCase):
+@unittest.skipIf(not is_root(), "This tests needs to run as root")
+class TestHook(ClickTestCase):
     def _make_hook(self, name):
         hook_fname = "/usr/share/click/hooks/%s.hook" % name
         canary_fname = os.path.join(self.temp_dir, "canary.sh")

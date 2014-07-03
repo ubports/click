@@ -53,10 +53,10 @@ class ClickTestCase(unittest.TestCase):
         cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
 
     def setUp(self):
-        super(TestCase, self).setUp()
+        super(ClickTestCase, self).setUp()
         self.temp_dir = tempfile.mkdtemp()
     def tearDown(self):
-        super(TestCase, self).tearDown()
+        super(ClickTestCase, self).tearDown()
         # we force the cleanup before removing the tempdir so that stuff
         # in temp_dir is still available
         self.doCleanups()

@@ -62,6 +62,7 @@ extra_packages = {
         "libqt5v8-5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qt5-qmake:TARGET",
@@ -81,6 +82,7 @@ extra_packages = {
         "libunity-scopes-dev:TARGET",
         # bug #1316930, needed for autopilot
         "python3",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -101,6 +103,7 @@ extra_packages = {
         "libunity-scopes-dev:TARGET",
         # bug #1316930, needed for autopilot
         "python3",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",

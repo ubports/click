@@ -195,8 +195,8 @@ public class Users : Object {
 			foreach (var entry in Click.Dir.open (users_db)) {
 				if (entry in seen)
 					continue;
-				// the user does not/no-longer exist
-				if (Posix.getpwnam (entry) == null)
+				// the user is not a pseudo user and does not/no-longer exist
+				if (entry[0] != '@' && Posix.getpwnam (entry) == null)
 					continue;
 				var path = Path.build_filename (users_db,
 								entry);

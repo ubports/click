@@ -17,10 +17,12 @@
 
 import contextlib
 import glob
+import json
 import os
 import random
 import shutil
 import string
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -50,17 +52,28 @@ class ClickTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
 
-    def _create_manifest(self, target, name, version, framework):
-        with open(target, "w") as f:
-            f.write("""{
-            "name": "%s",
-            "version": "%s",
-            "maintainer": "Foo Bar <foo@example.org>",
-            "title": "test title",
-            "framework": "%s"
-            }""" % (name, version, framework))
+    def setUp(self):
+        super(ClickTestCase, self).setUp()
+        self.temp_dir = tempfile.mkdtemp()
+    def tearDown(self):
+        super(ClickTestCase, self).tearDown()
+        # we force the cleanup before removing the tempdir so that stuff
+        # in temp_dir is still available
+        self.doCleanups()
+        shutil.rmtree(self.temp_dir)
 
-    def _make_click(self, name=None, version=1.0, framework="ubuntu-sdk-13.10"):
+    def _create_manifest(self, target, name, version, framework, hooks={}):
+        with open(target, "w") as f:
+            json.dump({'name': name,
+                       'version': str(version),
+                       'maintainer': 'Foo Bar <foo@example.org>',
+                       'title': 'test title',
+                       'framework': framework,
+                       'hooks': hooks,
+                   }, f)
+
+    def _make_click(self, name=None, version=1.0,
+                    framework="ubuntu-sdk-13.10", hooks={}):
         if name is None:
             name = "com.ubuntu.%s" % "".join(
                 random.choice(string.ascii_lowercase) for i in range(10))
@@ -69,7 +82,7 @@ class ClickTestCase(unittest.TestCase):
         clickdir = os.path.join(tmpdir, name)
         os.makedirs(clickdir)
         self._create_manifest(os.path.join(clickdir, "manifest.json"),
-                              name, version, framework)
+                              name, version, framework, hooks)
         with open(os.path.join(clickdir, "README"), "w") as f:
             f.write("hello world!")
         with chdir(tmpdir), open(os.devnull, "w") as devnull:

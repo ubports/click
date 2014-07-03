@@ -5,6 +5,7 @@ click (0.4.29) UNRELEASED; urgency=medium
   * Test-build two ubuntu-system-apps in a click chroot as part of the
     integration tests.
   * Generalise handling of -devN frameworks in "click chroot".
+  * Add integration test for "click hook install".
 
   [ Colin Watson ]
   * Various adjustments for improved PEP-8 compliance.

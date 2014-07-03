@@ -19,7 +19,7 @@ import os
 import subprocess
 import unittest
 
-from .helpers import TestCase
+from .helpers import ClickTestCase
 
 
 def add_user(name):
@@ -33,7 +33,7 @@ def del_user(name):
 
 @unittest.skipIf(
     os.getuid() != 0, "This tests needs to run as root")
-class TestClickInstall(TestCase):
+class TestClickInstall(ClickTestCase):
 
     @classmethod
     def setUpClass(cls):

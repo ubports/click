@@ -26,7 +26,6 @@ __all__ = [
     "ClickChrootDoesNotExistException",
     ]
 
-
 import os
 import pwd
 import re
@@ -34,19 +33,17 @@ import shutil
 import stat
 import subprocess
 import sys
+from textwrap import dedent
 
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
-    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
     }
 
 
@@ -65,6 +62,7 @@ extra_packages = {
         "libqt5v8-5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qt5-qmake:TARGET",
@@ -82,6 +80,9 @@ extra_packages = {
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -100,6 +101,9 @@ extra_packages = {
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -131,6 +135,11 @@ def shell_escape(command):
     return " ".join(escaped)
 
 
+def strip_dev_series_from_framework(framework):
+    """Remove trailing -dev[0-9]+ from a framework name"""
+    return re.sub(r'^(.*)-dev[0-9]+$', r'\1', framework)
+
+
 class ClickChrootException(Exception):
     """A generic issue with the chroot"""
     pass
@@ -147,9 +156,23 @@ class ClickChrootDoesNotExistException(ClickChrootException):
 
 
 class ClickChroot:
-    def __init__(self, target_arch, framework, name=None, series=None, session=None):
+
+    DAEMON_POLICY = dedent("""\
+    #!/bin/sh
+    while true; do
+        case "$1" in
+          -*) shift ;;
+          makedev) exit 0;;
+          x11-common) exit 0;;
+          *) exit 101;;
+        esac
+    done
+    """)
+
+    def __init__(self, target_arch, framework, name=None, series=None,
+                 session=None, chroots_dir=None):
         self.target_arch = target_arch
-        self.framework = framework
+        self.framework = strip_dev_series_from_framework(framework)
         if name is None:
             name = "click"
         self.name = name
@@ -161,7 +184,9 @@ class ClickChroot:
             ["dpkg", "--print-architecture"],
             universal_newlines=True).strip()
         self.native_arch = self._get_native_arch(system_arch, self.target_arch)
-        self.chroots_dir = "/var/lib/schroot/chroots"
+        if chroots_dir is None:
+            chroots_dir = "/var/lib/schroot/chroots"
+        self.chroots_dir = chroots_dir
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
             self.archive = os.environ['DEBOOTSTRAP_MIRROR']
@@ -222,6 +247,29 @@ class ClickChroot:
                     dpkg_architecture[new_key] = dpkg_architecture[key]
         return dpkg_architecture
 
+    def _generate_chroot_config(self, mount):
+        admin_user = "root"
+        users = []
+        for key in ("users", "root-users", "source-root-users"):
+            users.append("%s=%s,%s" % (key, admin_user, self.user))
+        with open(self.chroot_config, "w") as target:
+            target.write(dedent("""\
+            [{full_name}]
+            description=Build chroot for click packages on {target_arch}
+            {users}
+            type=directory
+            profile=default
+            setup.fstab=click/fstab
+            # Not protocols or services see
+            # debian bug 557730
+            setup.nssdatabases=sbuild/nssdatabases
+            union-type=overlayfs
+            directory={mount}
+            """).format(full_name=self.full_name,
+                        target_arch=self.target_arch,
+                        users="\n".join(users),
+                        mount=mount))
+
     def _generate_sources(self, series, native_arch, target_arch, components):
         ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
         pockets = ['%s' % series]
@@ -247,6 +295,71 @@ class ClickChroot:
 
         return sources
 
+    def _generate_daemon_policy(self, mount):
+        daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
+        with open(daemon_policy, "w") as policy:
+            policy.write(self.DAEMON_POLICY)
+        return daemon_policy
+
+    def _generate_apt_proxy_file(self, mount, proxy):
+        apt_conf_d = os.path.join(mount, "etc", "apt", "apt.conf.d")
+        if not os.path.exists(apt_conf_d):
+            os.makedirs(apt_conf_d)
+        apt_conf_f = os.path.join(apt_conf_d, "99-click-chroot-proxy")
+        if proxy:
+            with open(apt_conf_f, "w") as f:
+                f.write(dedent("""\
+                // proxy settings copied by click chroot
+                Acquire {
+                    HTTP {
+                        Proxy "%s";
+                    };
+                };
+                """) % proxy)
+        return apt_conf_f
+
+    def _generate_finish_script(self, mount, build_pkgs):
+        finish_script = "%s/finish.sh" % mount
+        with open(finish_script, 'w') as finish:
+            finish.write(dedent("""\
+            #!/bin/bash
+            set -e
+            # Configure target arch
+            dpkg --add-architecture {target_arch}
+            # Reload package lists
+            apt-get update || true
+            # Pull down signature requirements
+            apt-get -y --force-yes install gnupg ubuntu-keyring
+            # Reload package lists
+            apt-get update || true
+            # Disable debconf questions so that automated builds won't prompt
+            echo set debconf/frontend Noninteractive | debconf-communicate
+            echo set debconf/priority critical | debconf-communicate
+            apt-get -y --force-yes dist-upgrade
+            # Install basic build tool set to match buildd
+            apt-get -y --force-yes install {build_pkgs}
+            # Set up expected /dev entries
+            if [ ! -r /dev/stdin ];  then ln -s /proc/self/fd/0 /dev/stdin;  fi
+            if [ ! -r /dev/stdout ]; then ln -s /proc/self/fd/1 /dev/stdout; fi
+            if [ ! -r /dev/stderr ]; then ln -s /proc/self/fd/2 /dev/stderr; fi
+            # Clean up
+            rm /finish.sh
+            apt-get clean
+            """).format(target_arch=self.target_arch,
+                        build_pkgs=' '.join(build_pkgs)))
+        return finish_script
+
+    def _debootstrap(self, components, mount):
+        subprocess.check_call([
+            "debootstrap",
+            "--arch", self.native_arch,
+            "--variant=buildd",
+            "--components=%s" % ','.join(components),
+            self.series,
+            mount,
+            self.archive
+            ])
+
     @property
     def framework_base(self):
         if self.framework in framework_base:
@@ -261,6 +374,10 @@ class ClickChroot:
     @property
     def full_session_name(self):
         return "%s-%s" % (self.full_name, self.session)
+
+    @property
+    def chroot_config(self):
+        return "/etc/schroot/chroot.d/%s" % self.full_name
 
     def exists(self):
         command = ["schroot", "-c", self.full_name, "-i"]
@@ -302,15 +419,7 @@ class ClickChroot:
             package = package.replace(":TARGET", ":%s" % self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)
-        subprocess.check_call([
-            "debootstrap",
-            "--arch", self.native_arch,
-            "--variant=buildd",
-            "--components=%s" % ','.join(components),
-            self.series,
-            mount,
-            self.archive
-            ])
+        self._debootstrap(components, mount)
         sources = self._generate_sources(self.series, self.native_arch,
                                          self.target_arch,
                                          ' '.join(components))
@@ -319,80 +428,13 @@ class ClickChroot:
                 print(line, file=sources_list)
         shutil.copy2("/etc/localtime", "%s/etc/" % mount)
         shutil.copy2("/etc/timezone", "%s/etc/" % mount)
-        chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
-        with open(chroot_config, "w") as target:
-            admin_user = "root"
-            print("[%s]" % self.full_name, file=target)
-            print("description=Build chroot for click packages on %s" %
-                  self.target_arch, file=target)
-            for key in ("users", "root-users", "source-root-users"):
-                print("%s=%s,%s" % (key, admin_user, self.user), file=target)
-            print("type=directory", file=target)
-            print("profile=default", file=target)
-            print("setup.fstab=click/fstab", file=target)
-            print("# Not protocols or services see ", file=target)
-            print("# debian bug 557730", file=target)
-            print("setup.nssdatabases=sbuild/nssdatabases",
-                file=target)
-            print("union-type=overlayfs", file=target)
-            print("directory=%s" % mount, file=target)
-        daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
-        with open(daemon_policy, "w") as policy:
-            print("#!/bin/sh", file=policy)
-            print("while true; do", file=policy)
-            print('    case "$1" in', file=policy)
-            print("      -*) shift ;;", file=policy)
-            print("      makedev) exit 0;;", file=policy)
-            print("      x11-common) exit 0;;", file=policy)
-            print("      *) exit 101;;", file=policy)
-            print("    esac", file=policy)
-            print("done", file=policy)
+        self._generate_chroot_config(mount)
+        daemon_policy = self._generate_daemon_policy(mount)
         self._make_executable(daemon_policy)
         os.remove("%s/sbin/initctl" % mount)
         os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
-        finish_script = "%s/finish.sh" % mount
-        with open(finish_script, 'w') as finish:
-            print("#!/bin/bash", file=finish)
-            print("set -e", file=finish)
-            if proxy:
-                print("mkdir -p /etc/apt/apt.conf.d", file=finish)
-                print("cat > /etc/apt/apt.conf.d/99-click-chroot-proxy <<EOF",
-                      file=finish)
-                print("// proxy settings copied by click chroot", file=finish)
-                print('Acquire { HTTP { Proxy "%s"; }; };' % proxy,
-                      file=finish)
-                print("EOF", file=finish)
-            print("# Configure target arch", file=finish)
-            print("dpkg --add-architecture %s" % self.target_arch,
-                  file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Pull down signature requirements", file=finish)
-            print("apt-get -y --force-yes install \
-gnupg ubuntu-keyring", file=finish)
-            print("# Reload package lists", file=finish)
-            print("apt-get update || true", file=finish)
-            print("# Disable debconf questions so that automated \
-builds won't prompt", file=finish)
-            print("echo set debconf/frontend Noninteractive | \
-debconf-communicate", file=finish)
-            print("echo set debconf/priority critical | \
-debconf-communicate", file=finish)
-            print("apt-get -y --force-yes dist-upgrade", file=finish)
-            print("# Install basic build tool set to match buildd",
-                  file=finish)
-            print("apt-get -y --force-yes install %s"
-                  % ' '.join(build_pkgs), file=finish)
-            print("# Set up expected /dev entries", file=finish)
-            print("if [ ! -r /dev/stdin ];  \
-then ln -s /proc/self/fd/0 /dev/stdin;  fi", file=finish)
-            print("if [ ! -r /dev/stdout ]; \
-then ln -s /proc/self/fd/1 /dev/stdout; fi", file=finish)
-            print("if [ ! -r /dev/stderr ]; \
-then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
-            print("# Clean up", file=finish)
-            print("rm /finish.sh", file=finish)
-            print("apt-get clean", file=finish)
+        self._generate_apt_proxy_file(mount, proxy)
+        finish_script = self._generate_finish_script(mount, build_pkgs)
         self._make_executable(finish_script)
         command = ["/finish.sh"]
         ret_code = self.maint(*command)
@@ -426,7 +468,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
             return ret
 
     def maint(self, *args):
-        command = [ "schroot", "-u", "root", "-c" ]
+        command = ["schroot", "-u", "root", "-c"]
         if self.session:
             command.extend([self.full_session_name, "--run-session"])
         else:
@@ -480,8 +522,7 @@ then ln -s /proc/self/fd/2 /dev/stderr; fi", file=finish)
         if not self.exists():
             raise ClickChrootDoesNotExistException(
                 "Chroot %s does not exist" % self.full_name)
-        chroot_config = "/etc/schroot/chroot.d/%s" % self.full_name
-        os.remove(chroot_config)
+        os.remove(self.chroot_config)
         mount = "%s/%s" % (self.chroots_dir, self.full_name)
         shutil.rmtree(mount)
         return 0

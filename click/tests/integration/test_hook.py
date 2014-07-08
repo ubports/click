@@ -55,7 +55,7 @@ class TestHook(ClickTestCase):
         subprocess.check_call(
             [self.click_binary, "hook", "install", hook_name])
         self.addCleanup(
-            subprocess.check_call, [self.click_binary, "hook", "remove", 
+            subprocess.check_call, [self.click_binary, "hook", "remove",
                                     hook_name])
         # make click that uses the hook
         hooks = {'app1' : {hook_name: 'README'}}
@@ -67,7 +67,7 @@ class TestHook(ClickTestCase):
             self.click_binary, "install", "--user=%s" % user, click_pkg],
                               universal_newlines=True)
         self.addCleanup(
-            subprocess.check_call, 
+            subprocess.check_call,
             [self.click_binary, "unregister","--user=%s" % user,
              click_pkg_name])
         # ensure we have the hook

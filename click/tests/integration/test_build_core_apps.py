@@ -117,6 +117,3 @@ class TestBuildCoreApps(ClickTestCase, metaclass=AddBranchTestFunctions):
                 self.configure()
                 self.make()
                 self.create_click()
-                
-
-                

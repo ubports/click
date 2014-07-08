@@ -45,6 +45,8 @@ def chdir(target):
         os.chdir(curdir)
 
 
+@unittest.skipUnless(
+    "TEST_INTEGRATION" in os.environ, "Skipping integration tests")
 class ClickTestCase(unittest.TestCase):
 
     @classmethod

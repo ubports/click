@@ -1,3 +1,11 @@
+click (0.4.30) UNRELEASED; urgency=medium
+
+  * Move integration tests to a location where they won't end up being
+    installed into inappropriate places on the system module path
+    (LP: #1337696).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 08 Jul 2014 12:58:05 +0100
+
 click (0.4.29.1) utopic; urgency=medium
 
   [ Michael Vogt ]

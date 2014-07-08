@@ -22,7 +22,6 @@ import os
 import random
 import shutil
 import string
-import shutil
 import subprocess
 import tempfile
 import unittest

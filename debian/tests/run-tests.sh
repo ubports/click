@@ -2,4 +2,4 @@
 
 set -e
 
-TEST_INTEGRATION=1 python3 -m unittest discover tests.integration
+TEST_INTEGRATION=1 python3 -m unittest discover click.tests.integration

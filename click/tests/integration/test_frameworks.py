@@ -20,10 +20,12 @@ import subprocess
 import unittest
 
 from .helpers import (
+    allow_integration,
     ClickTestCase,
 )
 
 
+@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(
     (not os.path.exists("/usr/share/click/frameworks") or
      not os.listdir("/usr/share/click/frameworks")),

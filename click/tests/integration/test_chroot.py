@@ -19,11 +19,13 @@ import subprocess
 import unittest
 
 from .helpers import (
+    allow_integration,
     has_network,
     is_root,
     ClickTestCase,
 )
 
+@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")
 class TestChroot(ClickTestCase):

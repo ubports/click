@@ -19,7 +19,10 @@ import os
 import subprocess
 import unittest
 
-from .helpers import ClickTestCase
+from .helpers import (
+    allow_integration,
+    ClickTestCase,
+)
 
 
 def add_user(name):
@@ -31,6 +34,7 @@ def del_user(name):
     subprocess.check_call(["userdel", "-r", name])
 
 
+@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(
     os.getuid() != 0, "This tests needs to run as root")
 class TestClickInstall(ClickTestCase):

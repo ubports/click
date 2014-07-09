@@ -25,6 +25,7 @@ import unittest
 from six import with_metaclass
 
 from .helpers import (
+    allow_integration,
     chdir,
     has_network,
     is_root,
@@ -65,6 +66,7 @@ class AddBranchTestFunctions(type):
         return type.__new__(cls, name, bases, dct)
 
 
+@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")
 class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):

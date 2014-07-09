@@ -34,6 +34,9 @@ def has_network():
     return subprocess.call(
         ["ping", "-c1", "archive.ubuntu.com"]) == 0
 
+def allow_integration():
+    return "TEST_INTEGRATION" in os.environ
+
 
 @contextlib.contextmanager
 def chdir(target):
@@ -45,8 +48,7 @@ def chdir(target):
         os.chdir(curdir)
 
 
-@unittest.skipUnless(
-    "TEST_INTEGRATION" in os.environ, "Skipping integration tests")
+@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 class ClickTestCase(unittest.TestCase):
 
     @classmethod

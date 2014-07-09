@@ -33,6 +33,7 @@ dist
 click/paths.py
 click/tests/config.py
 click/tests/preload.gir
+click/tests/test_paths.py
 build-aux/compile
 build-aux/config.guess
 build-aux/config.rpath

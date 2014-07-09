@@ -260,9 +260,13 @@ class TestClickSingleDB(TestCase):
             self.assertFalse(self.db.any_app_running("a", "1.0"))
 
     def test_any_app_running_missing_app(self):
-        self.assertRaisesDatabaseError(
-            Click.DatabaseError.DOES_NOT_EXIST,
-            self.db.any_app_running, "a", "1.0")
+        with self.run_in_subprocess("click_find_on_path") as (enter, preloads):
+            enter()
+            preloads["click_find_on_path"].side_effect = (
+                lambda command: command == b"ubuntu-app-pid")
+            self.assertRaisesDatabaseError(
+                Click.DatabaseError.DOES_NOT_EXIST,
+                self.db.any_app_running, "a", "1.0")
 
     def test_any_app_running_bad_manifest(self):
         with self.run_in_subprocess(

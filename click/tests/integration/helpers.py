@@ -31,8 +31,11 @@ def is_root():
     return os.getuid() == 0
 
 def has_network():
-    return subprocess.call(
-        ["ping", "-c1", "archive.ubuntu.com"]) == 0
+    try:
+        return subprocess.call(
+            ["ping", "-c1", "archive.ubuntu.com"]) == 0
+    except Exception:
+        return False
 
 def allow_integration():
     return "TEST_INTEGRATION" in os.environ

@@ -1,3 +1,9 @@
+click (0.4.30) UNRELEASED; urgency=medium
+
+  * Add many more unit tests to fill in some gaps in the coverage report.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 09 Jul 2014 13:55:30 +0100
+
 click (0.4.29.1) utopic; urgency=medium
 
   [ Michael Vogt ]

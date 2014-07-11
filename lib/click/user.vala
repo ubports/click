@@ -196,7 +196,8 @@ public class Users : Object {
 				if (entry in seen)
 					continue;
 				// the user is not a pseudo user and does not/no-longer exist
-				if (entry[0] != '@' && Posix.getpwnam (entry) == null)
+				if (!entry.has_prefix ("@") &&
+					Posix.getpwnam (entry) == null)
 					continue;
 				var path = Path.build_filename (users_db,
 								entry);

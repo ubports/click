@@ -30,6 +30,7 @@ from functools import partial
 import grp
 import inspect
 import json
+import logging
 import os
 import pwd
 import shutil
@@ -197,6 +198,18 @@ class ClickInstaller:
                 validate_framework(framework, self.force_missing_framework)
             except ClickFrameworkInvalid as e:
                 raise ClickInstallerAuditError(str(e))
+
+            # do a signature check
+            if Click.find_on_path("debsig-verify"):
+                command = ["debsig-verify", path]
+                try:
+                    subprocess.check_output(command, universal_newlines=True)
+                except subprocess.CalledProcessError as e:
+                    raise ClickInstallerAuditError(
+                        "Signature verification failed: %s" % e.output)
+            else:
+                logging.warning(
+                    "debsig-verify not available, can not check signatures")
 
             if check_arch:
                 architecture = manifest.get("architecture", "all")

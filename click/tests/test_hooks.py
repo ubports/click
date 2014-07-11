@@ -748,12 +748,14 @@ class TestClickHookUserLevel(TestClickHookBase):
 
     def test_install(self):
         with self.run_in_subprocess(
-                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_hooks_dir", "click_get_user_home", "getpwnam"
                 ) as (enter, preloads):
             enter()
             # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.new" % self.temp_dir, file=f)

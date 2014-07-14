@@ -57,4 +57,3 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         self.addCleanup(
             subprocess.call, [self.click_binary, "unregister",
                               "--user=%s" % user, name])
-                        

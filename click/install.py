@@ -75,6 +75,42 @@ except AttributeError:
 apt_pkg.init_system()
 
 
+class DebsigVerifyError(Exception):
+    def __init__(self, output):
+        self.output = output
+
+
+class DebsigVerify:
+    """Tiny wrapper around the debsig-verify commandline"""
+    # from debsig-verify-0.9/debsigs.h
+    DS_SUCCESS = 0
+    DS_FAIL_NOSIGS = 10
+    DS_FAIL_UNKNOWN_ORIGIN = 11
+    DS_FAIL_NOPOLICIES = 12
+    DS_FAIL_BADSIG = 13
+    DS_FAIL_INTERNAL = 14
+
+    @classmethod
+    @property
+    def available(cls):
+        return Click.find_on_path("debsig-verify")
+
+    @classmethod
+    def verify(cls, path, allow_unauthenticated):
+        command = ["debsig-verify", path]
+        try:
+            subprocess.check_output(command, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            if (allow_unauthenticated and
+                e.returncode == DebsigVerify.DS_FAIL_NOSIGS):
+                logging.warning(
+                    "Signature check failed, but installing anyway "
+                    "as requested")
+            else:
+                raise DebsigVerifyError(e.output)
+        return True
+
+
 class ClickInstallerError(Exception):
     pass
 
@@ -202,20 +238,12 @@ class ClickInstaller:
                 raise ClickInstallerAuditError(str(e))
 
             # do a signature check
-            if Click.find_on_path("debsig-verify"):
-                command = ["debsig-verify", path]
+            if DebsigVerify.available:
                 try:
-                    subprocess.check_output(command, universal_newlines=True)
-                except subprocess.CalledProcessError as e:
-                    # FIXME: we need to teach debsig-verify the difference
-                    #        between no signature and invalid signature
-                    if self.allow_unauthenticated:
-                        logging.warning(
-                            "Signature check failed, but installing anyway "
-                            "as requested")
-                    else:
-                        raise ClickInstallerAuditError(
-                            "Signature verification failed: %s" % e.output)
+                    DebsigVerify.verify(path, self.allow_unauthenticated)
+                except DebsigVerifyError as e:
+                    raise ClickInstallerAuditError(
+                        "Signature verification failed: %s" % e.output)
             else:
                 logging.warning(
                     "debsig-verify not available, can not check signatures")

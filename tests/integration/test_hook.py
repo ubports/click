@@ -63,7 +63,7 @@ class TestHook(ClickTestCase):
         click_pkg = self._make_click(
             click_pkg_name, framework="", hooks=hooks)
         user = os.environ.get("USER", "root")
-        self.click_install(click_pkg, click_pkg_name, user, with_cleanup=False)
+        self.click_install(click_pkg, click_pkg_name, user)
         # ensure we have the hook
         generated_hook_file = os.path.expanduser(
             "~/com.example.hook-1_app1_1.0.test-hook")

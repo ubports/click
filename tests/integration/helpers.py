@@ -72,11 +72,10 @@ class ClickTestCase(unittest.TestCase):
         self.doCleanups()
         shutil.rmtree(self.temp_dir)
 
-    def click_install(self, path_to_click, click_name, username,
-                      with_cleanup=True):
+    def click_install(self, path_to_click, click_name, username):
         subprocess.check_call([
             self.click_binary, "install", cmdline_for_user(username),
-            path_to_click], universal_newlines=True)
+            path_to_click])
         self.addCleanup(self.click_unregister, click_name, username)
 
     def click_unregister(self, click_name, username):

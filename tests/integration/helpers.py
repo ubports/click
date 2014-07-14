@@ -46,6 +46,15 @@ def chdir(target):
         os.chdir(curdir)
 
 
+def cmdline_for_user(username):
+    """Helper to get the click commandline for the given username"""
+    if username == "@all":
+        user = "--all-users"
+    else:
+        user = "--user=%s" % username
+    return user
+
+
 class ClickTestCase(unittest.TestCase):
 
     @classmethod
@@ -55,12 +64,25 @@ class ClickTestCase(unittest.TestCase):
     def setUp(self):
         super(ClickTestCase, self).setUp()
         self.temp_dir = tempfile.mkdtemp()
+
     def tearDown(self):
         super(ClickTestCase, self).tearDown()
         # we force the cleanup before removing the tempdir so that stuff
         # in temp_dir is still available
         self.doCleanups()
         shutil.rmtree(self.temp_dir)
+
+    def click_install(self, path_to_click, click_name, username,
+                      with_cleanup=True):
+        subprocess.check_call([
+            self.click_binary, "install", cmdline_for_user(username),
+            path_to_click], universal_newlines=True)
+        self.addCleanup(self.click_unregister, click_name, username)
+
+    def click_unregister(self, click_name, username):
+        subprocess.check_call(
+            [self.click_binary, "unregister", cmdline_for_user(username),
+             click_name])
 
     def _create_manifest(self, target, name, version, framework, hooks={}):
         with open(target, "w") as f:

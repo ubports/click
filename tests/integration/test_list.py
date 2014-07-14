@@ -26,12 +26,7 @@ class TestList(ClickTestCase):
         name = "com.ubuntu.verify-ok"
         path_to_click = self._make_click(name, framework="")
         user = os.environ.get("USER", "root")
-        subprocess.check_call([
-            self.click_binary, "install", "--user=%s" % user,
-            path_to_click])
-        self.addCleanup(
-            subprocess.check_call,
-            [self.click_binary, "unregister", "--user=%s" % user, name])
+        self.click_install(path_to_click, name, user)
         output = subprocess.check_output(
             [self.click_binary, "list", "--user=%s" % user],
             universal_newlines=True)

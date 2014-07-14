@@ -63,13 +63,7 @@ class TestHook(ClickTestCase):
         click_pkg = self._make_click(
             click_pkg_name, framework="", hooks=hooks)
         user = os.environ.get("USER", "root")
-        subprocess.check_call([
-            self.click_binary, "install", "--user=%s" % user, click_pkg],
-                              universal_newlines=True)
-        self.addCleanup(
-            subprocess.check_call, 
-            [self.click_binary, "unregister","--user=%s" % user,
-             click_pkg_name])
+        self.click_install(click_pkg, click_pkg_name, user, with_cleanup=False)
         # ensure we have the hook
         generated_hook_file = os.path.expanduser(
             "~/com.example.hook-1_app1_1.0.test-hook")

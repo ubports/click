@@ -34,11 +34,7 @@ class TestInfo(ClickTestCase):
         name = "com.ubuntu.foo"
         user = os.environ.get("USER", "root")
         path_to_click = self._make_click(name, framework="")
-        subprocess.check_call([
-            self.click_binary, "install", "--user=%s" % user, path_to_click])
-        self.addCleanup(
-            subprocess.check_call,
-             [self.click_binary, "unregister", "--user=%s" % user, name])
+        self.click_install(path_to_click, name, user)
         output = subprocess.check_output([
             self.click_binary, "info", name], universal_newlines=True)
         self.assertEqual(json.loads(output)["name"], name)

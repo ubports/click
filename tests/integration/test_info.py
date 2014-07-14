@@ -16,15 +16,29 @@
 """Integration tests for the click CLI info command."""
 
 import json
+import os
 import subprocess
 
 from .helpers import ClickTestCase
 
 
 class TestInfo(ClickTestCase):
-    def test_info(self):
+    def test_info_from_path(self):
         name = "com.ubuntu.foo"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "info", path_to_click], universal_newlines=True)
+        self.assertEqual(json.loads(output)["name"], name)
+
+    def test_info_installed_click(self):
+        name = "com.ubuntu.foo"
+        user = os.environ.get("USER", "root")
+        path_to_click = self._make_click(name, framework="")
+        subprocess.check_call([
+            self.click_binary, "install", "--user=%s" % user, path_to_click])
+        self.addCleanup(
+            subprocess.check_call,
+             [self.click_binary, "unregister", "--user=%s" % user, name])
+        output = subprocess.check_output([
+            self.click_binary, "info", name], universal_newlines=True)
         self.assertEqual(json.loads(output)["name"], name)

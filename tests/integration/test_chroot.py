@@ -66,3 +66,13 @@ class TestChroot(ClickTestCase):
             self.click_binary, "chroot", "-a", self.arch,
             "maint", "id"], universal_newlines=True)
         self.assertEqual(output, "uid=0(root) gid=0(root) groups=0(root)\n")
+
+    def test_exists_ok(self):
+        subprocess.check_call([
+            self.click_binary, "chroot", "-a", self.arch, "exists"])
+
+    def test_exists_no(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_call([
+                self.click_binary,
+                "chroot", "-a", "arch-that-does-not-exist"])

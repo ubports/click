@@ -88,9 +88,11 @@ class ClickInstallerAuditError(ClickInstallerError):
 
 
 class ClickInstaller:
-    def __init__(self, db, force_missing_framework=False):
+    def __init__(self, db, force_missing_framework=False,
+                 allow_unauthenticated=False):
         self.db = db
         self.force_missing_framework = force_missing_framework
+        self.allow_unauthenticated = allow_unauthenticated
 
     def _preload_path(self):
         if "CLICK_PACKAGE_PRELOAD" in os.environ:
@@ -205,8 +207,15 @@ class ClickInstaller:
                 try:
                     subprocess.check_output(command, universal_newlines=True)
                 except subprocess.CalledProcessError as e:
-                    raise ClickInstallerAuditError(
-                        "Signature verification failed: %s" % e.output)
+                    # FIXME: we need to teach debsig-verify the difference
+                    #        between no signature and invalid signature
+                    if self.allow_unauthenticated:
+                        logging.warning(
+                            "Signature check failed, but installing anyway "
+                            "as requested")
+                    else:
+                        raise ClickInstallerAuditError(
+                            "Signature verification failed: %s" % e.output)
             else:
                 logging.warning(
                     "debsig-verify not available, can not check signatures")

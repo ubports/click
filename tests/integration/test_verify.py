@@ -15,16 +15,52 @@
 
 """Integration tests for the click CLI verify command."""
 
+import os
 import subprocess
 
 from .helpers import ClickTestCase
 
 
 class TestVerify(ClickTestCase):
-    def test_verify_ok(self):
-        name = "com.ubuntu.verify-ok"
+    def test_verify_force_missing_framwork_ok(self):
+        name = "com.ubuntu.verify-missing-framework"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "verify", "--force-missing-framework",
             path_to_click], universal_newlines=True)
         self.assertEqual(output, "")
+
+    def test_verify_force_ok(self):
+        name = "com.ubuntu.verify-ok"
+        path_to_click = self._make_click(name, framework="")
+        output = subprocess.check_output([
+            self.click_binary, "verify",
+            path_to_click], universal_newlines=True)
+        self.assertEqual(output, "")
+
+    def test_verify_missing_framework(self):
+        name = "com.ubuntu.verify-really-missing-framework"
+        path_to_click = self._make_click(name, framework="missing")
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            subprocess.check_output(
+                [self.click_binary, "verify", path_to_click],
+                universal_newlines=True, stderr=subprocess.STDOUT)
+        expected_error = (
+            'click.framework.ClickFrameworkInvalid: Framework '
+            '"missing" not present on system (use '
+            '--force-missing-framework option to override)')
+        self.assertIn(expected_error, cm.exception.output)
+
+    def test_verify_no_click_but_invalid(self):
+        name = "com.ubuntu.verify-no-click"
+        path_to_click = os.path.join(self.temp_dir, name+".click")
+        with open(path_to_click, "w") as f:
+            f.write("something-that-is-not-a-click")
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            subprocess.check_output(
+                [self.click_binary, "verify", path_to_click],
+                universal_newlines=True, stderr=subprocess.STDOUT)
+        expected_error = (
+            'click.install.ClickInstallerError: Failed to read %s: '
+            'Unable to find global header') % path_to_click
+        self.assertIn(expected_error, cm.exception.output)

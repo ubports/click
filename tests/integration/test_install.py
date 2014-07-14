@@ -68,6 +68,26 @@ class TestClickInstall(ClickTestCase):
             universal_newlines=True)
         self.assertEqual(output, "%s\t1.0\n" % name)
 
+    def test_install_for_single_user_and_register(self):
+        name = "foo-1"
+        click_pkg = self._make_click(name=name, framework="")
+        self.click_install(click_pkg, name, self.USER_1)
+        # not available for user2
+        output = subprocess.check_output([
+            "sudo", "-u", self.USER_2,
+            self.click_binary, "list"], universal_newlines=True)
+        self.assertEqual(output, "")
+        # register it
+        subprocess.check_call(
+            [self.click_binary, "register", "--user=%s" % self.USER_2,
+             name, "1.0", ])
+        self.addCleanup(self.click_unregister, name, self.USER_2)
+        # and ensure its available for user2
+        output = subprocess.check_output([
+            "sudo", "-u", self.USER_2,
+            self.click_binary, "list"], universal_newlines=True)
+        self.assertEqual(output, "%s\t1.0\n" % name)
+
     def test_install_for_all_users(self):
         name = "foo-2"
         click_pkg = self._make_click(name=name, framework="")

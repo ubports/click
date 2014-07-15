@@ -199,16 +199,20 @@ class TestSignatureVerification(ClickSignaturesTestCase):
                 universal_newlines=True)
             self.assertNotIn(name, output)
 
+    def make_nasty_data_tar_bz2(self):
+        new_data_tar = os.path.join(self.temp_dir, "data.tar.bz2")
+        evilfile = os.path.join(self.temp_dir, "README.evil")
+        with open(evilfile, "w") as f:
+            f.write("I am a nasty README")
+        with tarfile.open(new_data_tar, "w:bz2") as tar:
+            tar.add(evilfile)
+        return new_data_tar
+
     def test_debsig_install_signature_injected_data_tar(self):
         name = "com.ubuntu.debsig-injected-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
-        new_data = os.path.join(self.temp_dir, "data.tar.bz2")
-        evilfile = os.path.join(self.temp_dir, "README.evil")
-        with open(evilfile, "w") as f:
-            f.write("I am a nasty README")
-        with tarfile.open(new_data, "w:bz2") as tar:
-            tar.add(evilfile)
+        new_data = self.make_nasty_data_tar_bz2()
         # insert before the real data.tar.gz and ensure this is caught
         # NOTE: that right now this will not be caught by debsig-verify
         #        but later in audit() by debian.debfile.DebFile()
@@ -239,12 +243,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         name = "com.ubuntu.debsig-replaced-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
-        new_data = os.path.join(self.temp_dir, "data.tar.bz2")
-        evilfile = os.path.join(self.temp_dir, "README.evil")
-        with open(evilfile, "w") as f:
-            f.write("I am a nasty README")
-        with tarfile.open(new_data, "w:bz2") as tar:
-            tar.add(evilfile)
+        new_data = self.make_nasty_data_tar_bz2()
         # replace data.tar.gz with data.tar.bz2 and ensure this is caught
         subprocess.check_call(["ar",
                                "-d", 

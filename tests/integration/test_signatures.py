@@ -182,10 +182,10 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             subprocess.check_call(
                 ["ar", "-x", path_to_click, "control.tar.gz"],
                 cwd=self.temp_dir)
-            altered_control = os.path.join(self.temp_dir, member)
-            with open(altered_control, "ba") as f:
+            altered_member = os.path.join(self.temp_dir, member)
+            with open(altered_member, "ba") as f:
                 f.write(b"\0")
-            subprocess.check_call(["ar", "-r", path_to_click, altered_control])
+            subprocess.check_call(["ar", "-r", path_to_click, altered_member])
 
         # ensure that all members we care about are checked by debsig-verify
         for member in ["control.tar.gz", "data.tar.gz", "debian-binary"]:

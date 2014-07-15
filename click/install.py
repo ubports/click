@@ -97,7 +97,9 @@ class DebsigVerify:
 
     @classmethod
     def verify(cls, path, allow_unauthenticated):
-        command = ["debsig-verify", path]
+        debug = []
+        debug = ["-d"]
+        command = ["debsig-verify"] + debug + [path]
         try:
             subprocess.check_output(command, universal_newlines=True)
         except subprocess.CalledProcessError as e:
@@ -164,6 +166,19 @@ class ClickInstaller:
             subprocess.check_call(command, env=env, **kwargs)
 
     def audit(self, path, slow=False, check_arch=False):
+        # do a signature check before anything else to ensure we
+        # do not risk that a evil click exploits any potential weakness
+        # in the code below
+        if DebsigVerify.available:
+            try:
+                DebsigVerify.verify(path, self.allow_unauthenticated)
+            except DebsigVerifyError as e:
+                raise ClickInstallerAuditError(
+                    "Signature verification failed: %s" % e.output)
+        else:
+            logging.warning(
+                "debsig-verify not available, can not check signatures")
+
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 
@@ -236,17 +251,6 @@ class ClickInstaller:
                 validate_framework(framework, self.force_missing_framework)
             except ClickFrameworkInvalid as e:
                 raise ClickInstallerAuditError(str(e))
-
-            # do a signature check
-            if DebsigVerify.available:
-                try:
-                    DebsigVerify.verify(path, self.allow_unauthenticated)
-                except DebsigVerifyError as e:
-                    raise ClickInstallerAuditError(
-                        "Signature verification failed: %s" % e.output)
-            else:
-                logging.warning(
-                    "debsig-verify not available, can not check signatures")
 
             if check_arch:
                 architecture = manifest.get("architecture", "all")

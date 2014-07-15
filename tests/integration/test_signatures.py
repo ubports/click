@@ -31,12 +31,14 @@ def makedirs(path):
 
 
 class Debsigs:
+    """Tiny wrapper around the debsigs CLI"""
     def __init__(self, gpghome, keyid):
         self.keyid = keyid
         self.gpghome = gpghome
         self.policy = "/etc/debsig/policies/%s/generic.pol" % self.keyid
 
     def sign(self, filepath, signature_type="origin"):
+        """Sign the click at filepath"""
         env = copy.copy(os.environ)
         env["GNUPGHOME"] = os.path.abspath(self.gpghome)        
         subprocess.check_call(
@@ -46,6 +48,7 @@ class Debsigs:
              filepath], env=env)
 
     def install_signature_policy(self):
+        """Install/update the system-wide signature policy"""
         xmls = dedent("""\
         <?xml version="1.0"?>
         <!DOCTYPE Policy SYSTEM "http://www.debian.org/debsig/1.0/policy.dtd">
@@ -121,9 +124,9 @@ class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
 class TestSignatureVerification(ClickSignaturesTestCase):
     def setUp(self):
         super(TestSignatureVerification, self).setUp()
-        self.datadir = os.path.join(os.path.dirname(__file__), "data")
         self.user = os.environ.get("USER", "root")
         # the valid origin keyring
+        self.datadir = os.path.join(os.path.dirname(__file__), "data")
         origin_keyring_dir = os.path.join(self.datadir, "origin-keyring")
         self.debsigs = Debsigs(origin_keyring_dir, "8354C8099FD1B9DA")
         self.debsigs.install_signature_policy()
@@ -151,15 +154,16 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         name = "com.ubuntu.debsig-no-keyring-sig"
         path_to_click = self._make_click(name, framework="")
         evil_keyring_dir = os.path.join(self.datadir, "evil-keyring")
-        debsig = Debsigs(evil_keyring_dir, "18B38B9AC1B67A0D")
-        debsig.sign(path_to_click)
+        debsig_bad = Debsigs(evil_keyring_dir, "18B38B9AC1B67A0D")
+        debsig_bad.sign(path_to_click)
+        # and ensure its really not there
         self.assertClickInvalidSignatureError(["install", path_to_click])
         output = subprocess.check_output(
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)
         self.assertNotIn(name, output)
 
-    def test_debsig_install_invalid_signature(self):
+    def test_debsig_install_not_a_signature(self):
         name = "com.ubuntu.debsig-invalid-sig"
         path_to_click = self._make_click(name, framework="")
         invalid_sig = os.path.join(self.temp_dir, "_gpgorigin")
@@ -173,3 +177,25 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             universal_newlines=True)
         self.assertNotIn(name, output)
 
+    def test_debsig_install_signature_altered_click(self):
+        def modify_ar_member(member):
+            subprocess.check_call(
+                ["ar", "-x", path_to_click, "control.tar.gz"],
+                cwd=self.temp_dir)
+            altered_control = os.path.join(self.temp_dir, member)
+            with open(altered_control, "ba") as f:
+                f.write(b"\0")
+            subprocess.check_call(["ar", "-r", path_to_click, altered_control])
+
+        # ensure that all members we care about are checked by debsig-verify
+        for member in ["control.tar.gz", "data.tar.gz", "debian-binary"]:
+            name = "com.ubuntu.debsig-altered-click"
+            path_to_click = self._make_click(name, framework="")
+            self.debsigs.sign(path_to_click)
+            modify_ar_member(member)
+            self.assertClickInvalidSignatureError(["install", path_to_click])
+            output = subprocess.check_output(
+                [self.click_binary, "list", "--user=%s" % self.user],
+                universal_newlines=True)
+            self.assertNotIn(name, output)
+        

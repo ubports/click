@@ -98,7 +98,7 @@ class DebsigVerify:
     @classmethod
     def verify(cls, path, allow_unauthenticated):
         debug = []
-        debug = ["-d"]
+        #debug = ["-d"]
         command = ["debsig-verify"] + debug + [path]
         try:
             subprocess.check_output(command, universal_newlines=True)

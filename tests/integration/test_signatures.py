@@ -19,6 +19,7 @@ import copy
 import os
 import shutil
 import subprocess
+import tarfile
 from textwrap import dedent
 
 from .helpers import ClickTestCase
@@ -92,7 +93,6 @@ class ClickSignaturesTestCase(ClickTestCase):
                 [self.click_binary] + cmd_args,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         output = cm.exception.output
-        print(output)
         expected_error_message = "Signature verification failed: "
         self.assertIn(expected_error_message, output)
 
@@ -198,4 +198,40 @@ class TestSignatureVerification(ClickSignaturesTestCase):
                 [self.click_binary, "list", "--user=%s" % self.user],
                 universal_newlines=True)
             self.assertNotIn(name, output)
+
+    def test_debsig_install_signature_different_data_tar(self):
+        name = "com.ubuntu.debsig-different-data-click"
+        path_to_click = self._make_click(name, framework="")
+        self.debsigs.sign(path_to_click)
+        new_data = os.path.join(self.temp_dir, "data.tar.bz2")
+        evilfile = os.path.join(self.temp_dir, "README.evil")
+        with open(evilfile, "w") as f:
+            f.write("I am a nasty README")
+        with tarfile.open(new_data, "w:bz2") as tar:
+            tar.add(evilfile)
+        # insert before the real data.tar.gz and ensure this is caught
+        # NOTE: that right now this will not be caught by debsig-verify
+        #        but later in audit() by debian.debfile.DebFile()
+        subprocess.check_call(["ar",
+                               "-r", 
+                               "-b", "data.tar.gz",
+                               path_to_click,
+                               new_data])
+        output = subprocess.check_output(
+            ["ar", "-t", path_to_click], universal_newlines=True)
+        self.assertEqual(output.splitlines(),
+                         ["debian-binary",
+                          "_click-binary",
+                          "control.tar.gz",
+                          "data.tar.bz2",
+                          "data.tar.gz",
+                          "_gpgorigin"])
+        with self.assertRaises(subprocess.CalledProcessError):
+            output = subprocess.check_output(
+                [self.click_binary, "install", path_to_click],
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        output = subprocess.check_output(
+            [self.click_binary, "list", "--user=%s" % self.user],
+            universal_newlines=True)
+        self.assertNotIn(name, output)
         

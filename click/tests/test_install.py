@@ -239,6 +239,8 @@ class TestClickInstaller(TestCase):
                 ClickInstaller(self.db).audit, path)
 
     def test_audit_no_signature(self):
+        if not Click.find_on_path("debsig-verify"):
+            self.skipTest("this test needs debsig-verify")
         path = self.make_fake_package(
             control_fields={"Click-Version": "0.4"},
             manifest={

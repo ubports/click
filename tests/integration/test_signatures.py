@@ -199,12 +199,12 @@ class TestSignatureVerification(ClickSignaturesTestCase):
                 universal_newlines=True)
             self.assertNotIn(name, output)
 
-    def make_nasty_data_tar_bz2(self):
-        new_data_tar = os.path.join(self.temp_dir, "data.tar.bz2")
+    def make_nasty_data_tar(self, compression):
+        new_data_tar = os.path.join(self.temp_dir, "data.tar." + compression)
         evilfile = os.path.join(self.temp_dir, "README.evil")
         with open(evilfile, "w") as f:
             f.write("I am a nasty README")
-        with tarfile.open(new_data_tar, "w:bz2") as tar:
+        with tarfile.open(new_data_tar, "w:"+compression) as tar:
             tar.add(evilfile)
         return new_data_tar
 
@@ -212,7 +212,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         name = "com.ubuntu.debsig-injected-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
-        new_data = self.make_nasty_data_tar_bz2()
+        new_data = self.make_nasty_data_tar("bz2")
         # insert before the real data.tar.gz and ensure this is caught
         # NOTE: that right now this will not be caught by debsig-verify
         #        but later in audit() by debian.debfile.DebFile()
@@ -243,7 +243,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         name = "com.ubuntu.debsig-replaced-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
-        new_data = self.make_nasty_data_tar_bz2()
+        new_data = self.make_nasty_data_tar("bz2")
         # replace data.tar.gz with data.tar.bz2 and ensure this is caught
         subprocess.check_call(["ar",
                                "-d", 
@@ -267,7 +267,53 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             output = subprocess.check_output(
                 [self.click_binary, "install", path_to_click],
                 stderr=subprocess.STDOUT, universal_newlines=True)
-            self.assertIn("Signature verification failed", cm.exception.output)
+        self.assertIn("Signature verification failed", cm.exception.output)
+        output = subprocess.check_output(
+            [self.click_binary, "list", "--user=%s" % self.user],
+            universal_newlines=True)
+        self.assertNotIn(name, output)
+
+    def test_debsig_install_signature_prepend_sig(self):
+        # this test is probably not really needed, it tries to trick
+        # the system by prepending a valid signature that is not
+        # in the keyring. But given that debsig-verify only reads
+        # the first packet of any given _gpg$foo signature its 
+        # equivalent to test_debsig_install_signature_not_in_keyring test
+        name = "com.ubuntu.debsig-replaced-data-prepend-sig-click"
+        path_to_click = self._make_click(name, framework="")
+        self.debsigs.sign(path_to_click)
+        new_data = self.make_nasty_data_tar("gz")
+        # replace data.tar.gz
+        subprocess.check_call(["ar",
+                               "-r", 
+                               path_to_click,
+                               new_data,
+                               ])
+        # get previous good _gpgorigin for the old data
+        subprocess.check_call(
+            ["ar", "-x", path_to_click, "_gpgorigin"], cwd=self.temp_dir)
+        with open(os.path.join(self.temp_dir, "_gpgorigin"), "br") as f:
+            good_gpg_origin = f.read()
+        # and append a valid signature from a non-keyring key
+        evil_keyring_dir = os.path.join(self.datadir, "evil-keyring")
+        debsig_bad = Debsigs(evil_keyring_dir, "18B38B9AC1B67A0D")
+        debsig_bad.sign(path_to_click)
+        subprocess.check_call(
+            ["ar", "-x", path_to_click, "_gpgorigin"], cwd=self.temp_dir)
+        with open(os.path.join(self.temp_dir, "_gpgorigin"), "br") as f:
+            evil_gpg_origin = f.read()
+        with open(os.path.join(self.temp_dir, "_gpgorigin"), "wb") as f:
+            f.write(evil_gpg_origin)
+            f.write(good_gpg_origin)
+        subprocess.check_call(
+            ["ar", "-r", path_to_click, "_gpgorigin"], cwd=self.temp_dir)
+        # now ensure that the verification fails as well
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            output = subprocess.check_output(
+                [self.click_binary, "install", path_to_click],
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        print(cm.exception.output)
+        self.assertIn("Signature verification failed", cm.exception.output)
         output = subprocess.check_output(
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)

@@ -96,25 +96,27 @@ extra_packages = {
         "qttools5-dev-tools:TARGET",
         ],
     "ubuntu-sdk-14.10": [
-        # bug #1316930, needed for autopilot
-        "python3",
         "cmake",
         "libcontent-hub0:TARGET",
         "libcontent-hub-dev:TARGET",
         "libqt5keychain0:TARGET",
         "libqt5multimedia5-plugins:TARGET",
-        "qml-module-qtgraphicaleffects:TARGET",
         "libqt5script5:TARGET",
         "libqt5sensors5-dev:TARGET",
         "libqt5sensors5-dev:TARGET",
         "libqt5sql5-sqlite:TARGET",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
-        "qml-module-qtwebkit:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
         "oxideqt-codecs-extra:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
+        "qml-module-qtgraphicaleffects:TARGET",
         "qml-module-qtmultimedia:TARGET",
+        "qml-module-qtquick-layouts:TARGET",
+        "qml-module-qtsensors:TARGET",
+        "qml-module-qtwebkit:TARGET",
         "qmlscene:TARGET",
         "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
@@ -134,8 +136,6 @@ extra_packages = {
         "qtdeclarative5-qtorganizer-plugin:TARGET",
         "qtdeclarative5-qtpositioning-plugin:TARGET",
         "qtdeclarative5-qtquick2-plugin:TARGET",
-        "qml-module-qtsensors:TARGET",
-        "qml-module-qtquick-layouts:TARGET",
         "qtdeclarative5-u1db1.0:TARGET",
         "qtdeclarative5-ubuntu-content0.1:TARGET",
         "qtdeclarative5-ubuntu-download-manager0.1:TARGET",
@@ -153,6 +153,7 @@ extra_packages = {
         "qttools5-dev-tools:TARGET",
         "ubuntu-html5-theme:TARGET",
         "ubuntu-ui-toolkit-theme:TARGET",
+
         ],
     }
 

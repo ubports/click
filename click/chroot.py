@@ -123,7 +123,7 @@ extra_packages = {
         "qtchooser:TARGET",
         "qtdeclarative5-accounts-plugin:TARGET",
         "qtdeclarative5-dev:TARGET",
-        "qtdeclarative5-dev-tools:TARGET",
+        "qtdeclarative5-dev-tools",
         "qtdeclarative5-folderlistmodel-plugin:TARGET",
         "qtdeclarative5-localstorage-plugin:TARGET",
         "qtdeclarative5-online-accounts-client0.1:TARGET",

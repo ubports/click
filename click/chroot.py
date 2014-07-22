@@ -103,7 +103,6 @@ extra_packages = {
         "libqt5multimedia5-plugins:TARGET",
         "libqt5script5:TARGET",
         "libqt5sensors5-dev:TARGET",
-        "libqt5sensors5-dev:TARGET",
         "libqt5sql5-sqlite:TARGET",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
@@ -118,9 +117,7 @@ extra_packages = {
         "qml-module-qtsensors:TARGET",
         "qml-module-qtwebkit:TARGET",
         "qmlscene:TARGET",
-        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
-        "qt5-default:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
         "qtchooser:TARGET",
@@ -153,7 +150,6 @@ extra_packages = {
         "qttools5-dev-tools:TARGET",
         "ubuntu-html5-theme:TARGET",
         "ubuntu-ui-toolkit-theme:TARGET",
-
         ],
     }
 

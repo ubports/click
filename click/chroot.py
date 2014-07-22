@@ -134,7 +134,7 @@ extra_packages = {
         "qtdeclarative5-qtorganizer-plugin:TARGET",
         "qtdeclarative5-qtpositioning-plugin:TARGET",
         "qtdeclarative5-qtquick2-plugin:TARGET",
-	"qml-module-qtsensors:TARGET",
+        "qml-module-qtsensors:TARGET",
         "qml-module-qtquick-layouts:TARGET",
         "qtdeclarative5-u1db1.0:TARGET",
         "qtdeclarative5-ubuntu-content0.1:TARGET",

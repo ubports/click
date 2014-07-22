@@ -525,7 +525,7 @@ class ClickChroot:
         # find all schroot mount points, this is actually quite complicated
         mount_dir = os.path.abspath(
             os.path.join(self.chroots_dir, "..", "mount"))
-        needle = os.path.join(mount_dir, self.full_name) 
+        needle = os.path.join(mount_dir, self.full_name)
         all_mounts = []
         with open("/proc/mounts") as f:
             for line in f.readlines():

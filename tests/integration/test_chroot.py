@@ -24,6 +24,7 @@ from .helpers import (
     ClickTestCase,
 )
 
+
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")
 class TestChroot(ClickTestCase):

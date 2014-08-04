@@ -73,6 +73,7 @@ extra_packages = {
         "qtscript5-dev:TARGET",
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.04": [
         "cmake",
@@ -94,6 +95,7 @@ extra_packages = {
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         "qttools5-dev-tools:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
@@ -137,6 +139,7 @@ extra_packages = {
         "qttools5-dev:TARGET",
         "qttools5-dev-tools:TARGET",
         "ubuntu-html5-theme:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     }
 
@@ -223,6 +226,7 @@ class ClickChroot:
         self.dpkg_architecture = self._dpkg_architecture()
 
     def _get_native_arch(self, system_arch, target_arch):
+        """Determine the proper native architecture for a chroot.
         """Determine the proper native architecture for a chroot.
 
         Some combinations of system and target architecture do not require

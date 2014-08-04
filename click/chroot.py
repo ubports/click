@@ -227,7 +227,6 @@ class ClickChroot:
 
     def _get_native_arch(self, system_arch, target_arch):
         """Determine the proper native architecture for a chroot.
-        """Determine the proper native architecture for a chroot.
 
         Some combinations of system and target architecture do not require
         cross-building, so in these cases we just create a chroot suitable

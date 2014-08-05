@@ -108,6 +108,7 @@ extra_packages = {
         "libunity-scopes-dev:TARGET",
         # bug #1316930, needed for autopilot
         "python3",
+        "qml-module-qt-labs-settings:TARGET",
         "qml-module-qtmultimedia:TARGET",
         "qml-module-qtquick-layouts:TARGET",
         "qml-module-qtsensors:TARGET",

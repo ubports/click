@@ -115,6 +115,7 @@ extra_packages = {
         "qml-module-qtwebkit:TARGET",
         "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
+        "qt5-default:TARGET",
         "qtdeclarative5-accounts-plugin:TARGET",
         "qtdeclarative5-dev-tools",
         "qtdeclarative5-folderlistmodel-plugin:TARGET",

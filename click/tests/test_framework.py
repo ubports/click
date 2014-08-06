@@ -27,7 +27,7 @@ import os
 
 from gi.repository import Click
 
-from click.tests.helpers import TestCase
+from click.tests.helpers import TestCase, touch
 
 
 class TestClickFramework(TestCase):
@@ -77,6 +77,48 @@ class TestClickFramework(TestCase):
             self.assertEqual(
                 ["ubuntu-sdk-13.10", "ubuntu-sdk-14.04", "ubuntu-sdk-14.10"],
                 sorted(f.props.name for f in Click.Framework.get_frameworks()))
+
+    def test_get_frameworks_nonexistent(self):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            frameworks_dir = os.path.join(self.temp_dir, "nonexistent")
+            preloads["click_get_frameworks_dir"].side_effect = (
+                lambda: self.make_string(frameworks_dir))
+            self.assertEqual([], Click.Framework.get_frameworks())
+
+    def test_get_frameworks_not_directory(self):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = os.path.join(self.temp_dir, "file")
+            touch(path)
+            preloads["click_get_frameworks_dir"].side_effect = (
+                lambda: self.make_string(path))
+            self.assertEqual([], Click.Framework.get_frameworks())
+
+    def test_get_frameworks_ignores_other_files(self):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+            Click.ensuredir(frameworks_dir)
+            touch(os.path.join(frameworks_dir, "file"))
+            preloads["click_get_frameworks_dir"].side_effect = (
+                lambda: self.make_string(frameworks_dir))
+            self.assertEqual([], Click.Framework.get_frameworks())
+
+    def test_get_frameworks_ignores_unopenable_files(self):
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            frameworks_dir = os.path.join(self.temp_dir, "frameworks")
+            Click.ensuredir(frameworks_dir)
+            os.symlink(
+                "nonexistent", os.path.join(frameworks_dir, "foo.framework"))
+            preloads["click_get_frameworks_dir"].side_effect = (
+                lambda: self.make_string(frameworks_dir))
+            self.assertEqual([], Click.Framework.get_frameworks())
 
     def test_fields(self):
         with self.run_in_subprocess(

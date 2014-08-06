@@ -7,6 +7,10 @@ click (0.4.30) UNRELEASED; urgency=medium
   * Exclude non-existing users from User.get_user_names() 
     (LP: #1334611)
 
+  [ Zoltan Balogh ]
+  * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
+    all frameworks.
+
  -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 11 Jul 2014 19:17:47 +0200
 
 click (0.4.29.1) utopic; urgency=medium

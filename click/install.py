@@ -76,8 +76,7 @@ apt_pkg.init_system()
 
 
 class DebsigVerifyError(Exception):
-    def __init__(self, output):
-        self.output = output
+    pass
 
 
 class DebsigVerify:
@@ -97,19 +96,20 @@ class DebsigVerify:
 
     @classmethod
     def verify(cls, path, allow_unauthenticated):
-        debug = []
-        #debug = ["-d"]
-        command = ["debsig-verify"] + debug + [path]
+        command = ["debsig-verify"] + [path]
         try:
             subprocess.check_output(command, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             if (allow_unauthenticated and
-                e.returncode == DebsigVerify.DS_FAIL_NOSIGS):
+                e.returncode in (DebsigVerify.DS_FAIL_NOSIGS,
+                                 DebsigVerify.DS_FAIL_UNKNOWN_ORIGIN,
+                                 DebsigVerify.DS_FAIL_NOPOLICIES)):
                 logging.warning(
                     "Signature check failed, but installing anyway "
                     "as requested")
             else:
-                raise DebsigVerifyError(e.output)
+                raise DebsigVerifyError(
+                    "Signature verification error: %s" % e.output)
         return True
 
 
@@ -166,18 +166,15 @@ class ClickInstaller:
             subprocess.check_call(command, env=env, **kwargs)
 
     def audit(self, path, slow=False, check_arch=False):
-        # do a signature check before anything else to ensure we
-        # do not risk that a evil click exploits any potential weakness
-        # in the code below
+        # always do the signature check first
         if DebsigVerify.available:
             try:
                 DebsigVerify.verify(path, self.allow_unauthenticated)
             except DebsigVerifyError as e:
-                raise ClickInstallerAuditError(
-                    "Signature verification failed: %s" % e.output)
+                raise ClickInstallerAuditError(str(e))
         else:
             logging.warning(
-                "debsig-verify not available, can not check signatures")
+                "debsig-verify not available; cannot check signatures")
 
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()

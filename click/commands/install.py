@@ -55,7 +55,8 @@ def run(argv):
         db.add(options.root)
     package_path = args[0]
     installer = ClickInstaller(
-        db, options.force_missing_framework, options.allow_unauthenticated)
+        db=db, force_missing_framework=options.force_missing_framework,
+        allow_unauthenticated=options.allow_unauthenticated)
     try:
         installer.install(
             package_path, user=options.user, all_users=options.all_users)

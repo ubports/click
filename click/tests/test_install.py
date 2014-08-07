@@ -238,6 +238,7 @@ class TestClickInstaller(TestCase):
                 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
 
+    # FIXME: we really want a unit test with a valid signature too
     def test_audit_no_signature(self):
         if not Click.find_on_path("debsig-verify"):
             self.skipTest("this test needs debsig-verify")

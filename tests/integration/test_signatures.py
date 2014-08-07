@@ -20,15 +20,30 @@ import os
 import shutil
 import subprocess
 import tarfile
+import unittest
 from textwrap import dedent
 
-from .helpers import ClickTestCase
+from .helpers import (
+    is_root,
+    ClickTestCase,
+)
 
 def makedirs(path):
     try:
         os.makedirs(path)
     except OSError:
         pass
+
+def get_keyid_from_gpghome(gpg_home):
+    """Return the public keyid of a given gpg home dir"""
+    output = subprocess.check_output(
+        ["gpg", "--home", gpg_home, "--list-keys", "--with-colons"],
+        universal_newlines=True)
+    for line in output.splitlines():
+        if not line.startswith("pub:"):
+            continue
+        return line.split(":")[5]
+    raise ValueError("Cannot find public key in output: '%s'" % output)
 
 
 class Debsigs:
@@ -68,14 +83,20 @@ class Debsigs:
         makedirs(os.path.dirname(self.policy))
         with open(self.policy, "w") as f:
             f.write(xmls)
-        pubkey_path = "/usr/share/debsig/keyrings/%s/origin.pub" % self.keyid
-        makedirs(os.path.dirname(pubkey_path))
-        shutil.copy(os.path.join(self.gpghome, "pubring.gpg"), pubkey_path)
+        self.pubkey_path = (
+            "/usr/share/debsig/keyrings/%s/origin.pub" % self.keyid)
+        makedirs(os.path.dirname(self.pubkey_path))
+        shutil.copy(os.path.join(self.gpghome, "pubring.gpg"), self.pubkey_path)
 
     def uninstall_signature_policy(self):
+        # FIXME: update debsig-verify so that it can work from a different
+        #        root than "/" so that the tests do not have to use the
+        #        system root
         os.remove(self.policy)
+        os.remove(self.pubkey_path)
 
 
+@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class ClickSignaturesTestCase(ClickTestCase):
     def assertClickNoSignatureError(self, cmd_args):
         with self.assertRaises(subprocess.CalledProcessError) as cm:
@@ -97,19 +118,20 @@ class ClickSignaturesTestCase(ClickTestCase):
         self.assertIn(expected_error_message, output)
 
 
+@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
     def test_debsig_verify_no_sig(self):
-        name = "com.ubuntu.debsig-no-sig"
+        name = "org.example.debsig-no-sig"
         path_to_click = self._make_click(name, framework="")
         self.assertClickNoSignatureError(["verify", path_to_click])
 
     def test_debsig_install_no_sig(self):
-        name = "com.ubuntu.debsig-no-sig"
+        name = "org.example.debsig-no-sig"
         path_to_click = self._make_click(name, framework="")
         self.assertClickNoSignatureError(["install", path_to_click])
 
     def test_debsig_install_can_install_with_sig_override(self):
-        name = "com.ubuntu.debsig-no-sig"
+        name = "org.example.debsig-no-sig"
         path_to_click = self._make_click(name, framework="")
         user = os.environ.get("USER", "root")
         subprocess.check_call(
@@ -121,21 +143,24 @@ class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
                               "--user=%s" % user, name])
 
 
+@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerification(ClickSignaturesTestCase):
     def setUp(self):
         super(TestSignatureVerification, self).setUp()
         self.user = os.environ.get("USER", "root")
         # the valid origin keyring
         self.datadir = os.path.join(os.path.dirname(__file__), "data")
-        origin_keyring_dir = os.path.join(self.datadir, "origin-keyring")
-        self.debsigs = Debsigs(origin_keyring_dir, "8354C8099FD1B9DA")
+        origin_keyring_dir = os.path.abspath(
+            os.path.join(self.datadir, "origin-keyring"))
+        keyid = get_keyid_from_gpghome(origin_keyring_dir)
+        self.debsigs = Debsigs(origin_keyring_dir, keyid)
         self.debsigs.install_signature_policy()
 
     def tearDown(self):
         self.debsigs.uninstall_signature_policy()
 
     def test_debsig_install_valid_signature(self):
-        name = "com.ubuntu.debsig-valid-sig"
+        name = "org.example.debsig-valid-sig"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
         subprocess.check_call(
@@ -151,10 +176,11 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         self.assertIn(name, output)
         
     def test_debsig_install_signature_not_in_keyring(self):
-        name = "com.ubuntu.debsig-no-keyring-sig"
+        name = "org.example.debsig-no-keyring-sig"
         path_to_click = self._make_click(name, framework="")
         evil_keyring_dir = os.path.join(self.datadir, "evil-keyring")
-        debsig_bad = Debsigs(evil_keyring_dir, "18B38B9AC1B67A0D")
+        keyid = get_keyid_from_gpghome(evil_keyring_dir)
+        debsig_bad = Debsigs(evil_keyring_dir, keyid)
         debsig_bad.sign(path_to_click)
         # and ensure its really not there
         self.assertClickInvalidSignatureError(["install", path_to_click])
@@ -164,7 +190,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         self.assertNotIn(name, output)
 
     def test_debsig_install_not_a_signature(self):
-        name = "com.ubuntu.debsig-invalid-sig"
+        name = "org.example.debsig-invalid-sig"
         path_to_click = self._make_click(name, framework="")
         invalid_sig = os.path.join(self.temp_dir, "_gpgorigin")
         with open(invalid_sig, "w") as f:
@@ -189,7 +215,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
 
         # ensure that all members we care about are checked by debsig-verify
         for member in ["control.tar.gz", "data.tar.gz", "debian-binary"]:
-            name = "com.ubuntu.debsig-altered-click"
+            name = "org.example.debsig-altered-click"
             path_to_click = self._make_click(name, framework="")
             self.debsigs.sign(path_to_click)
             modify_ar_member(member)
@@ -209,7 +235,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         return new_data_tar
 
     def test_debsig_install_signature_injected_data_tar(self):
-        name = "com.ubuntu.debsig-injected-data-click"
+        name = "org.example.debsig-injected-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
         new_data = self.make_nasty_data_tar("bz2")
@@ -240,7 +266,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         self.assertNotIn(name, output)
 
     def test_debsig_install_signature_replaced_data_tar(self):
-        name = "com.ubuntu.debsig-replaced-data-click"
+        name = "org.example.debsig-replaced-data-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
         new_data = self.make_nasty_data_tar("bz2")
@@ -279,7 +305,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         # in the keyring. But given that debsig-verify only reads
         # the first packet of any given _gpg$foo signature its 
         # equivalent to test_debsig_install_signature_not_in_keyring test
-        name = "com.ubuntu.debsig-replaced-data-prepend-sig-click"
+        name = "org.example.debsig-replaced-data-prepend-sig-click"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
         new_data = self.make_nasty_data_tar("gz")

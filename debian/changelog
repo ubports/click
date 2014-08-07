@@ -1,4 +1,4 @@
-click (0.4.30) UNRELEASED; urgency=medium
+click (0.4.30) utopic; urgency=medium
 
   [ Colin Watson ]
   * Add many more unit tests to fill in some gaps in the coverage report.
@@ -11,7 +11,10 @@ click (0.4.30) UNRELEASED; urgency=medium
   * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
     all frameworks.
 
- -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 11 Jul 2014 19:17:47 +0200
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 23:33:22 +0000
 
 click (0.4.29.1) utopic; urgency=medium
 

@@ -42,7 +42,7 @@ def get_keyid_from_gpghome(gpg_home):
     for line in output.splitlines():
         if not line.startswith("pub:"):
             continue
-        return line.split(":")[5]
+        return line.split(":")[4]
     raise ValueError("Cannot find public key in output: '%s'" % output)
 
 
@@ -114,7 +114,7 @@ class ClickSignaturesTestCase(ClickTestCase):
                 [self.click_binary] + cmd_args,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         output = cm.exception.output
-        expected_error_message = "Signature verification failed: "
+        expected_error_message = "Signature verification error: "
         self.assertIn(expected_error_message, output)
 
 
@@ -293,7 +293,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             output = subprocess.check_output(
                 [self.click_binary, "install", path_to_click],
                 stderr=subprocess.STDOUT, universal_newlines=True)
-        self.assertIn("Signature verification failed", cm.exception.output)
+        self.assertIn("Signature verification error", cm.exception.output)
         output = subprocess.check_output(
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)
@@ -338,8 +338,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             output = subprocess.check_output(
                 [self.click_binary, "install", path_to_click],
                 stderr=subprocess.STDOUT, universal_newlines=True)
-        print(cm.exception.output)
-        self.assertIn("Signature verification failed", cm.exception.output)
+        self.assertIn("Signature verification error", cm.exception.output)
         output = subprocess.check_output(
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)

@@ -105,7 +105,7 @@ class TestClickHookBase(TestCase):
         self.db.add(self.temp_dir)
         self.spawn_calls = []
 
-    def _make_installed_click(self, package="test-1",version="1.0",
+    def _make_installed_click(self, package="test-1", version="1.0",
                               json_data={},
                               make_current=True,
                               all_users=False):
@@ -114,7 +114,8 @@ class TestClickHookBase(TestCase):
                 "%s.manifest" % package)) as f:
             json.dump(json_data, f, ensure_ascii=False)
         if make_current:
-            os.symlink(version, os.path.join(self.temp_dir, package, "current"))
+            os.symlink(
+                version, os.path.join(self.temp_dir, package, "current"))
         if all_users:
             db = Click.User.for_all_users(self.db)
         else:
@@ -163,7 +164,18 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self.assertEqual(
                 "/usr/share/test/${id}.test", hook.get_field("pattern"))
             self.assertEqual("test-update", hook.get_field("exec"))
+            self.assertRaisesHooksError(
+                Click.HooksError.MISSING_FIELD, hook.get_field, "nonexistent")
             self.assertFalse(hook.props.is_user_level)
+
+    def test_open_unopenable_file(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            os.symlink("nonexistent", os.path.join(self.hooks_dir, "foo.hook"))
+            self.assertRaisesHooksError(
+                Click.HooksError.NO_SUCH_HOOK, Click.Hook.open, self.db, "foo")
 
     def test_hook_name_absent(self):
         with self.run_in_subprocess(
@@ -182,8 +194,7 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self._setup_hooks_dir(preloads)
             self._make_hook_file(dedent("""\
                 Pattern: /usr/share/test/${id}.test
-                Hook-Name: other""")
-            )
+                Hook-Name: other"""))
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("other", hook.get_hook_name())
 
@@ -204,6 +215,12 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "package", "0.1", "app_name")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
+                "package", "0.1", "app/name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
+                "package", "0.1", "app_name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
                 "package", "0.1", "app/name")
 
     def test_short_id_invalid(self):
@@ -249,6 +266,21 @@ class TestClickHookSystemLevel(TestClickHookBase):
             hook.run_commands(user_name=None)
             self.assertEqual(
                 [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
+
+    def test_run_commands_fail(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "g_spawn_sync") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 1})
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("Exec: test-update", file=f)
+                print("User: root", file=f)
+            hook = Click.Hook.open(self.db, "test")
+            self.assertRaisesHooksError(
+                Click.HooksError.COMMAND_FAILED, hook.run_commands,
+                user_name=None)
 
     def test_install_package(self):
         with self.run_in_subprocess(
@@ -428,7 +460,8 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "Pattern: %s/${id}.test" % self.temp_dir)
             self._make_installed_click("test-1", "1.0", json_data={
                 "hooks": {"test1-app": {"test": "target-1"}}})
-            self._make_installed_click("test-2", "1.0", make_current=False,
+            self._make_installed_click(
+                "test-2", "1.0", make_current=False,
                 json_data={"hooks": {"test2-app": {"test": "target-2"}}})
             self._make_installed_click("test-2", "1.1", json_data={
                 "hooks": {"test2-app": {"test": "target-2"}}})
@@ -480,6 +513,8 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "${home}/.local/share/test/${id}.test",
                 hook.get_field("pattern"))
             self.assertEqual("test-update", hook.get_field("exec"))
+            self.assertRaisesHooksError(
+                Click.HooksError.MISSING_FIELD, hook.get_field, "nonexistent")
             self.assertTrue(hook.props.is_user_level)
 
     def test_hook_name_absent(self):
@@ -489,8 +524,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             self._setup_hooks_dir(preloads)
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: ${home}/.local/share/test/${id}.test""")
-            )
+                Pattern: ${home}/.local/share/test/${id}.test"""))
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("test", hook.get_hook_name())
 
@@ -502,8 +536,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             self._make_hook_file(dedent("""\
                 User-Level: yes
                 Pattern: ${home}/.local/share/test/${id}.test
-                Hook-Name: other""")
-            )
+                Hook-Name: other"""))
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual("other", hook.get_hook_name())
 
@@ -516,14 +549,19 @@ class TestClickHookUserLevel(TestClickHookBase):
                     User-Level: yes
                     Pattern: ${home}/.local/share/test/${id}.test
                     # Comment
-                    Exec: test-update""")
-            )
+                    Exec: test-update"""))
             hook = Click.Hook.open(self.db, "test")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
                 "package", "0.1", "app_name")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
+                "package", "0.1", "app/name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
+                "package", "0.1", "app_name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
                 "package", "0.1", "app/name")
 
     def test_short_id_valid(self):
@@ -555,10 +593,26 @@ class TestClickHookUserLevel(TestClickHookBase):
                 print("Exec: test-update", file=f)
             hook = Click.Hook.open(self.db, "test")
             self.assertEqual(
-                self.TEST_USER, hook.get_run_commands_user(user_name=self.TEST_USER))
+                self.TEST_USER,
+                hook.get_run_commands_user(user_name=self.TEST_USER))
             hook.run_commands(user_name=self.TEST_USER)
             self.assertEqual(
                 [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
+
+    def test_run_commands_fail(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "g_spawn_sync") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 1})
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("User-Level: yes", file=f)
+                print("Exec: test-update", file=f)
+            hook = Click.Hook.open(self.db, "test")
+            self.assertRaisesHooksError(
+                Click.HooksError.COMMAND_FAILED, hook.run_commands,
+                user_name=self.TEST_USER)
 
     def test_install_package(self):
         with self.run_in_subprocess(
@@ -573,8 +627,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             user_db.set_version("org.example.package", "1.0")
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: %s/${id}.test""") % self.temp_dir
-            )
+                Pattern: %s/${id}.test""") % self.temp_dir)
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
@@ -600,8 +653,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             user_db.set_version("org.example.package", "1.0")
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: %s/${id}/""") % self.temp_dir
-            )
+                Pattern: %s/${id}/""") % self.temp_dir)
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo",
@@ -629,8 +681,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             user_db.set_version("org.example.package", "1.0")
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: %s/${id}.test""") % self.temp_dir
-            )
+                Pattern: %s/${id}.test""") % self.temp_dir)
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
@@ -665,8 +716,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             user_db.set_version("org.example.package", "1.0")
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: %s/${id}.test""") % self.temp_dir
-            )
+                Pattern: %s/${id}.test""") % self.temp_dir)
             hook = Click.Hook.open(self.db, "test")
             hook.install_package(
                 "org.example.package", "1.0", "test-app", "foo/bar",
@@ -686,8 +736,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             preloads["click_get_user_home"].return_value = "/home/test-user"
             self._make_hook_file(dedent("""\
                 User-Level: yes
-                Pattern: %s/${id}.test""") % self.temp_dir
-            )
+                Pattern: %s/${id}.test""") % self.temp_dir)
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
@@ -699,12 +748,14 @@ class TestClickHookUserLevel(TestClickHookBase):
 
     def test_install(self):
         with self.run_in_subprocess(
-                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_hooks_dir", "click_get_user_home", "getpwnam"
                 ) as (enter, preloads):
             enter()
             # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.new" % self.temp_dir, file=f)
@@ -973,8 +1024,8 @@ class TestPackageInstallHooks(TestClickHookBase):
                 print("Hook-Name: b", file=f)
             os.mkdir(os.path.join(self.temp_dir, "a"))
             os.mkdir(os.path.join(self.temp_dir, "b"))
-            self._make_installed_click("test", "1.0", make_current=False,
-                                json_data={"hooks": {}})
+            self._make_installed_click(
+                "test", "1.0", make_current=False, json_data={"hooks": {}})
             self._make_installed_click("test", "1.1", json_data={
                 "hooks": {"app": {"a": "foo.a", "b": "foo.b"}}})
             Click.package_install_hooks(

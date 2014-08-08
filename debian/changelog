@@ -1,3 +1,74 @@
+click (0.4.30) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Add many more unit tests to fill in some gaps in the coverage report.
+  
+  [ Michael Vogt ]
+  * Exclude non-existing users from User.get_user_names() 
+    (LP: #1334611)
+
+  [ Zoltan Balogh ]
+  * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
+    all frameworks.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 23:33:22 +0000
+
+click (0.4.29.1) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Trivial fix for the current autopkgtest failure.  The ADT environment
+    does not have the USER environment set.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 04 Jul 2014 15:10:01 +0000
+
+click (0.4.29) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Refactor click/chroot.py and improve tests.
+  * Test-build two ubuntu-system-apps in a click chroot as part of the
+    integration tests.
+  * Generalise handling of -devN frameworks in "click chroot".
+  * Add integration test for "click hook install".
+
+  [ Colin Watson ]
+  * Various adjustments for improved PEP-8 compliance.
+  * Produce coverage only on request via ./configure --enable-gcov.  Extend
+    it to cover C code as well, and produce a merged coverage.xml.
+
+  [ Brendan Donegan ]
+  * Clean up integration tests - have one file per command and make some
+    things clearer.
+
+  [ Dimitri John Ledkov ]
+  * Seed runtime target arch SDK app launcher, to enable remote debugging.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 03 Jul 2014 13:10:21 +0000
+
+click (0.4.28) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Revert change in 0.4.27 to raise an error if no databases are added;
+    this makes most of libclick unusable if click is not installed.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 23 Jun 2014 16:07:37 +0000
+
+click (0.4.27) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Fix failing autopkgtests.
+  * Refactor the integration tests to be more modular.  Add installation
+    integration tests based on
+    https://wiki.ubuntu.com/Process/Merges/TestPlan/click.
+  * Add integration tests for buildsource, pkgdir and framework.
+
+  [ Dimitri John Ledkov ]
+  * Handle renaming of qtsensors5-dev to libqt5sensors5-dev in Qt 5.3.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 23 Jun 2014 11:31:50 +0000
+
 click (0.4.26.1) utopic; urgency=medium
 
   [ Colin Watson ]

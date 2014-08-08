@@ -158,7 +158,6 @@ class TestCase(gimock.GIMockTestCase):
             f.write("Base-Version: {0}\n".format(ver))
 
 
-
 if not hasattr(mock, "call"):
     # mock 0.7.2, the version in Ubuntu 12.04 LTS, lacks mock.ANY and
     # mock.call.  Since it's so convenient, monkey-patch a partial backport
@@ -175,9 +174,7 @@ if not hasattr(mock, "call"):
         def __repr__(self):
             return '<ANY>'
 
-
     mock.ANY = _ANY()
-
 
     class _Call(tuple):
         """
@@ -230,13 +227,11 @@ if not hasattr(mock, "call"):
 
             return tuple.__new__(cls, (name, args, kwargs))
 
-
         def __init__(self, value=(), name=None, parent=None, two=False,
                      from_kall=True):
             self.name = name
             self.parent = parent
             self.from_kall = from_kall
-
 
         def __eq__(self, other):
             if other is mock.ANY:
@@ -287,10 +282,8 @@ if not hasattr(mock, "call"):
             # this order is important for ANY to work!
             return (other_args, other_kwargs) == (self_args, self_kwargs)
 
-
         def __ne__(self, other):
             return not self.__eq__(other)
-
 
         def __call__(self, *args, **kwargs):
             if self.name is None:
@@ -299,13 +292,11 @@ if not hasattr(mock, "call"):
             name = self.name + '()'
             return _Call((self.name, args, kwargs), name=name, parent=self)
 
-
         def __getattr__(self, attr):
             if self.name is None:
                 return _Call(name=attr, from_kall=False)
             name = '%s.%s' % (self.name, attr)
             return _Call(name=name, parent=self, from_kall=False)
-
 
     mock.call = _Call(from_kall=False)
 

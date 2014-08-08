@@ -245,7 +245,7 @@ class GIMockTestCase(unittest.TestCase):
             if func.get("throws", "0") == "1":
                 params.append({
                     "name": "error",
-                    "type": { "gi": "GError**", "c": "GError**" },
+                    "type": {"gi": "GError**", "c": "GError**"},
                     })
             funcs[name] = {
                 "name": name,

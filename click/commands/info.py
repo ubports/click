@@ -18,14 +18,18 @@
 from __future__ import print_function
 
 from contextlib import closing
+import glob
 import json
 from optparse import OptionParser
+import os
 import sys
 
 from gi.repository import Click
 
 from click.install import DebFile
 from click.json_helpers import json_object_to_python
+
+
 def _load_manifest(manifest_file):
     manifest = json.load(manifest_file)
     keys = list(manifest)
@@ -51,7 +55,6 @@ def get_manifest(options, arg):
                     "manifest", encoding="UTF-8") as manifest_file:
                 return _load_manifest(manifest_file)
     else:
-        import glob, os
         pkgdir = Click.find_package_directory(arg)
         manifest_path = glob.glob(
             os.path.join(pkgdir, ".click", "info", "*.manifest"))

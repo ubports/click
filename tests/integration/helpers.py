@@ -22,7 +22,6 @@ import os
 import random
 import shutil
 import string
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -30,6 +29,7 @@ import unittest
 
 def is_root():
     return os.getuid() == 0
+
 
 def has_network():
     return subprocess.call(
@@ -55,6 +55,7 @@ class ClickTestCase(unittest.TestCase):
     def setUp(self):
         super(ClickTestCase, self).setUp()
         self.temp_dir = tempfile.mkdtemp()
+
     def tearDown(self):
         super(ClickTestCase, self).tearDown()
         # we force the cleanup before removing the tempdir so that stuff
@@ -64,13 +65,14 @@ class ClickTestCase(unittest.TestCase):
 
     def _create_manifest(self, target, name, version, framework, hooks={}):
         with open(target, "w") as f:
-            json.dump({'name': name,
-                       'version': str(version),
-                       'maintainer': 'Foo Bar <foo@example.org>',
-                       'title': 'test title',
-                       'framework': framework,
-                       'hooks': hooks,
-                   }, f)
+            json.dump({
+                'name': name,
+                'version': str(version),
+                'maintainer': 'Foo Bar <foo@example.org>',
+                'title': 'test title',
+                'framework': framework,
+                'hooks': hooks,
+                }, f)
 
     def _make_click(self, name=None, version=1.0,
                     framework="ubuntu-sdk-13.10", hooks={}):

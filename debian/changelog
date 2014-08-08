@@ -1,8 +1,20 @@
-click (0.4.30) UNRELEASED; urgency=medium
+click (0.4.30) utopic; urgency=medium
 
+  [ Colin Watson ]
   * Add many more unit tests to fill in some gaps in the coverage report.
+  
+  [ Michael Vogt ]
+  * Exclude non-existing users from User.get_user_names() 
+    (LP: #1334611)
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 09 Jul 2014 13:55:30 +0100
+  [ Zoltan Balogh ]
+  * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
+    all frameworks.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 23:33:22 +0000
 
 click (0.4.29.1) utopic; urgency=medium
 

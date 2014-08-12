@@ -3,6 +3,7 @@ click (0.4.31) UNRELEASED; urgency=medium
   [ Michael Vogt ]
   * Add "click info" interface to get manifest corresponding to file in
     installed package (LP: #1324853).
+  * Add support for click package gpg signatures (LP: #1330770).
 
   [ Colin Watson ]
   * Ugly hack to get coverage reporting working again with gcovr 3.1.

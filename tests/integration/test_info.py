@@ -27,4 +27,19 @@ class TestInfo(ClickTestCase):
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "info", path_to_click], universal_newlines=True)
-        self.assertEqual(json.loads(output)["name"], name)
+        self.assertEqual(name, json.loads(output)["name"])
+
+    def test_info_file_in_package(self):
+        name = "org.example.info"
+        version = "1.0"
+        click_pkg = self._make_click(name=name, version=version, framework="")
+        subprocess.check_call(
+            [self.click_binary, "install", "--all-users", click_pkg])
+        self.addCleanup(
+            subprocess.check_call,
+            [self.click_binary, "unregister", "--all-users", name])
+        output = subprocess.check_output(
+            [self.click_binary, "info",
+             "/opt/click.ubuntu.com/%s/%s/README" % (name, version)],
+            universal_newlines=True)
+        self.assertEqual(name, json.loads(output)["name"])

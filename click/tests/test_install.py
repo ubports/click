@@ -251,7 +251,7 @@ class TestClickInstaller(TestCase):
             })
         self.debsig_patcher.stop()
         self.assertRaisesRegex(
-            ClickInstallerAuditError, "Signature verification failed",
+            ClickInstallerAuditError, "Signature verification error",
             ClickInstaller(self.db).audit, path)
         self.debsig_patcher.start()
 

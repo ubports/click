@@ -7,9 +7,6 @@ click (0.4.31) UNRELEASED; urgency=medium
 
   [ Colin Watson ]
   * Ugly hack to get coverage reporting working again with gcovr 3.1.
-  * Pass --allow-unauthenticated to "click install" from the PackageKit
-    plugin for now.  Revert this when a keyring and signing policies are in
-    place on the phone images and confirmed to work.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 12 Aug 2014 14:32:38 +0100
 

@@ -89,7 +89,7 @@ class DebsigVerify:
     DS_FAIL_BADSIG = 13
     DS_FAIL_INTERNAL = 14
 
-    # should be a property, but python does not support support 
+    # should be a property, but python does not support support
     # class properties easily
     @classmethod
     def available(cls):

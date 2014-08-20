@@ -1,4 +1,4 @@
-click (0.4.31) UNRELEASED; urgency=medium
+click (0.4.31.1) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Add "click info" interface to get manifest corresponding to file in

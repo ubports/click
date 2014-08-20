@@ -89,8 +89,9 @@ class DebsigVerify:
     DS_FAIL_BADSIG = 13
     DS_FAIL_INTERNAL = 14
 
+    # should be a property, but python does not support support 
+    # class properties easily
     @classmethod
-    @property
     def available(cls):
         return Click.find_on_path("debsig-verify")
 
@@ -167,7 +168,7 @@ class ClickInstaller:
 
     def audit(self, path, slow=False, check_arch=False):
         # always do the signature check first
-        if DebsigVerify.available:
+        if DebsigVerify.available():
             try:
                 DebsigVerify.verify(path, self.allow_unauthenticated)
             except DebsigVerifyError as e:

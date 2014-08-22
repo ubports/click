@@ -113,6 +113,8 @@ class ClickSignaturesTestCase(ClickTestCase):
             output = subprocess.check_output(
                 [self.click_binary] + cmd_args,
                 stderr=subprocess.STDOUT, universal_newlines=True)
+            print(output)
+
         output = cm.exception.output
         expected_error_message = "Signature verification error: "
         self.assertIn(expected_error_message, output)

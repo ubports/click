@@ -60,6 +60,7 @@ class TestClickInstall(ClickTestCase):
         # install it
         subprocess.check_call([
             self.click_binary, "install", "--user=%s" % self.USER_1,
+            "--allow-unauthenticated",
             click_pkg], universal_newlines=True)
         self.addCleanup(self.click_unregister, self.USER_1, "foo-1")
         # ensure that user-1 has it
@@ -82,7 +83,8 @@ class TestClickInstall(ClickTestCase):
         click_pkg = self._make_click(name="foo-2", framework="")
         # install it
         subprocess.check_call(
-            [self.click_binary, "install", "--all-users",  click_pkg],
+            [self.click_binary, "install", "--all-users",
+            "--allow-unauthenticated", click_pkg],
             universal_newlines=True)
         self.addCleanup(self.click_unregister, "@all", "foo-2")
         # ensure all users see it
@@ -95,7 +97,8 @@ class TestClickInstall(ClickTestCase):
     def test_pkgdir_after_install(self):
         click_pkg = self._make_click(name="foo-2", version="1.2", framework="")
         subprocess.check_call(
-            [self.click_binary, "install", "--all-users",  click_pkg],
+            [self.click_binary, "install", "--all-users",
+            "--allow-unauthenticated", click_pkg],
             universal_newlines=True)
         self.addCleanup(self.click_unregister, "@all", "foo-2")
         # from the path

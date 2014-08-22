@@ -34,7 +34,8 @@ class TestInfo(ClickTestCase):
         version = "1.0"
         click_pkg = self._make_click(name=name, version=version, framework="")
         subprocess.check_call(
-            [self.click_binary, "install", "--all-users", click_pkg])
+            [self.click_binary, "install", "--allow-unauthenticated",
+             "--all-users", click_pkg])
         self.addCleanup(
             subprocess.check_call,
             [self.click_binary, "unregister", "--all-users", name])

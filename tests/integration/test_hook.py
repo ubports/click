@@ -64,7 +64,8 @@ class TestHook(ClickTestCase):
             click_pkg_name, framework="", hooks=hooks)
         user = os.environ.get("USER", "root")
         subprocess.check_call(
-            [self.click_binary, "install", "--user=%s" % user, click_pkg],
+            [self.click_binary, "install", "--allow-unauthenticated",
+             "--user=%s" % user, click_pkg],
             universal_newlines=True)
         self.addCleanup(
             subprocess.check_call,

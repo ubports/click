@@ -515,10 +515,11 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	JsonObject *manifest;
 	gchar *pkid = NULL;
 
-	argv = g_malloc0_n (6, sizeof (*argv));
+	argv = g_malloc0_n (7, sizeof (*argv));
 	i = 0;
 	argv[i++] = g_strdup ("click");
 	argv[i++] = g_strdup ("install");
+	argv[i++] = g_strdup ("--allow-unauthenticated");
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
 	if (username)

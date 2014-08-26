@@ -1,3 +1,11 @@
+click (0.4.31.3) UNRELEASED; urgency=low
+
+  * Pass --allow-unauthenticated to "click install" from the PackageKit
+    plugin for now.  Revert this when we can pass --allow-unauthenticated
+    from the SDK (LP: #1360582)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 25 Aug 2014 17:10:04 -0700
+
 click (0.4.31.2) utopic; urgency=medium
 
   [ Michael Vogt ]

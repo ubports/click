@@ -1,10 +1,19 @@
-click (0.4.31.3) UNRELEASED; urgency=low
+click (0.4.31.3) utopic; urgency=medium
 
-  * Pass --allow-unauthenticated to "click install" from the PackageKit
-    plugin for now.  Revert this when we can pass --allow-unauthenticated
-    from the SDK (LP: #1360582)
+  * Reinstate most of 0.4.31.2; instead, just always pass
+    --allow-unauthenticated to "click install" from the PackageKit plugin
+    for now, until we can sort out sideloading (see LP #1360582).
 
- -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 25 Aug 2014 17:10:04 -0700
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 25 Aug 2014 12:25:21 -0700
+
+click (0.4.31.2.is.0.4.30) utopic; urgency=medium
+
+  * Temporary everting to previous version as the current one makes installing
+    click packages locally through pkcon install-local impossible, which is
+    breaking some other projects relying on this functionality. Needs to be
+    revisited.
+
+ -- Åukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
 
 click (0.4.31.2) utopic; urgency=medium
 

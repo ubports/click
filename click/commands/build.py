@@ -20,7 +20,9 @@ from __future__ import print_function
 from optparse import OptionParser
 import os
 import sys
+import subprocess
 
+from gi.repository import Click
 from click.build import ClickBuildError, ClickBuilder
 
 
@@ -29,6 +31,9 @@ def run(argv):
     parser.add_option(
         "-m", "--manifest", metavar="PATH", default="manifest.json",
         help="read package manifest from PATH (default: manifest.json)")
+    parser.add_option(
+        "--no-validate", action="store_true", dest="novalidate",
+        help="Don't run click-reviewers-tools check on resulting .click")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need directory")
@@ -49,4 +54,7 @@ def run(argv):
         print(e, file=sys.stderr)
         return 1
     print("Successfully built package in '%s'." % path)
+    if Click.find_on_path('click-review') and not options.novalidate:
+        print("Now executing: click-review %s" % path)
+        subprocess.call(['click-review', path])
     return 0

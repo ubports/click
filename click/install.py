@@ -125,7 +125,7 @@ class ClickInstaller:
             subprocess.check_call(command, env=env, **kwargs)
 
     def audit(self, path, slow=False, check_arch=False):
-        # fail early if the file can not opened at all
+        # fail early if the file cannot be opened
         try:
             with closing(DebFile(filename=path)) as package:
                 pass
@@ -133,7 +133,7 @@ class ClickInstaller:
             raise ClickInstallerError("Failed to read %s: %s" % (
                 path, str(e)))
 
-        # then perform the autdit
+        # then perform the audit
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 

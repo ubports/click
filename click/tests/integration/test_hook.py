@@ -21,13 +21,11 @@ from textwrap import dedent
 import unittest
 
 from .helpers import (
-    allow_integration,
     ClickTestCase,
     is_root,
 )
 
 
-@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestHook(ClickTestCase):
     def _make_hook(self, name):

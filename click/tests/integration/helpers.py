@@ -38,9 +38,6 @@ def has_network():
     except Exception:
         return False
 
-def allow_integration():
-    return "TEST_INTEGRATION" in os.environ
-
 
 @contextlib.contextmanager
 def chdir(target):
@@ -52,7 +49,6 @@ def chdir(target):
         os.chdir(curdir)
 
 
-@unittest.skipIf(not allow_integration(), "Skipping integration tests")
 class ClickTestCase(unittest.TestCase):
 
     @classmethod
@@ -61,6 +57,8 @@ class ClickTestCase(unittest.TestCase):
 
     def setUp(self):
         super(ClickTestCase, self).setUp()
+        if "TEST_INTEGRATION" not in os.environ:
+            self.skipTest("Skipping integration tests")
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):

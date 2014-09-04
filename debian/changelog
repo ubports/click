@@ -1,4 +1,4 @@
-click (0.4.31.4) UNRELEASED; urgency=medium
+click (0.4.32) UNRELEASED; urgency=medium
 
   * Run click-review after a successful build of a click package. Offer
     --no-validate as an option

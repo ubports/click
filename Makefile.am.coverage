@@ -38,6 +38,7 @@ coverage-gcovr: coverage-python.xml
 generate-coverage-gcovr:
 	@echo Generating coverage GCOVR report
 	$(GCOVR) -x -r $(top_builddir) -o coverage-c.xml
+	sed -i 's/\(<package .*name=\)""/\1"lib.click..libs"/' coverage-c.xml
 	
 clean-coverage-gcovr: clean-gcda
 	rm -f coverage-c.xml

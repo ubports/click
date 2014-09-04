@@ -26,7 +26,9 @@ class TestVerify(ClickTestCase):
         name = "com.example.verify-missing-framework"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
-            self.click_binary, "verify", "--force-missing-framework",
+            self.click_binary, "verify",
+            "--force-missing-framework",
+            "--allow-unauthenticated",
             path_to_click], universal_newlines=True)
         self.assertEqual(output, "")
 
@@ -34,7 +36,7 @@ class TestVerify(ClickTestCase):
         name = "com.example.verify-ok"
         path_to_click = self._make_click(name, framework="")
         output = subprocess.check_output([
-            self.click_binary, "verify",
+            self.click_binary, "verify", "--allow-unauthenticated",
             path_to_click], universal_newlines=True)
         self.assertEqual(output, "")
 
@@ -43,7 +45,9 @@ class TestVerify(ClickTestCase):
         path_to_click = self._make_click(name, framework="missing")
         with self.assertRaises(subprocess.CalledProcessError) as cm:
             subprocess.check_output(
-                [self.click_binary, "verify", path_to_click],
+                [self.click_binary, "verify",
+                 "--allow-unauthenticated",
+                 path_to_click],
                 universal_newlines=True, stderr=subprocess.STDOUT)
         expected_error = (
             'click.framework.ClickFrameworkInvalid: Framework '
@@ -58,9 +62,11 @@ class TestVerify(ClickTestCase):
             f.write("something-that-is-not-a-click")
         with self.assertRaises(subprocess.CalledProcessError) as cm:
             subprocess.check_output(
-                [self.click_binary, "verify", path_to_click],
+                [self.click_binary, "verify", "--allow-unauthenticated",
+                 path_to_click],
                 universal_newlines=True, stderr=subprocess.STDOUT)
         expected_error = (
-            'click.install.ClickInstallerError: Failed to read %s: '
-            'Unable to find global header') % path_to_click
+            'click.install.DebsigVerifyError: Signature verification error: '
+            'debsig: %s does not appear to be a deb format package'
+        ) % path_to_click
         self.assertIn(expected_error, cm.exception.output)

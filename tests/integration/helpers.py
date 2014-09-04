@@ -22,7 +22,6 @@ import os
 import random
 import shutil
 import string
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -30,6 +29,7 @@ import unittest
 
 def is_root():
     return os.getuid() == 0
+
 
 def has_network():
     return subprocess.call(
@@ -72,10 +72,13 @@ class ClickTestCase(unittest.TestCase):
         self.doCleanups()
         shutil.rmtree(self.temp_dir)
 
-    def click_install(self, path_to_click, click_name, username):
-        subprocess.check_call([
-            self.click_binary, "install", cmdline_for_user(username),
-            path_to_click])
+    def click_install(self, path_to_click, click_name, username,
+                      allow_unauthenticated=True):
+        cmd = [self.click_binary, "install", cmdline_for_user(username)]
+        if allow_unauthenticated:
+            cmd.append("--allow-unauthenticated")
+        cmd.append(path_to_click)
+        subprocess.check_call(cmd)
         self.addCleanup(self.click_unregister, click_name, username)
 
     def click_unregister(self, click_name, username):
@@ -85,13 +88,14 @@ class ClickTestCase(unittest.TestCase):
 
     def _create_manifest(self, target, name, version, framework, hooks={}):
         with open(target, "w") as f:
-            json.dump({'name': name,
-                       'version': str(version),
-                       'maintainer': 'Foo Bar <foo@example.org>',
-                       'title': 'test title',
-                       'framework': framework,
-                       'hooks': hooks,
-                   }, f)
+            json.dump({
+                'name': name,
+                'version': str(version),
+                'maintainer': 'Foo Bar <foo@example.org>',
+                'title': 'test title',
+                'framework': framework,
+                'hooks': hooks,
+                }, f)
 
     def _make_click(self, name=None, version=1.0,
                     framework="ubuntu-sdk-13.10", hooks={}):

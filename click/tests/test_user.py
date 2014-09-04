@@ -27,11 +27,11 @@ import json
 import os
 import shutil
 
-from gi.repository import Click
+from gi.repository import Click, GLib
 
 from click.json_helpers import json_array_to_python, json_object_to_python
 from click.tests.gimock_types import Passwd
-from click.tests.helpers import TestCase, mkfile
+from click.tests.helpers import TestCase, mkfile, touch
 
 
 class TestClickUser(TestCase):
@@ -92,6 +92,17 @@ class TestClickUser(TestCase):
                 os.path.join(db_root, ".click", "users", "test-user"),
                 registry.get_overlay_db())
 
+    def test_new_db_not_directory(self):
+        with self.run_in_subprocess(
+                "click_get_db_dir", "g_get_user_name") as (enter, preloads):
+            enter()
+            path = os.path.join(self.temp_dir, "file")
+            touch(path)
+            preloads["click_get_db_dir"].side_effect = (
+                lambda: self.make_string(path))
+            self.assertRaisesFileError(
+                GLib.FileError.NOTDIR, Click.User.for_user, None, None)
+
     def test_get_overlay_db(self):
         self.assertEqual(
             os.path.join(self.temp_dir, ".click", "users", "user"),
@@ -140,6 +151,46 @@ class TestClickUser(TestCase):
                 os.path.join(click_dir, "users").encode(), 1, 1)
             preloads["chown"].assert_any_call(
                 os.path.join(click_dir, "users", "user").encode(), 2, 2)
+
+    def test_ensure_db_mkdir_fails(self):
+        with self.run_in_subprocess("mkdir") as (enter, preloads):
+            enter()
+            preloads["mkdir"].return_value = -1
+            registry = Click.User.for_user(self.db, "user")
+            self.assertRaisesUserError(
+                Click.UserError.CREATE_DB, registry.set_version, "a", "1.0")
+
+    def test_ensure_db_chown_fails(self):
+        with self.run_in_subprocess(
+                "chown", "geteuid", "getpwnam") as (enter, preloads):
+            enter()
+            preloads["geteuid"].return_value = 0
+            getpwnam_result = Passwd()
+
+            def getpwnam_side_effect(name):
+                if name == b"clickpkg":
+                    getpwnam_result.pw_uid = 1
+                    getpwnam_result.pw_gid = 1
+                else:
+                    getpwnam_result.pw_uid = 2
+                    getpwnam_result.pw_gid = 2
+                return self.make_pointer(getpwnam_result)
+
+            preloads["getpwnam"].side_effect = getpwnam_side_effect
+            preloads["chown"].return_value = -1
+            registry = Click.User.for_user(self.db, "user")
+            self.assertRaisesUserError(
+                Click.UserError.CHOWN_DB, registry.set_version, "a", "1.0")
+
+    def test_ensure_db_getpwnam_fails(self):
+        with self.run_in_subprocess(
+                "geteuid", "getpwnam") as (enter, preloads):
+            enter()
+            preloads["geteuid"].return_value = 0
+            preloads["getpwnam"].return_value = None
+            registry = Click.User.for_user(self.db, "user")
+            self.assertRaisesUserError(
+                Click.UserError.GETPWNAM, registry.set_version, "a", "1.0")
 
     def test_get_package_names_missing(self):
         db = Click.DB()

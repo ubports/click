@@ -25,6 +25,7 @@ from .helpers import (
     ClickTestCase,
 )
 
+
 @unittest.skipIf(not allow_integration(), "Skipping integration tests")
 @unittest.skipIf(not is_root(), "This tests needs to run as root")
 @unittest.skipIf(not has_network(), "Need network")

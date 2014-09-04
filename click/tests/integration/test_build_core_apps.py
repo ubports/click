@@ -39,7 +39,7 @@ TEST_BUILD_BRANCHES = [
 ]
 
 # command to "configure"
-CORE_APP_CONFIGURE_CMD  = [
+CORE_APP_CONFIGURE_CMD = [
     "cmake", "..", "-DCLICK_MODE=on", "-DINSTALL_TESTS=off"]
 
 # command to make install
@@ -107,9 +107,9 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
             branch_dir = branch[len("lp:"):]
             build_dir = os.path.join(branch_dir, "build-tree")
             if os.path.exists(branch_dir):
-                subprocess.check_call(["bzr","pull"], cwd=branch_dir)
+                subprocess.check_call(["bzr", "pull"], cwd=branch_dir)
             else:
-                subprocess.check_call(["bzr","branch", branch])
+                subprocess.check_call(["bzr", "branch", branch])
             manifest = find_manifest(branch_dir)
             # build it
             self._set_arch_and_framework_from_manifest(manifest)

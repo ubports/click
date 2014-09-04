@@ -43,6 +43,9 @@ def run(argv):
     parser.add_option(
         "--all-users", default=False, action="store_true",
         help="register package for all users")
+    parser.add_option(
+        "--allow-unauthenticated", default=False, action="store_true",
+        help="allow installing packages with no sigantures")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")
@@ -51,7 +54,9 @@ def run(argv):
     if options.root is not None:
         db.add(options.root)
     package_path = args[0]
-    installer = ClickInstaller(db, options.force_missing_framework)
+    installer = ClickInstaller(
+        db=db, force_missing_framework=options.force_missing_framework,
+        allow_unauthenticated=options.allow_unauthenticated)
     try:
         installer.install(
             package_path, user=options.user, all_users=options.all_users)

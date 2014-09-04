@@ -113,6 +113,11 @@ class TestOSExtrasNative(TestCase, TestOSExtrasBaseMixin):
         self.use_temp_dir()
         self.mod = Click
 
+    def test_ensuredir_error(self):
+        path = os.path.join(self.temp_dir, "file")
+        touch(path)
+        self.assertRaisesFileError(mock.ANY, self.mod.ensuredir, path)
+
     def test_dir_read_name_directory_present(self):
         new_dir = os.path.join(self.temp_dir, "dir")
         touch(os.path.join(new_dir, "file"))
@@ -136,12 +141,28 @@ class TestOSExtrasNative(TestCase, TestOSExtrasBaseMixin):
         os.mkdir(path)
         self.assertRaisesFileError(mock.ANY, self.mod.unlink_force, path)
 
+    def test_symlink_unlink_error(self):
+        path = os.path.join(self.temp_dir, "dir")
+        os.mkdir(path)
+        self.assertRaisesFileError(
+            mock.ANY, self.mod.symlink_force, "source", path)
+
+    def test_symlink_error(self):
+        path = os.path.join(self.temp_dir, "dir", "file")
+        self.assertRaisesFileError(
+            mock.ANY, self.mod.symlink_force, "source", path)
+
 
 class TestOSExtrasPython(TestCase, TestOSExtrasBaseMixin):
     def setUp(self):
         super(TestOSExtrasPython, self).setUp()
         self.use_temp_dir()
         self.mod = osextras
+
+    def test_ensuredir_oserror(self):
+        path = os.path.join(self.temp_dir, "file")
+        touch(path)
+        self.assertRaises(OSError, self.mod.ensuredir, path)
 
     def test_listdir_directory_present(self):
         new_dir = os.path.join(self.temp_dir, "dir")
@@ -161,3 +182,12 @@ class TestOSExtrasPython(TestCase, TestOSExtrasBaseMixin):
         path = os.path.join(self.temp_dir, "dir")
         os.mkdir(path)
         self.assertRaises(OSError, self.mod.unlink_force, path)
+
+    def test_symlink_unlink_oserror(self):
+        path = os.path.join(self.temp_dir, "dir")
+        os.mkdir(path)
+        self.assertRaises(OSError, self.mod.symlink_force, "source", path)
+
+    def test_symlink_oserror(self):
+        path = os.path.join(self.temp_dir, "dir", "file")
+        self.assertRaises(OSError, self.mod.symlink_force, "source", path)

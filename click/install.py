@@ -30,6 +30,7 @@ from functools import partial
 import grp
 import inspect
 import json
+import logging
 import os
 import pwd
 import shutil
@@ -74,6 +75,45 @@ except AttributeError:
 apt_pkg.init_system()
 
 
+class DebsigVerifyError(Exception):
+    pass
+
+
+class DebsigVerify:
+    """Tiny wrapper around the debsig-verify commandline"""
+    # from debsig-verify-0.9/debsigs.h
+    DS_SUCCESS = 0
+    DS_FAIL_NOSIGS = 10
+    DS_FAIL_UNKNOWN_ORIGIN = 11
+    DS_FAIL_NOPOLICIES = 12
+    DS_FAIL_BADSIG = 13
+    DS_FAIL_INTERNAL = 14
+
+    # should be a property, but python does not support support
+    # class properties easily
+    @classmethod
+    def available(cls):
+        return Click.find_on_path("debsig-verify")
+
+    @classmethod
+    def verify(cls, path, allow_unauthenticated):
+        command = ["debsig-verify"] + [path]
+        try:
+            subprocess.check_output(command, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            if (allow_unauthenticated and
+                e.returncode in (DebsigVerify.DS_FAIL_NOSIGS,
+                                 DebsigVerify.DS_FAIL_UNKNOWN_ORIGIN,
+                                 DebsigVerify.DS_FAIL_NOPOLICIES)):
+                logging.warning(
+                    "Signature check failed, but installing anyway "
+                    "as requested")
+            else:
+                raise DebsigVerifyError(
+                    "Signature verification error: %s" % e.output)
+        return True
+
+
 class ClickInstallerError(Exception):
     pass
 
@@ -87,9 +127,11 @@ class ClickInstallerAuditError(ClickInstallerError):
 
 
 class ClickInstaller:
-    def __init__(self, db, force_missing_framework=False):
+    def __init__(self, db, force_missing_framework=False,
+                 allow_unauthenticated=False):
         self.db = db
         self.force_missing_framework = force_missing_framework
+        self.allow_unauthenticated = allow_unauthenticated
 
     def _preload_path(self):
         if "CLICK_PACKAGE_PRELOAD" in os.environ:
@@ -125,6 +167,16 @@ class ClickInstaller:
             subprocess.check_call(command, env=env, **kwargs)
 
     def audit(self, path, slow=False, check_arch=False):
+        # always do the signature check first
+        if DebsigVerify.available():
+            try:
+                DebsigVerify.verify(path, self.allow_unauthenticated)
+            except DebsigVerifyError as e:
+                raise ClickInstallerAuditError(str(e))
+        else:
+            logging.warning(
+                "debsig-verify not available; cannot check signatures")
+
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 

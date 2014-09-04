@@ -24,14 +24,14 @@ from .helpers import ClickTestCase
 
 class TestInfo(ClickTestCase):
     def test_info_from_path(self):
-        name = "com.ubuntu.foo"
+        name = "com.example.foo"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "info", path_to_click], universal_newlines=True)
         self.assertEqual(json.loads(output)["name"], name)
 
     def test_info_installed_click(self):
-        name = "com.ubuntu.foo"
+        name = "com.example.foo"
         user = os.environ.get("USER", "root")
         path_to_click = self._make_click(name, framework="")
         self.click_install(path_to_click, name, user)

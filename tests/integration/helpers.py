@@ -96,7 +96,7 @@ class ClickTestCase(unittest.TestCase):
     def _make_click(self, name=None, version=1.0,
                     framework="ubuntu-sdk-13.10", hooks={}):
         if name is None:
-            name = "com.ubuntu.%s" % "".join(
+            name = "com.example.%s" % "".join(
                 random.choice(string.ascii_lowercase) for i in range(10))
         tmpdir = tempfile.mkdtemp()
         self.addCleanup(lambda: shutil.rmtree(tmpdir))

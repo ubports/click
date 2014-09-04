@@ -20,11 +20,10 @@ import os
 import shutil
 import subprocess
 import tarfile
-import unittest
 from textwrap import dedent
 
 from .helpers import (
-    is_root,
+    require_root,
     ClickTestCase,
 )
 
@@ -99,8 +98,13 @@ class Debsigs:
         os.remove(self.pubkey_path)
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class ClickSignaturesTestCase(ClickTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ClickSignaturesTestCase, cls).setUpClass()
+        require_root()
+
     def assertClickNoSignatureError(self, cmd_args):
         with self.assertRaises(subprocess.CalledProcessError) as cm:
             output = subprocess.check_output(
@@ -123,8 +127,13 @@ class ClickSignaturesTestCase(ClickTestCase):
         self.assertIn(expected_error_message, output)
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSignatureVerificationNoSignature, cls).setUpClass()
+        require_root()
+
     def test_debsig_verify_no_sig(self):
         name = "org.example.debsig-no-sig"
         path_to_click = self._make_click(name, framework="")
@@ -148,8 +157,13 @@ class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
                               "--user=%s" % user, name])
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerification(ClickSignaturesTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSignatureVerification, cls).setUpClass()
+        require_root()
+
     def setUp(self):
         super(TestSignatureVerification, self).setUp()
         self.user = os.environ.get("USER", "root")

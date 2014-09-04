@@ -16,10 +16,9 @@
 """Integration tests for the click install feature."""
 
 import subprocess
-import unittest
 
 from .helpers import (
-    is_root,
+    require_root,
     ClickTestCase,
 )
 
@@ -33,12 +32,12 @@ def del_user(name):
     subprocess.check_call(["userdel", "-r", name])
 
 
-@unittest.skipIf(not is_root(), "This test needs to run as root")
 class TestClickInstall(ClickTestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestClickInstall, cls).setUpClass()
+        require_root()
         cls.USER_1 = add_user("click-test-user-1")
         cls.USER_2 = add_user("click-test-user-2")
 

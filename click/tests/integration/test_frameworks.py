@@ -17,18 +17,17 @@
 
 import os
 import subprocess
-import unittest
 
-from .helpers import (
-    ClickTestCase,
-)
+from .helpers import ClickTestCase
 
 
-@unittest.skipIf(
-    (not os.path.exists("/usr/share/click/frameworks") or
-     not os.listdir("/usr/share/click/frameworks")),
-    "Please install ubuntu-sdk-libs")
 class TestFrameworks(ClickTestCase):
+    def setUp(self):
+        super(TestFrameworks, self).setUp()
+        if (not os.path.exists("/usr/share/click/frameworks") or
+                not os.listdir("/usr/share/click/frameworks")):
+            self.skipTest("Please install ubuntu-sdk-libs")
+
     def test_framework_list(self):
         output = subprocess.check_output([
             self.click_binary, "framework", "list"], universal_newlines=True)

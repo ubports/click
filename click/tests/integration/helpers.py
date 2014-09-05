@@ -27,13 +27,17 @@ import tempfile
 import unittest
 
 
-def is_root():
-    return os.getuid() == 0
+def require_root():
+    if os.getuid() != 0:
+        raise unittest.SkipTest("This test needs to run as root")
 
 
-def has_network():
-    return subprocess.call(
-        ["ping", "-c1", "archive.ubuntu.com"]) == 0
+def require_network():
+    try:
+        if subprocess.call(["ping", "-c1", "archive.ubuntu.com"]) != 0:
+            raise unittest.SkipTest("Need network")
+    except Exception:
+        pass
 
 
 @contextlib.contextmanager
@@ -50,6 +54,8 @@ class ClickTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if "TEST_INTEGRATION" not in os.environ:
+            raise unittest.SkipTest("Skipping integration tests")
         cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
 
     def setUp(self):

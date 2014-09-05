@@ -16,22 +16,21 @@
 """Integration tests for the click chroot feature."""
 
 import subprocess
-import unittest
 
 from .helpers import (
-    has_network,
-    is_root,
+    require_network,
+    require_root,
     ClickTestCase,
 )
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
-@unittest.skipIf(not has_network(), "Need network")
 class TestChroot(ClickTestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestChroot, cls).setUpClass()
+        require_root()
+        require_network()
         cls.arch = subprocess.check_output(
             ["dpkg", "--print-architecture"], universal_newlines=True).strip()
         subprocess.check_call([

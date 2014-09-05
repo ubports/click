@@ -1,9 +1,17 @@
 click (0.4.32) UNRELEASED; urgency=medium
 
+  [ Daniel Holbach ]
   * Run click-review after a successful build of a click package. Offer
     --no-validate as an option.
 
- -- Daniel Holbach <daniel.holbach@ubuntu.com>  Thu, 04 Sep 2014 16:43:52 +0200
+  [ Colin Watson ]
+  * Move integration tests to a location where they won't end up being
+    installed into inappropriate places on the system module path
+    (LP: #1337696).
+  * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
+    pyflakes angry when running tests under Python 2.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Sep 2014 14:46:16 +0100
 
 click (0.4.31.3) utopic; urgency=medium
 
@@ -20,7 +28,7 @@ click (0.4.31.2.is.0.4.30) utopic; urgency=medium
     breaking some other projects relying on this functionality. Needs to be
     revisited.
 
- -- Åukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
 
 click (0.4.31.2) utopic; urgency=medium
 

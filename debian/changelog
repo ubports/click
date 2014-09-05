@@ -11,6 +11,9 @@ click (0.4.32) UNRELEASED; urgency=medium
   * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
     pyflakes angry when running tests under Python 2.
 
+   [ Michael Vogt ]
+   * Add more integration tests for "click {list,register,verify,info}".
+
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Sep 2014 14:46:16 +0100
 
 click (0.4.31.3) utopic; urgency=medium

@@ -1,5 +1,9 @@
 click (0.4.32) UNRELEASED; urgency=medium
 
+  [ Daniel Holbach ]
+  * Run click-review after a successful build of a click package. Offer
+    --no-validate as an option.
+
   [ Colin Watson ]
   * Move integration tests to a location where they won't end up being
     installed into inappropriate places on the system module path

@@ -10,7 +10,7 @@ click (0.4.32) UNRELEASED; urgency=medium
   [ Michael Vogt ]
   * Add more integration tests for "click {list,register,verify,info}".
   * Only install trusted click packages by default. To override you
-      can run "pkcon --allow-untrusted" (LP: #1360582)
+    can run "pkcon --allow-untrusted" (LP: #1360582)
 
  -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 05 Sep 2014 15:43:16 +0200
 

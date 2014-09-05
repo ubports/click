@@ -53,11 +53,11 @@ def run(argv):
     except ClickBuildError as e:
         print(e, file=sys.stderr)
         return 1
-    print("Successfully built package in '%s'." % path)
     if options.validate and Click.find_on_path('click-review'):
         print("Now executing: click-review %s" % path)
         try:
             subprocess.check_call(['click-review', path])
         except subprocess.CalledProcessError:
             return 1
+    print("Successfully built package in '%s'." % path)
     return 0

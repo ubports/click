@@ -76,7 +76,6 @@ Options:
 --no-validate               Don't tun checks from click-reviewers-tools on
                             the resulting .click file.
 
-
 click buildsource DIRECTORY
 ---------------------------
 

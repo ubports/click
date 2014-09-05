@@ -18,16 +18,20 @@
 import os
 import subprocess
 from textwrap import dedent
-import unittest
 
 from .helpers import (
-    is_root,
     ClickTestCase,
+    require_root,
 )
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestHook(ClickTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestHook, cls).setUpClass()
+        require_root()
+
     def _make_hook(self, name):
         hook_fname = "/usr/share/click/hooks/%s.hook" % name
         canary_fname = os.path.join(self.temp_dir, "canary.sh")

@@ -58,6 +58,15 @@ def run(argv):
         try:
             subprocess.check_call(['click-review', path])
         except subprocess.CalledProcessError:
-            return 1
+            # qtcreator-plugin-ubuntu relies on return code 0
+            # to establish if a .click package has been built
+            # at all.
+            #
+            # If we want to distinguish between 
+            # - click build failed
+            # - click build succeeded, but validation failed
+            # both tools will have to learn this at the same
+            # time.
+            pass
     print("Successfully built package in '%s'." % path)
     return 0

@@ -13,7 +13,7 @@ click (0.4.31.2.is.0.4.30) utopic; urgency=medium
     breaking some other projects relying on this functionality. Needs to be
     revisited.
 
- -- Åukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
 
 click (0.4.31.2) utopic; urgency=medium
 

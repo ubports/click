@@ -55,4 +55,3 @@ class TestInfo(ClickTestCase):
              "/opt/click.ubuntu.com/%s/%s/README" % (name, version)],
             universal_newlines=True)
         self.assertEqual(name, json.loads(output)["name"])
-

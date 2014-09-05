@@ -1,5 +1,14 @@
-click (0.4.32) UNRELEASED; urgency=low
+click (0.4.32) UNRELEASED; urgency=medium
 
+  [ Colin Watson ]
+  * Move integration tests to a location where they won't end up being
+    installed into inappropriate places on the system module path
+    (LP: #1337696).
+  * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
+    pyflakes angry when running tests under Python 2.
+
+  [ Michael Vogt ]
+  * Add more integration tests for "click {list,register,verify,info}".
   * Only install trusted click packages by default. To override you
       can run "pkcon --allow-untrusted" (LP: #1360582)
 
@@ -20,7 +29,7 @@ click (0.4.31.2.is.0.4.30) utopic; urgency=medium
     breaking some other projects relying on this functionality. Needs to be
     revisited.
 
- -- Åukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
 
 click (0.4.31.2) utopic; urgency=medium
 

@@ -27,13 +27,17 @@ import tempfile
 import unittest
 
 
-def is_root():
-    return os.getuid() == 0
+def require_root():
+    if os.getuid() != 0:
+        raise unittest.SkipTest("This test needs to run as root")
 
 
-def has_network():
-    return subprocess.call(
-        ["ping", "-c1", "archive.ubuntu.com"]) == 0
+def require_network():
+    try:
+        if subprocess.call(["ping", "-c1", "archive.ubuntu.com"]) != 0:
+            raise unittest.SkipTest("Need network")
+    except Exception:
+        pass
 
 
 @contextlib.contextmanager
@@ -46,10 +50,21 @@ def chdir(target):
         os.chdir(curdir)
 
 
+def cmdline_for_user(username):
+    """Helper to get the click commandline for the given username"""
+    if username == "@all":
+        user = "--all-users"
+    else:
+        user = "--user=%s" % username
+    return user
+
+
 class ClickTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if "TEST_INTEGRATION" not in os.environ:
+            raise unittest.SkipTest("Skipping integration tests")
         cls.click_binary = os.environ.get("CLICK_BINARY", "/usr/bin/click")
 
     def setUp(self):
@@ -62,6 +77,20 @@ class ClickTestCase(unittest.TestCase):
         # in temp_dir is still available
         self.doCleanups()
         shutil.rmtree(self.temp_dir)
+
+    def click_install(self, path_to_click, click_name, username,
+                      allow_unauthenticated=True):
+        cmd = [self.click_binary, "install", cmdline_for_user(username)]
+        if allow_unauthenticated:
+            cmd.append("--allow-unauthenticated")
+        cmd.append(path_to_click)
+        subprocess.check_call(cmd)
+        self.addCleanup(self.click_unregister, click_name, username)
+
+    def click_unregister(self, click_name, username):
+        subprocess.check_call(
+            [self.click_binary, "unregister", cmdline_for_user(username),
+             click_name])
 
     def _create_manifest(self, target, name, version, framework, hooks={}):
         with open(target, "w") as f:
@@ -77,7 +106,7 @@ class ClickTestCase(unittest.TestCase):
     def _make_click(self, name=None, version=1.0,
                     framework="ubuntu-sdk-13.10", hooks={}):
         if name is None:
-            name = "com.ubuntu.%s" % "".join(
+            name = "com.example.%s" % "".join(
                 random.choice(string.ascii_lowercase) for i in range(10))
         tmpdir = tempfile.mkdtemp()
         self.addCleanup(lambda: shutil.rmtree(tmpdir))

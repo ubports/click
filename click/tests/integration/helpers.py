@@ -50,6 +50,15 @@ def chdir(target):
         os.chdir(curdir)
 
 
+def cmdline_for_user(username):
+    """Helper to get the click commandline for the given username"""
+    if username == "@all":
+        user = "--all-users"
+    else:
+        user = "--user=%s" % username
+    return user
+
+
 class ClickTestCase(unittest.TestCase):
 
     @classmethod
@@ -69,6 +78,20 @@ class ClickTestCase(unittest.TestCase):
         self.doCleanups()
         shutil.rmtree(self.temp_dir)
 
+    def click_install(self, path_to_click, click_name, username,
+                      allow_unauthenticated=True):
+        cmd = [self.click_binary, "install", cmdline_for_user(username)]
+        if allow_unauthenticated:
+            cmd.append("--allow-unauthenticated")
+        cmd.append(path_to_click)
+        subprocess.check_call(cmd)
+        self.addCleanup(self.click_unregister, click_name, username)
+
+    def click_unregister(self, click_name, username):
+        subprocess.check_call(
+            [self.click_binary, "unregister", cmdline_for_user(username),
+             click_name])
+
     def _create_manifest(self, target, name, version, framework, hooks={}):
         with open(target, "w") as f:
             json.dump({
@@ -83,7 +106,7 @@ class ClickTestCase(unittest.TestCase):
     def _make_click(self, name=None, version=1.0,
                     framework="ubuntu-sdk-13.10", hooks={}):
         if name is None:
-            name = "com.ubuntu.%s" % "".join(
+            name = "com.example.%s" % "".join(
                 random.choice(string.ascii_lowercase) for i in range(10))
         tmpdir = tempfile.mkdtemp()
         self.addCleanup(lambda: shutil.rmtree(tmpdir))

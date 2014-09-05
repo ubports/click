@@ -1,10 +1,202 @@
-click (0.4.22) UNRELEASED; urgency=medium
+click (0.4.32) UNRELEASED; urgency=medium
+
+  * Move integration tests to a location where they won't end up being
+    installed into inappropriate places on the system module path
+    (LP: #1337696).
+  * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
+    pyflakes angry when running tests under Python 2.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Sep 2014 14:46:16 +0100
+
+click (0.4.31.3) utopic; urgency=medium
+
+  * Reinstate most of 0.4.31.2; instead, just always pass
+    --allow-unauthenticated to "click install" from the PackageKit plugin
+    for now, until we can sort out sideloading (see LP #1360582).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 25 Aug 2014 12:25:21 -0700
+
+click (0.4.31.2.is.0.4.30) utopic; urgency=medium
+
+  * Temporary everting to previous version as the current one makes installing
+    click packages locally through pkcon install-local impossible, which is
+    breaking some other projects relying on this functionality. Needs to be
+    revisited.
+
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
+
+click (0.4.31.2) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Add "click info" interface to get manifest corresponding to file in
+    installed package (LP: #1324853).
+  * Add support for click package gpg signatures (LP: #1330770).
+
+  [ Colin Watson ]
+  * Ugly hack to get coverage reporting working again with gcovr 3.1.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 22 Aug 2014 17:19:06 +0000
+
+click (0.4.30) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Add many more unit tests to fill in some gaps in the coverage report.
+  
+  [ Michael Vogt ]
+  * Exclude non-existing users from User.get_user_names() 
+    (LP: #1334611)
+
+  [ Zoltan Balogh ]
+  * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
+    all frameworks.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 23:33:22 +0000
+
+click (0.4.29.1) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Trivial fix for the current autopkgtest failure.  The ADT environment
+    does not have the USER environment set.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 04 Jul 2014 15:10:01 +0000
+
+click (0.4.29) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Refactor click/chroot.py and improve tests.
+  * Test-build two ubuntu-system-apps in a click chroot as part of the
+    integration tests.
+  * Generalise handling of -devN frameworks in "click chroot".
+  * Add integration test for "click hook install".
+
+  [ Colin Watson ]
+  * Various adjustments for improved PEP-8 compliance.
+  * Produce coverage only on request via ./configure --enable-gcov.  Extend
+    it to cover C code as well, and produce a merged coverage.xml.
+
+  [ Brendan Donegan ]
+  * Clean up integration tests - have one file per command and make some
+    things clearer.
+
+  [ Dimitri John Ledkov ]
+  * Seed runtime target arch SDK app launcher, to enable remote debugging.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 03 Jul 2014 13:10:21 +0000
+
+click (0.4.28) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Revert change in 0.4.27 to raise an error if no databases are added;
+    this makes most of libclick unusable if click is not installed.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 23 Jun 2014 16:07:37 +0000
+
+click (0.4.27) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Fix failing autopkgtests.
+  * Refactor the integration tests to be more modular.  Add installation
+    integration tests based on
+    https://wiki.ubuntu.com/Process/Merges/TestPlan/click.
+  * Add integration tests for buildsource, pkgdir and framework.
+
+  [ Dimitri John Ledkov ]
+  * Handle renaming of qtsensors5-dev to libqt5sensors5-dev in Qt 5.3.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 23 Jun 2014 11:31:50 +0000
+
+click (0.4.26.1) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Fix a pyflakes complaint.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 10 Jun 2014 18:04:12 +0000
+
+click (0.4.26) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Add basic integration tests, run via autopkgtest.
+  * Add coverage testing.
+
+  [ Colin Watson ]
+  * Fix DEB_BUILD_* environment variables when building on amd64 for i386
+    (LP: #1328486).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 10 Jun 2014 19:02:33 +0100
+
+click (0.4.25) utopic; urgency=medium
+
+  [ Ted Gould ]
+  * Check for ubuntu-app-launch-desktop hook (LP: #1326694).
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 05 Jun 2014 18:18:50 +0000
+
+click (0.4.24) utopic; urgency=medium
+
+  [ Loïc Minier ]
+  * Add 14.10 framework in places where all frameworks are listed.
+
+  [ Colin Watson ]
+  * Copy the pw_uid and pw_gid members from getpwnam's return value and
+    cache those separately, since getpwnam returns a pointer to a static
+    buffer so just caching its return value is not useful (LP: #1323998).
+  * Handle the renaming of upstart-app-launch to ubuntu-app-launch: we now
+    cope with both old and new names.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 04 Jun 2014 08:37:18 +0000
+
+click (0.4.23.1) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * chroot: Force dpkg-architecture to recalculate everything rather than
+    picking up values from the environment, to avoid the test suite getting
+    confused by environment variables exported by dpkg-buildpackage.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 20 May 2014 13:15:41 +0000
+
+click (0.4.23) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Show human-readable error message when a click chroot subcommand fails
+    because of existing or non-existing chroots (LP: #1296820).
+  * Selectively disable logging on some tests to avoid message spam during
+    the test runs.
+  * When running hooks, remove hook symlinks if framework requirements are
+    not met (LP: #1271944).
+  * Cleanup the chroot if "click chroot create" fails (unless 
+    --keep-broken-chroot is used)
+  * Fix sources.list generation when native_arch and target_arch are on the
+    same archive server (part of LP #1319153).
+  * Add "click framework list" command to list available frameworks
+    (LP: #1294659).
+
+  [ Pete Woods ]
+  * Add libunity-scopes-dev package to chroot (LP: #1320786).
+
+  [ Sergio Schvezov ]
+  * click chroot creation depends on dpkg-architecture, so recommend
+    dpkg-dev.
+
+  [ Colin Watson ]
+  * chroot: Handle the case where we can execute binaries for the target
+    architecture directly and thus don't need a cross-compiler
+    (LP: #1319153).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 20 May 2014 14:10:11 +0100
+
+click (0.4.22) utopic; urgency=medium
 
   [ Michael Vogt ]
   * Update documentation for building the project.
   * Add support for multiple frameworks (LP: #1318757).
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 08 May 2014 13:47:55 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 14 May 2014 06:28:34 +0000
 
 click (0.4.21.1) trusty; urgency=medium
 

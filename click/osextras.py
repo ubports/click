@@ -36,6 +36,7 @@ import os
 try:
     # Python 3.3
     from shutil import which
+
     def find_on_path(command):
         # http://bugs.python.org/issue17012
         path = os.environ.get('PATH', os.pathsep)

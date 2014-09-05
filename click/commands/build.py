@@ -32,7 +32,7 @@ def run(argv):
         "-m", "--manifest", metavar="PATH", default="manifest.json",
         help="read package manifest from PATH (default: manifest.json)")
     parser.add_option(
-        "--no-validate", action="store_true", dest="novalidate",
+        "--no-validate", action="store_false", default=True, dest="validate",
         help="Don't run click-reviewers-tools check on resulting .click")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
@@ -54,7 +54,10 @@ def run(argv):
         print(e, file=sys.stderr)
         return 1
     print("Successfully built package in '%s'." % path)
-    if Click.find_on_path('click-review') and not options.novalidate:
+    if options.validate and Click.find_on_path('click-review'):
         print("Now executing: click-review %s" % path)
-        subprocess.call(['click-review', path])
+        try:
+            subprocess.check_call(['click-review', path])
+        except subprocess.CalledProcessError:
+            return 1
     return 0

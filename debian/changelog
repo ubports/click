@@ -1,7 +1,7 @@
 click (0.4.32) UNRELEASED; urgency=medium
 
   * Run click-review after a successful build of a click package. Offer
-    --no-validate as an option
+    --no-validate as an option.
 
  -- Daniel Holbach <daniel.holbach@ubuntu.com>  Thu, 04 Sep 2014 16:43:52 +0200
 

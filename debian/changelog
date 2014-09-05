@@ -1,3 +1,10 @@
+click (0.4.32) UNRELEASED; urgency=low
+
+  * Only install trusted click packages by default. To override you
+      can run "pkcon --allow-untrusted" (LP: #1360582)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 05 Sep 2014 15:43:16 +0200
+
 click (0.4.31.3) utopic; urgency=medium
 
   * Reinstate most of 0.4.31.2; instead, just always pass

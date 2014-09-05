@@ -62,7 +62,7 @@ def run(argv):
             # to establish if a .click package has been built
             # at all.
             #
-            # If we want to distinguish between 
+            # If we want to distinguish between
             # - click build failed
             # - click build succeeded, but validation failed
             # both tools will have to learn this at the same

@@ -1,10 +1,14 @@
 click (0.4.32) UNRELEASED; urgency=medium
 
+  [ Colin Watson ]
   * Move integration tests to a location where they won't end up being
     installed into inappropriate places on the system module path
     (LP: #1337696).
   * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
     pyflakes angry when running tests under Python 2.
+
+  [ Michael Vogt ]
+  * Add more integration tests for "click {list,register,verify,info}".
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 04 Sep 2014 14:46:16 +0100
 

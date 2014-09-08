@@ -16,22 +16,21 @@
 """Integration tests for the click chroot feature."""
 
 import subprocess
-import unittest
 
 from .helpers import (
-    has_network,
-    is_root,
+    require_network,
+    require_root,
     ClickTestCase,
 )
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
-@unittest.skipIf(not has_network(), "Need network")
 class TestChroot(ClickTestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestChroot, cls).setUpClass()
+        require_root()
+        require_network()
         cls.arch = subprocess.check_output(
             ["dpkg", "--print-architecture"], universal_newlines=True).strip()
         subprocess.check_call([
@@ -67,3 +66,13 @@ class TestChroot(ClickTestCase):
             self.click_binary, "chroot", "-a", self.arch,
             "maint", "id"], universal_newlines=True)
         self.assertEqual(output, "uid=0(root) gid=0(root) groups=0(root)\n")
+
+    def test_exists_ok(self):
+        subprocess.check_call([
+            self.click_binary, "chroot", "-a", self.arch, "exists"])
+
+    def test_exists_no(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_call([
+                self.click_binary,
+                "chroot", "-a", "arch-that-does-not-exist"])

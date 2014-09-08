@@ -73,6 +73,8 @@ Options:
 
 -m PATH, --manifest=PATH    Read package manifest from PATH
                             (default: ``manifest.json``).
+--no-validate               Don't run checks from click-reviewers-tools on
+                            the resulting .click file.
 
 click buildsource DIRECTORY
 ---------------------------

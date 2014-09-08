@@ -177,6 +177,15 @@ class ClickInstaller:
             logging.warning(
                 "debsig-verify not available; cannot check signatures")
 
+        # fail early if the file cannot be opened
+        try:
+            with closing(DebFile(filename=path)) as package:
+                pass
+        except Exception as e:
+            raise ClickInstallerError("Failed to read %s: %s" % (
+                path, str(e)))
+
+        # then perform the audit
         with closing(DebFile(filename=path)) as package:
             control_fields = package.control.debcontrol()
 

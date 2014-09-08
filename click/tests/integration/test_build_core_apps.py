@@ -20,12 +20,13 @@ import json
 import os
 import shutil
 import subprocess
-import unittest
+
+from six import with_metaclass
 
 from .helpers import (
     chdir,
-    has_network,
-    is_root,
+    require_network,
+    require_root,
     ClickTestCase,
 )
 
@@ -63,9 +64,13 @@ class AddBranchTestFunctions(type):
         return type.__new__(cls, name, bases, dct)
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
-@unittest.skipIf(not has_network(), "Need network")
-class TestBuildCoreApps(ClickTestCase, metaclass=AddBranchTestFunctions):
+class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestBuildCoreApps, cls).setUpClass()
+        require_root()
+        require_network()
 
     def _run_in_chroot(self, cmd):
         """Run the given cmd in a click chroot"""

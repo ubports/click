@@ -18,16 +18,20 @@
 import os
 import subprocess
 from textwrap import dedent
-import unittest
 
 from .helpers import (
-    is_root,
     ClickTestCase,
+    require_root,
 )
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestHook(ClickTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestHook, cls).setUpClass()
+        require_root()
+
     def _make_hook(self, name):
         hook_fname = "/usr/share/click/hooks/%s.hook" % name
         canary_fname = os.path.join(self.temp_dir, "canary.sh")
@@ -63,14 +67,7 @@ class TestHook(ClickTestCase):
         click_pkg = self._make_click(
             click_pkg_name, framework="", hooks=hooks)
         user = os.environ.get("USER", "root")
-        subprocess.check_call(
-            [self.click_binary, "install", "--allow-unauthenticated",
-             "--user=%s" % user, click_pkg],
-            universal_newlines=True)
-        self.addCleanup(
-            subprocess.check_call,
-            [self.click_binary, "unregister", "--user=%s" % user,
-             click_pkg_name])
+        self.click_install(click_pkg, click_pkg_name, user)
         # ensure we have the hook
         generated_hook_file = os.path.expanduser(
             "~/com.example.hook-1_app1_1.0.test-hook")

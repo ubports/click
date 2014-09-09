@@ -13,20 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Integration tests for the click CLI verify command."""
+"""Integration tests for the click CLI list command."""
 
+import os
 import subprocess
 
 from .helpers import ClickTestCase
 
 
-class TestVerify(ClickTestCase):
-    def test_verify_ok(self):
-        name = "com.example.verify-ok"
-        path_to_click = self._make_click(name)
-        output = subprocess.check_output([
-            self.click_binary, "verify",
-            "--force-missing-framework",
-            "--allow-unauthenticated",
-            path_to_click], universal_newlines=True)
-        self.assertEqual(output, "")
+class TestList(ClickTestCase):
+    def test_list_simple(self):
+        name = "com.ubuntu.verify-ok"
+        path_to_click = self._make_click(name, framework="")
+        user = os.environ.get("USER", "root")
+        self.click_install(path_to_click, name, user)
+        output = subprocess.check_output(
+            [self.click_binary, "list", "--user=%s" % user],
+            universal_newlines=True)
+        self.assertIn(name, output)

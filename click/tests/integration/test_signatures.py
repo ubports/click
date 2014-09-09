@@ -20,19 +20,20 @@ import os
 import shutil
 import subprocess
 import tarfile
-import unittest
 from textwrap import dedent
 
 from .helpers import (
-    is_root,
+    require_root,
     ClickTestCase,
 )
+
 
 def makedirs(path):
     try:
         os.makedirs(path)
     except OSError:
         pass
+
 
 def get_keyid_from_gpghome(gpg_home):
     """Return the public keyid of a given gpg home dir"""
@@ -56,7 +57,7 @@ class Debsigs:
     def sign(self, filepath, signature_type="origin"):
         """Sign the click at filepath"""
         env = copy.copy(os.environ)
-        env["GNUPGHOME"] = os.path.abspath(self.gpghome)        
+        env["GNUPGHOME"] = os.path.abspath(self.gpghome)
         subprocess.check_call(
             ["debsigs",
              "--sign=%s" % signature_type,
@@ -74,7 +75,7 @@ class Debsigs:
         <Selection>
         <Required Type="origin" File="{filename}" id="{keyid}"/>
         </Selection>
-  
+
         <Verification>
         <Required Type="origin" File="{filename}" id="{keyid}"/>
         </Verification>
@@ -86,7 +87,8 @@ class Debsigs:
         self.pubkey_path = (
             "/usr/share/debsig/keyrings/%s/origin.pub" % self.keyid)
         makedirs(os.path.dirname(self.pubkey_path))
-        shutil.copy(os.path.join(self.gpghome, "pubring.gpg"), self.pubkey_path)
+        shutil.copy(
+            os.path.join(self.gpghome, "pubring.gpg"), self.pubkey_path)
 
     def uninstall_signature_policy(self):
         # FIXME: update debsig-verify so that it can work from a different
@@ -96,8 +98,13 @@ class Debsigs:
         os.remove(self.pubkey_path)
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class ClickSignaturesTestCase(ClickTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ClickSignaturesTestCase, cls).setUpClass()
+        require_root()
+
     def assertClickNoSignatureError(self, cmd_args):
         with self.assertRaises(subprocess.CalledProcessError) as cm:
             output = subprocess.check_output(
@@ -120,8 +127,13 @@ class ClickSignaturesTestCase(ClickTestCase):
         self.assertIn(expected_error_message, output)
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSignatureVerificationNoSignature, cls).setUpClass()
+        require_root()
+
     def test_debsig_verify_no_sig(self):
         name = "org.example.debsig-no-sig"
         path_to_click = self._make_click(name, framework="")
@@ -145,8 +157,13 @@ class TestSignatureVerificationNoSignature(ClickSignaturesTestCase):
                               "--user=%s" % user, name])
 
 
-@unittest.skipIf(not is_root(), "This tests needs to run as root")
 class TestSignatureVerification(ClickSignaturesTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSignatureVerification, cls).setUpClass()
+        require_root()
+
     def setUp(self):
         super(TestSignatureVerification, self).setUp()
         self.user = os.environ.get("USER", "root")
@@ -176,7 +193,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)
         self.assertIn(name, output)
-        
+
     def test_debsig_install_signature_not_in_keyring(self):
         name = "org.example.debsig-no-keyring-sig"
         path_to_click = self._make_click(name, framework="")
@@ -245,7 +262,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         # NOTE: that right now this will not be caught by debsig-verify
         #        but later in audit() by debian.debfile.DebFile()
         subprocess.check_call(["ar",
-                               "-r", 
+                               "-r",
                                "-b", "data.tar.gz",
                                path_to_click,
                                new_data])
@@ -274,12 +291,12 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         new_data = self.make_nasty_data_tar("bz2")
         # replace data.tar.gz with data.tar.bz2 and ensure this is caught
         subprocess.check_call(["ar",
-                               "-d", 
+                               "-d",
                                path_to_click,
                                "data.tar.gz",
                                ])
         subprocess.check_call(["ar",
-                               "-r", 
+                               "-r",
                                path_to_click,
                                new_data])
         output = subprocess.check_output(
@@ -290,7 +307,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
                           "control.tar.gz",
                           "_gpgorigin",
                           "data.tar.bz2",
-                         ])
+                          ])
         with self.assertRaises(subprocess.CalledProcessError) as cm:
             output = subprocess.check_output(
                 [self.click_binary, "install", path_to_click],
@@ -305,7 +322,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         # this test is probably not really needed, it tries to trick
         # the system by prepending a valid signature that is not
         # in the keyring. But given that debsig-verify only reads
-        # the first packet of any given _gpg$foo signature its 
+        # the first packet of any given _gpg$foo signature it's
         # equivalent to test_debsig_install_signature_not_in_keyring test
         name = "org.example.debsig-replaced-data-prepend-sig-click"
         path_to_click = self._make_click(name, framework="")
@@ -313,7 +330,7 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         new_data = self.make_nasty_data_tar("gz")
         # replace data.tar.gz
         subprocess.check_call(["ar",
-                               "-r", 
+                               "-r",
                                path_to_click,
                                new_data,
                                ])
@@ -345,4 +362,3 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             [self.click_binary, "list", "--user=%s" % self.user],
             universal_newlines=True)
         self.assertNotIn(name, output)
-        

@@ -23,7 +23,7 @@ from .helpers import ClickTestCase
 
 class TestContents(ClickTestCase):
     def test_contents(self):
-        name = "com.ubuntu.contents"
+        name = "com.example.contents"
         path_to_click = self._make_click(name)
         output = subprocess.check_output([
             self.click_binary, "contents", path_to_click],

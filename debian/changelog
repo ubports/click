@@ -1,4 +1,4 @@
-click (0.4.32) UNRELEASED; urgency=medium
+click (0.4.32) utopic; urgency=medium
 
   [ Daniel Holbach ]
   * Run click-review after a successful build of a click package. Offer
@@ -16,7 +16,7 @@ click (0.4.32) UNRELEASED; urgency=medium
   * Only install trusted click packages by default. To override you
     can run "pkcon --allow-untrusted" (LP: #1360582)
 
- -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 05 Sep 2014 15:43:16 +0200
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 08 Sep 2014 09:50:43 +0000
 
 click (0.4.31.3) utopic; urgency=medium
 

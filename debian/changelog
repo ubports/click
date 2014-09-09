@@ -1,3 +1,9 @@
+click (0.4.32.1) UNRELEASED; urgency=low
+
+  * fix autopkgtest failure found in 0.4.32
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Tue, 09 Sep 2014 09:56:57 +0200
+
 click (0.4.32) UNRELEASED; urgency=medium
 
   [ Daniel Holbach ]

@@ -6,6 +6,9 @@ click (0.4.33) UNRELEASED; urgency=medium
   [ Colin Watson ]
   * Warn that "click install" without a registration may result in later
     garbage-collection.
+  * Rearrange garbage-collection to remove versions of packages that have no
+    user registrations and are not running, rather than using the artificial
+    @gcinuse registration which never really worked properly.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 10 Sep 2014 12:47:46 +0100
 

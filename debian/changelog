@@ -1,3 +1,10 @@
+click (0.4.33) UNRELEASED; urgency=medium
+
+  [ Pete Woods ]
+  * Add scope-facing APIs to chroot build.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 10 Sep 2014 12:47:46 +0100
+
 click (0.4.32.1) utopic; urgency=low
 
   [ Michael Vogt ]

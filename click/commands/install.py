@@ -45,7 +45,7 @@ def run(argv):
         help="register package for all users")
     parser.add_option(
         "--allow-unauthenticated", default=False, action="store_true",
-        help="allow installing packages with no sigantures")
+        help="allow installing packages with no signatures")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")

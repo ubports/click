@@ -432,6 +432,8 @@ public class SingleDB : Object {
 			var user_db = users_db.get_user (user_name);
 			foreach (var package in user_db.get_package_names ()) {
 				var version = user_db.get_version (package);
+				if (version == "current")
+					continue;
 				/* Odd multimap syntax; this should really
 				 * be more like foo[package] += version.
 				 */
@@ -449,6 +451,8 @@ public class SingleDB : Object {
 				continue;
 			foreach (var version in Click.Dir.open
 					(package_path)) {
+				if (version == "current")
+					continue;
 				if (version in user_reg[package])
 					/* In use. */
 					continue;

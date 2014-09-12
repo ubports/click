@@ -330,12 +330,8 @@ public class SingleDB : Object {
 	private void
 	remove_unless_running (string package, string version) throws Error
 	{
-		if (any_app_running (package, version)) {
-			var gc_in_use_user_db =
-				new User.for_gc_in_use (master_db);
-			gc_in_use_user_db.set_version (package, version);
+		if (any_app_running (package, version))
 			return;
-		}
 
 		var version_path = get_path (package, version);
 		if (show_messages ())
@@ -386,14 +382,10 @@ public class SingleDB : Object {
 	 * Remove a package version if it is not in use.
 	 *
 	 * "In use" may mean registered for another user, or running.  In
-	 * the latter case we construct a fake registration so that we can
-	 * tell the difference later between a package version that was in
-	 * use at the time of removal and one that was never registered for
-	 * any user.
-	 *
-	 * (This is unfortunately complex, and perhaps some day we can
-	 * require that installations always have some kind of registration
-	 * to avoid this complexity.)
+	 * either case, we do nothing.  We will already have removed at
+	 * least one registration by this point, so if no registrations are
+	 * left but it is running, then gc will be able to come along later
+	 * and clean things out.
 	 */
 	public void
 	maybe_remove (string package, string version) throws Error
@@ -408,11 +400,8 @@ public class SingleDB : Object {
 				continue;
 			}
 			if (reg_version == version) {
-				if (user_db.is_gc_in_use)
-					user_db.remove (package);
-				else
-					/* In use. */
-					return;
+				/* In use. */
+				return;
 			}
 		}
 
@@ -422,33 +411,33 @@ public class SingleDB : Object {
 	/**
 	 * gc:
 	 *
-	 * Remove package versions with no user registrations.
+	 * Remove package versions that have no user registrations and that
+	 * are not running.
 	 *
-	 * To avoid accidentally removing packages that were installed
-	 * without ever having a user registration, we only garbage-collect
-	 * packages that were not removed by maybe_remove() due to having a
-	 * running application at the time.
+	 * This is rather like maybe_remove, but is suitable for bulk use,
+	 * since it only needs to scan the database once rather than once
+	 * per package.
 	 *
-	 * (This is unfortunately complex, and perhaps some day we can
-	 * require that installations always have some kind of registration
-	 * to avoid this complexity.)
+	 * For historical reasons, we don't count @gcinuse as a real user
+	 * registration, and remove any such registrations we find.  We can
+	 * drop this once we no longer care about upgrading versions from
+	 * before this change to something more current in a single step.
 	 */
 	public void
 	gc () throws Error
 	{
 		var users_db = new Users (master_db);
 		var user_reg = new Gee.HashMultiMap<string, string> ();
-		var gc_in_use = new Gee.HashMultiMap<string, string> ();
 		foreach (var user_name in users_db.get_user_names ()) {
 			var user_db = users_db.get_user (user_name);
 			foreach (var package in user_db.get_package_names ()) {
 				var version = user_db.get_version (package);
+				if (version == "current")
+					continue;
 				/* Odd multimap syntax; this should really
 				 * be more like foo[package] += version.
 				 */
-				if (user_db.is_gc_in_use)
-					gc_in_use[package] = version;
-				else
+				if (! user_db.is_gc_in_use)
 					user_reg[package] = version;
 			}
 		}
@@ -462,22 +451,14 @@ public class SingleDB : Object {
 				continue;
 			foreach (var version in Click.Dir.open
 					(package_path)) {
+				if (version == "current")
+					continue;
 				if (version in user_reg[package])
 					/* In use. */
 					continue;
-				if (! (version in gc_in_use[package])) {
-					if (show_messages ()) {
-						var version_path =
-							Path.build_filename
-							(package_path,
-							 version);
-						message ("Not removing %s " +
-							 "(never registered).",
-							 version_path);
-					}
-					continue;
-				}
-				gc_in_use_user_db.remove (package);
+				if (gc_in_use_user_db.has_package_name
+						(package))
+					gc_in_use_user_db.remove (package);
 				remove_unless_running (package, version);
 			}
 		}

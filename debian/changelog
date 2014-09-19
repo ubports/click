@@ -1,7 +1,7 @@
 click (0.4.33) UNRELEASED; urgency=medium
 
   [ Pete Woods ]
-  * Add scope-facing APIs to chroot build.
+  * Add scope-facing APIs to chroot build (LP: #1370727).
 
   [ Colin Watson ]
   * Warn that "click install" without a registration may result in later

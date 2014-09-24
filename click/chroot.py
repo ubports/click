@@ -78,7 +78,7 @@ extra_packages = {
     "ubuntu-sdk-14.04": [
         "cmake",
         "google-mock:TARGET",
-        "libboost1.55-dev:TARGET",
+        "libboost1.54-dev:TARGET",
         "libjsoncpp-dev:TARGET",
         "libprocess-cpp-dev:TARGET",
         "libproperties-cpp-dev:TARGET",

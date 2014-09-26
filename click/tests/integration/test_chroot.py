@@ -70,6 +70,7 @@ class TestChroot(ClickTestCase):
 
 
 class TestChrootName(TestChroot):
+    """Run the chroot tests again with a different --name."""
 
     @classmethod
     def command(cls, arch, *args):

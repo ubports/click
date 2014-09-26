@@ -77,7 +77,8 @@ class TestChrootName(TestChroot):
         return super(TestChrootName, cls).command(
             arch, "-n", "testname", *args)
 
-    def test_exists_different_name(self):
+    def test_exists_different_name_fails(self):
+        # "click chroot exists" fails for a non-existent name.
         with self.assertRaises(subprocess.CalledProcessError):
             subprocess.check_call(super(TestChrootName, self).command(
                 self.arch, "-n", "testname2", "exists"))

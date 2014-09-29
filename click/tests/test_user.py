@@ -26,12 +26,18 @@ __all__ = [
 import json
 import os
 import shutil
+from textwrap import dedent
 
 from gi.repository import Click, GLib
 
 from click.json_helpers import json_array_to_python, json_object_to_python
 from click.tests.gimock_types import Passwd
-from click.tests.helpers import TestCase, mkfile, touch
+from click.tests.helpers import (
+    TestCase,
+    mkfile,
+    make_file_with_content,
+    touch,
+)
 
 
 class TestClickUser(TestCase):
@@ -53,7 +59,8 @@ class TestClickUser(TestCase):
         a_1_0 = os.path.join(self.temp_dir, "custom", "a", "1.0")
         os.makedirs(a_1_0)
         with mkfile(os.path.join(a_1_0, ".click", "info", "a.manifest")) as m:
-            json.dump({"name": "a", "version": "1.0"}, m)
+            json.dump({"name": "a", "version": "1.0",
+                       "hooks": {"a-app": {}}}, m)
         b_2_0 = os.path.join(self.temp_dir, "custom", "b", "2.0")
         os.makedirs(b_2_0)
         with mkfile(os.path.join(b_2_0, ".click", "info", "b.manifest")) as m:
@@ -549,3 +556,22 @@ class TestClickUser(TestCase):
         self.assertEqual("2.0", registry.get_version("b"))
         self.assertEqual(b_overlay, registry.get_path("b"))
         self.assertTrue(registry.is_removable("b"))
+
+    def test_app_stops_on_remove(self):
+        fake_app_stop = os.path.join(self.temp_dir, "bin", "ubuntu-app-stop")
+        fake_app_stop_output = os.path.join(self.temp_dir, "fake-app-stop.out")
+        fake_app_stop_content = dedent("""\
+        #!/bin/sh
+        echo "$@" >> %s
+        """ % fake_app_stop_output)
+        make_file_with_content(fake_app_stop, fake_app_stop_content, 0o755)
+        # its ok to modify env here, click.helpers.TestCase will take care
+        # of it
+        os.environ["PATH"] = "%s:%s" % (
+            os.path.dirname(fake_app_stop), os.environ["PATH"])
+        # get a app with manifest etc all
+        _, registry = self._setUpMultiDB()
+        registry.remove("a")
+        # ensure that stop was called with the right app
+        with open(fake_app_stop_output) as f:
+            self.assertEqual("a_a-app_1.1", f.read().strip())

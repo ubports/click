@@ -6,13 +6,17 @@ libpk_plugin_click_la_SOURCES = pk-plugin-click.c
 
 libpk_plugin_click_la_CPPFLAGS = -I$(top_builddir)/lib/click
 
-libpk_plugin_click_la_CFLAGS = @PKPLUGIN_CFLAGS@
+libpk_plugin_click_la_CFLAGS = \
+	@PKPLUGIN_CFLAGS@ \
+	$(COVERAGE_CFLAGS)
 
 libpk_plugin_click_la_LIBADD = \
 	$(top_builddir)/lib/click/libclick-0.4.la \
 	@PKPLUGIN_LIBS@
 
-libpk_plugin_click_la_LDFLAGS = -avoid-version
+libpk_plugin_click_la_LDFLAGS = \
+	$(COVERAGE_LDFLAGS) \
+	-avoid-version
 
 polkit_policydir = $(datadir)/polkit-1/actions
 

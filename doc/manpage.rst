@@ -35,6 +35,7 @@ COMMAND OVERVIEW
     click buildsource DIRECTORY
     click chroot
     click contents PATH
+    click framework list
     click hook install HOOK
     click hook remove HOOK
     click hook run-system
@@ -70,14 +71,15 @@ than relying on recovering it from packages.
 
 Options:
 
--m PATH, --manifest=PATH                   Read package manifest from PATH
-                                           (default: ``manifest.json``).
+-m PATH, --manifest=PATH    Read package manifest from PATH
+                            (default: ``manifest.json``).
 -I file-pattern, --ignore=file-pattern     Ignore the given shell-pattern
                                            when building the package.
                                            The option may be repeated multiple
                                            times to list multiple patterns to
                                            exclude.
-
+--no-validate               Don't run checks from click-reviewers-tools on
+                            the resulting .click file.
 
 click buildsource DIRECTORY
 ---------------------------
@@ -158,6 +160,11 @@ click contents PATH
 -------------------
 
 Display the contents of the Click package in PATH as a file listing.
+
+click framework list
+--------------------
+
+Display a list of available frameworks as one framework per line.
 
 click hook install HOOK
 -----------------------
@@ -247,6 +254,12 @@ normally install it to one of the databases defined in
 The ``--force-missing-framework`` option is necessary while working with
 development versions of SDKs which have not yet put a framework declaration
 in place.
+
+You should always register installed packages either for a specific user or
+for all users; if you do not do this then the packages may be
+garbage-collected later.  You can do this using the ``--user`` or
+``--all-users`` options to this command, or using the ``click register``
+command.
 
 Options:
 

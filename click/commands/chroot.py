@@ -20,9 +20,14 @@
 from __future__ import print_function
 
 from argparse import ArgumentParser, REMAINDER
+from contextlib import contextmanager
 import os
 
-from click.chroot import ClickChroot
+from click.chroot import (
+    ClickChroot,
+    ClickChrootAlreadyExistsException,
+    ClickChrootDoesNotExistException,
+)
 from click import osextras
 
 
@@ -31,27 +36,59 @@ def requires_root(parser):
         parser.error("must be run as root; try sudo")
 
 
+@contextmanager
+def message_on_error(exc, msg):
+    """
+    Context Manager that prints the error message 'msg' on exception 'exc'
+    """
+    try:
+        yield
+    except exc:
+        print(msg)
+
+
+# FIXME: i18n(?)
+class ErrorMessages:
+    EXISTS = """A chroot for that name and architecture already exists.
+Please see the man-page how to use it."""
+    NOT_EXISTS = """A chroot for that name and architecture does not exist.
+Please use 'create' to create it."""
+
+
 def create(parser, args):
     if not osextras.find_on_path("debootstrap"):
         parser.error(
             "debootstrap not installed and configured; install click-dev and "
             "debootstrap")
     requires_root(parser)
-    chroot = ClickChroot(args.architecture, args.framework, series=args.series)
-    return chroot.create()
+    chroot = ClickChroot(
+        args.architecture, args.framework, name=args.name, series=args.series)
+    with message_on_error(
+            ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
+        return chroot.create(args.keep_broken_chroot)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def install(parser, args):
     packages = args.packages
-    chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.install(*packages)
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.install(*packages)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def destroy(parser, args):
     requires_root(parser)
     # ask for confirmation?
-    chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.destroy()
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.destroy()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def execute(parser, args):
@@ -59,8 +96,13 @@ def execute(parser, args):
     if not program:
         program = ["/bin/bash"]
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
-    return chroot.run(*program)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.run(*program)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def maint(parser, args):
@@ -68,25 +110,53 @@ def maint(parser, args):
     if not program:
         program = ["/bin/bash"]
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
-    return chroot.maint(*program)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.maint(*program)
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def upgrade(parser, args):
-    chroot = ClickChroot(args.architecture, args.framework)
-    return chroot.upgrade()
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.upgrade()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def begin_session(parser, args):
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
-    return chroot.begin_session()
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.begin_session()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
 
 
 def end_session(parser, args):
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
-    return chroot.end_session()
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
+    with message_on_error(
+            ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
+        return chroot.end_session()
+    # if we reach this point there was a error so return exit_status 1
+    return 1
+
+
+def exists(parser, args):
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    # return shell exit codes 0 on success, 1 on failure
+    if chroot.exists():
+        return 0
+    else:
+        return 1
 
 
 def run(argv):
@@ -104,9 +174,18 @@ def run(argv):
         "-s", "--series",
         help="series to use for a newly-created chroot (defaults to a series "
              "appropriate for the framework)")
+    parser.add_argument(
+        "-n", "--name", default="click",
+        help=(
+            "name of the chroot (default: click; the framework and "
+            "architecture will be appended)"))
     create_parser = subparsers.add_parser(
         "create",
         help="create a chroot of the provided architecture")
+    create_parser.add_argument(
+        "-k", "--keep-broken-chroot", default=False, action="store_true",
+        help="Keep the chroot even if creating it fails (default is to delete "
+              "it)")
     create_parser.set_defaults(func=create)
     destroy_parser = subparsers.add_parser(
         "destroy",
@@ -159,6 +238,10 @@ def run(argv):
         "session",
         help="session name to end")
     end_parser.set_defaults(func=end_session)
+    exists_parser = subparsers.add_parser(
+        "exists",
+        help="test if the given chroot exists")
+    exists_parser.set_defaults(func=exists)
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()

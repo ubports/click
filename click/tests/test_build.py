@@ -33,7 +33,12 @@ from textwrap import dedent
 
 from click.build import ClickBuildError, ClickBuilder, ClickSourceBuilder
 from click.preinst import static_preinst
-from click.tests.helpers import TestCase, mkfile, touch
+from click.tests.helpers import (
+    disable_logging,
+    mkfile,
+    TestCase,
+    touch,
+)
 
 
 # BAW 2013-04-15: Some tests require umask 022.  Use this decorator to
@@ -58,14 +63,14 @@ class TestClickBuilderBaseMixin:
         with mkfile(manifest_path) as manifest:
             print(dedent("""\
                 {
-                    "name": "com.ubuntu.test",
+                    "name": "com.example.test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
                     "title": "test title",
                     "framework": "ubuntu-sdk-13.10"
                 }"""), file=manifest)
         self.builder.read_manifest(manifest_path)
-        self.assertEqual("com.ubuntu.test", self.builder.name)
+        self.assertEqual("com.example.test", self.builder.name)
         self.assertEqual("1.0", self.builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", self.builder.maintainer)
         self.assertEqual("test title", self.builder.title)
@@ -85,7 +90,7 @@ class TestClickBuilderBaseMixin:
             with mkfile(manifest_path) as manifest:
                 print(dedent("""\
                     {
-                        "name": "com.ubuntu.test",
+                        "name": "com.example.test",
                         "version": "%s",
                         "maintainer": "Foo Bar <foo@example.org>",
                         "title": "test title",
@@ -101,7 +106,7 @@ class TestClickBuilderBaseMixin:
             # The comma after the "name" entry is intentionally missing.
             print(dedent("""\
                 {
-                    "name": "com.ubuntu.test"
+                    "name": "com.example.test"
                     "version": "1.0"
                 }"""), file=manifest)
         self.assertRaises(
@@ -118,6 +123,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             ["dpkg-deb", "-f", path, name],
             universal_newlines=True).rstrip("\n")
 
+    @disable_logging
     @umask(0o22)
     def test_build(self):
         self.use_temp_dir()
@@ -130,7 +136,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -140,11 +146,11 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "/")
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_all.click")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0_all.click")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         for key, value in (
-            ("Package", "com.ubuntu.test"),
+            ("Package", "com.example.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.4"),
             ("Architecture", "all"),
@@ -203,7 +209,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         self.use_temp_dir()
         scratch = os.path.join(self.temp_dir, "scratch")
         manifest = {
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -216,6 +222,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         self.builder.add_file(scratch, "/")
         return scratch
 
+    @disable_logging
     def test_build_excludes_dot_click(self):
         scratch = self._make_scratch_dir()
         touch(os.path.join(scratch, ".click", "evil-file"))
@@ -234,11 +241,12 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         subprocess.check_call(["dpkg-deb", "-x", path, extract_path])
         self.assertEqual([], os.listdir(extract_path))
 
+    @disable_logging
     def test_build_multiple_architectures(self):
         scratch = self._make_scratch_dir(manifest_override={
                 "architecture": ["armhf", "i386"],
         })
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_multi.click")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0_multi.click")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         self.assertEqual("multi", self.extract_field(path, "Architecture"))
@@ -252,6 +260,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             del target_json["installed-size"]
             self.assertEqual(source_json, target_json)
 
+    @disable_logging
     def test_build_multiple_frameworks(self):
         scratch = self._make_scratch_dir(manifest_override={
                 "framework":
@@ -312,7 +321,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
         touch(os.path.join(scratch, "build", "meep.goah"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -323,7 +332,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "./")
         self.builder.add_ignore_pattern("build")
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0.tar.gz")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0.tar.gz")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         with tarfile.open(path, mode="r:gz") as tar:

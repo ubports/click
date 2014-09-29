@@ -18,14 +18,25 @@
 from __future__ import print_function
 
 from contextlib import closing
+import glob
 import json
 from optparse import OptionParser
+import os
 import sys
 
 from gi.repository import Click
 
 from click.install import DebFile
 from click.json_helpers import json_object_to_python
+
+
+def _load_manifest(manifest_file):
+    manifest = json.load(manifest_file)
+    keys = list(manifest)
+    for key in keys:
+        if key.startswith("_"):
+            del manifest[key]
+    return manifest
 
 
 def get_manifest(options, arg):
@@ -38,15 +49,20 @@ def get_manifest(options, arg):
         if registry.has_package_name(arg):
             return json_object_to_python(registry.get_manifest(arg))
 
-    with closing(DebFile(filename=arg)) as package:
-        with package.control.get_file(
-                "manifest", encoding="UTF-8") as manifest_file:
-            manifest = json.load(manifest_file)
-            keys = list(manifest)
-            for key in keys:
-                if key.startswith("_"):
-                    del manifest[key]
-            return manifest
+    if arg.endswith(".click"):
+        with closing(DebFile(filename=arg)) as package:
+            with package.control.get_file(
+                    "manifest", encoding="UTF-8") as manifest_file:
+                return _load_manifest(manifest_file)
+    else:
+        pkgdir = Click.find_package_directory(arg)
+        manifest_path = glob.glob(
+            os.path.join(pkgdir, ".click", "info", "*.manifest"))
+        if len(manifest_path) > 1:
+            raise Exception("Multiple manifest files found in '%s'" % (
+                manifest_path))
+        with open(manifest_path[0]) as f:
+            return _load_manifest(f)
 
 
 def run(argv):

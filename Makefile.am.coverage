@@ -1,0 +1,58 @@
+
+# Coverage targets
+
+.PHONY: clean-gcno clean-gcda \
+	coverage-html generate-coverage-html clean-coverage-html \
+	coverage-gcovr generate-coverage-gcovr clean-coverage-gcovr \
+	clean-merged-coverage
+
+clean-local: clean-gcno clean-coverage-html clean-coverage-gcovr clean-merged-coverage
+
+if HAVE_GCOV
+
+clean-gcno:
+	@echo Removing old coverage instrumentation
+	-find -name '*.gcno' -print | xargs -r rm
+
+clean-gcda:
+	@echo Removing old coverage results
+	-find -name '*.gcda' -print | xargs -r rm
+  
+coverage-html: coverage-python.xml
+	$(MAKE) $(AM_MAKEFLAGS) generate-coverage-html
+  
+generate-coverage-html:
+	@echo Collecting coverage data
+	$(LCOV) --directory $(top_builddir) --capture --output-file coverage.info --no-checksum --compat-libtool
+	LANG=C $(GENHTML) --prefix $(top_builddir) --output-directory coveragereport --title "Code Coverage" --legend --show-details coverage.info
+  
+clean-coverage-html: clean-gcda
+	-$(LCOV) --directory $(top_builddir) -z
+	rm -rf coverage.info coveragereport
+
+if HAVE_GCOVR
+
+coverage-gcovr: coverage-python.xml
+	$(MAKE) $(AM_MAKEFLAGS) generate-coverage-gcovr
+	
+generate-coverage-gcovr:
+	@echo Generating coverage GCOVR report
+	$(GCOVR) -x -r $(top_builddir) -o coverage-c.xml
+	sed -i 's/\(<package .*name=\)""/\1"lib.click..libs"/' coverage-c.xml
+	
+clean-coverage-gcovr: clean-gcda
+	rm -f coverage-c.xml
+
+coverage-c.xml: coverage-gcovr
+
+coverage.xml: coverage-c.xml coverage-python.xml
+	$(top_srcdir)/merge-coverage $^ -o $@
+
+coverage-xml: coverage.xml
+
+clean-merged-coverage: clean-coverage-gcovr
+	rm -f coverage.xml
+
+endif # HAVE_GCOVR
+
+endif # HAVE_GCOV

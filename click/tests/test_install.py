@@ -43,7 +43,13 @@ from click.install import (
     ClickInstallerPermissionDenied,
 )
 from click.preinst import static_preinst
-from click.tests.helpers import TestCase, mkfile, mock, touch
+from click.tests.helpers import (
+    disable_logging,
+    mkfile,
+    mock,
+    TestCase,
+    touch,
+)
 
 
 @contextmanager
@@ -69,6 +75,12 @@ class TestClickInstaller(TestCase):
         self.use_temp_dir()
         self.db = Click.DB()
         self.db.add(self.temp_dir)
+        # mock signature checks during the tests
+        self.debsig_patcher = mock.patch("click.install.DebsigVerify")
+        self.debsig_patcher.start()
+
+    def tearDown(self):
+        self.debsig_patcher.stop()
 
     def make_fake_package(self, control_fields=None, manifest=None,
                           control_scripts=None, data_files=None):
@@ -102,14 +114,6 @@ class TestClickInstaller(TestCase):
         ClickBuilder()._pack(
             self.temp_dir, control_dir, data_dir, package_path)
         return package_path
-
-    def _setup_frameworks(self, preloads, frameworks_dir=None, frameworks=[]):
-        frameworks_dir = self._create_mock_framework_dir(frameworks_dir)
-        shutil.rmtree(frameworks_dir, ignore_errors=True)
-        for framework in frameworks:
-            self._create_mock_framework_file(framework)
-        preloads["click_get_frameworks_dir"].side_effect = (
-            lambda: self.make_string(frameworks_dir))
 
     def test_audit_no_click_version(self):
         path = self.make_fake_package()
@@ -234,6 +238,24 @@ class TestClickInstaller(TestCase):
                 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
 
+    # FIXME: we really want a unit test with a valid signature too
+    def test_audit_no_signature(self):
+        if not Click.find_on_path("debsig-verify"):
+            self.skipTest("this test needs debsig-verify")
+        path = self.make_fake_package(
+            control_fields={"Click-Version": "0.4"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "",
+            })
+        self.debsig_patcher.stop()
+        self.assertRaisesRegex(
+            ClickInstallerAuditError, "Signature verification error",
+            ClickInstaller(self.db).audit, path)
+        self.debsig_patcher.start()
+
+    @disable_logging
     def test_audit_missing_framework_force(self):
         with self.run_in_subprocess(
                 "click_get_frameworks_dir") as (enter, preloads):
@@ -659,6 +681,7 @@ class TestClickInstaller(TestCase):
             self.assertTrue(
                 os.path.exists(os.path.join(root, "test-package", "current")))
 
+    @disable_logging
     def test_reinstall_preinstalled(self):
         # Attempting to reinstall a preinstalled version shouldn't actually
         # reinstall it in an overlay database (which would cause

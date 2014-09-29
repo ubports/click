@@ -12,6 +12,13 @@
  */
 extern int chown (const char *file, uid_t owner, gid_t group);
 
+/**
+ * geteuid:
+ *
+ * Attributes: (headers sys/types.h,unistd.h)
+ */
+extern uid_t geteuid (void);
+
 /* Workaround for g-ir-scanner not picking up the type properly: mode_t is
  * uint32_t on all glibc platforms.
  */

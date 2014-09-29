@@ -24,6 +24,7 @@ all_commands = (
     "chroot",
     "contents",
     "desktophook",
+    "framework",
     "hook",
     "info",
     "install",

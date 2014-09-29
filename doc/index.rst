@@ -38,8 +38,10 @@ and installing anything that is missing here.
 Then run::
 
     $ ./autogen.sh
-    $ ./configure --with-systemdsystemunitdir=/lib/systemd/system \
-	--with-systemduserunitdir=/usr/lib/systemd/user
+    $ ./configure --prefix=/usr \
+        --sysconfdir=/etc \
+        --with-systemdsystemunitdir=/lib/systemd/system \
+        --with-systemduserunitdir=/usr/lib/systemd/user
     $ make
 
 to build the project.
@@ -88,6 +90,48 @@ or::
 
   $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
 
+Test coverage
+-------------
+
+If you have python-coverage installed, you can get a Python test coverage
+report by typing:
+
+  $ python-coverage combine
+  $ python-coverage report
+
+This works also for python3-coverage.
+
+To get Vala/C coverage information, install the gcovr and lcov packages and
+run:
+
+  $ ./configure --enable-gcov
+  $ make coverage-html
+
+which will generate a "coveragereport/index.html" file for you.
+
+The combined coverage information can be obtained via:
+
+  $ make coverage.xml
+
+Integration Tests
+-----------------
+
+There is also a set of integration tests that have additional
+test dependencies that are listed in debian/test/control.
+
+Beware that some require to be run as root and they are designed to be
+run in a safe environment (like a schroot or a autopkgtest container)
+and may alter the system state (e.g adding test users). By default the
+tests will run against the installed click binary, but you can also
+use:
+
+  $ LD_LIBRARY_PATH=$(pwd)/lib/click/.libs \
+    PYTHONPATH=$(pwd) \
+    GI_TYPELIB_PATH=$(pwd)/lib/click \
+    CLICK_BINARY=$(pwd)/bin/click \
+    python3 -m unittest discover tests.integration
+
+to run against the build tree.
 
 
 Documentation

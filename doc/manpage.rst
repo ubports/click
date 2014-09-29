@@ -73,6 +73,8 @@ Options:
 
 -m PATH, --manifest=PATH    Read package manifest from PATH
                             (default: ``manifest.json``).
+--no-validate               Don't run checks from click-reviewers-tools on
+                            the resulting .click file.
 
 click buildsource DIRECTORY
 ---------------------------
@@ -242,6 +244,12 @@ normally install it to one of the databases defined in
 The ``--force-missing-framework`` option is necessary while working with
 development versions of SDKs which have not yet put a framework declaration
 in place.
+
+You should always register installed packages either for a specific user or
+for all users; if you do not do this then the packages may be
+garbage-collected later.  You can do this using the ``--user`` or
+``--all-users`` options to this command, or using the ``click register``
+command.
 
 Options:
 

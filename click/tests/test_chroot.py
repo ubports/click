@@ -28,6 +28,7 @@ from textwrap import dedent
 
 from click.chroot import (
     ClickChroot,
+    strip_dev_series_from_framework,
 )
 from click.tests.helpers import TestCase, mock
 
@@ -329,3 +330,11 @@ class TestClickChroot(TestCase):
         self.assertTrue(os.path.exists(chroot_path))
         chroot.destroy()
         self.assertFalse(os.path.exists(chroot_path))
+
+    def test_strip_dev_series_from_framework(self):
+        for have, want in (
+                ("ubuntu-sdk-14.10-html-dev1", "ubuntu-sdk-14.10-html"),
+                ("ubuntu-sdk-14.10-html", "ubuntu-sdk-14.10-html"),
+                ("ubuntu-sdk-14.04-dev99", "ubuntu-sdk-14.04"),
+            ):
+            self.assertEqual(strip_dev_series_from_framework(have), want)

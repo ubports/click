@@ -43,14 +43,6 @@ override_dh_auto_clean:
 	dh_auto_clean
 	$(MAKE) -C doc clean
 
-ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
-override_dh_auto_test:
-	python3-coverage run -m unittest discover -vv click.tests
-	python3-coverage combine
-	python3-coverage xml
-	python3-coverage report
-endif
-
 PYTHON_INSTALL_FLAGS := \
 	--force --root=$(CURDIR)/debian/tmp \
 	--no-compile -O0 --install-layout=deb

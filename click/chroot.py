@@ -38,15 +38,12 @@ from textwrap import dedent
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
-    "ubuntu-sdk-14.04-html-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-papi-dev1": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.04-qml-dev1": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
-    "ubuntu-sdk-14.10-html-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-papi-dev1": "ubuntu-sdk-14.10",
-    "ubuntu-sdk-14.10-qml-dev1": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
+    "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
     }
 
 
@@ -65,6 +62,7 @@ extra_packages = {
         "libqt5v8-5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qt5-qmake:TARGET",
@@ -75,13 +73,22 @@ extra_packages = {
         "qtscript5-dev:TARGET",
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.04": [
         "cmake",
+        "google-mock:TARGET",
+        "libboost1.54-dev:TARGET",
+        "libjsoncpp-dev:TARGET",
+        "libprocess-cpp-dev:TARGET",
+        "libproperties-cpp-dev:TARGET",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
         "qtbase5-dev:TARGET",
@@ -93,24 +100,59 @@ extra_packages = {
         "qtsensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         "qttools5-dev-tools:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
+        "google-mock:TARGET",
+        "libboost1.55-dev:TARGET",
+        "libcontent-hub-dev:TARGET",
+        "libjsoncpp-dev:TARGET",
+        "libnet-cpp-dev:TARGET",
+        "libprocess-cpp-dev:TARGET",
+        "libproperties-cpp-dev:TARGET",
+        "libqt5keychain0:TARGET",
+        "libqt5sensors5-dev:TARGET",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
         "libunity-scopes-dev:TARGET",
+        # bug #1316930, needed for autopilot
+        "python3",
+        "qml-module-qt-labs-settings:TARGET",
+        "qml-module-qtmultimedia:TARGET",
+        "qml-module-qtquick-layouts:TARGET",
+        "qml-module-qtsensors:TARGET",
+        "qml-module-qtwebkit:TARGET",
+        "qmlscene:TARGET",
         "qt3d5-dev:TARGET",
         "qt5-default:TARGET",
-        "qtbase5-dev:TARGET",
-        "qtdeclarative5-dev:TARGET",
+        "qtdeclarative5-accounts-plugin:TARGET",
         "qtdeclarative5-dev-tools",
+        "qtdeclarative5-folderlistmodel-plugin:TARGET",
+        "qtdeclarative5-localstorage-plugin:TARGET",
+        "qtdeclarative5-online-accounts-client0.1:TARGET",
+        "qtdeclarative5-particles-plugin:TARGET",
+        "qtdeclarative5-poppler1.0:TARGET",
+        "qtdeclarative5-qtlocation-plugin:TARGET",
+        "qtdeclarative5-qtorganizer-plugin:TARGET",
+        "qtdeclarative5-qtpositioning-plugin:TARGET",
+        "qtdeclarative5-u1db1.0:TARGET",
+        "qtdeclarative5-ubuntu-content0.1:TARGET",
+        "qtdeclarative5-ubuntu-download-manager0.1:TARGET",
+        "qtdeclarative5-ubuntu-mediascanner0.1:TARGET",
+        "qtdeclarative5-ubuntu-syncmonitor0.1:TARGET",
+        "qtdeclarative5-ubuntu-telephony-phonenumber0.1:TARGET",
+        "qtdeclarative5-ubuntu-ui-toolkit-plugin:TARGET",
+        "qtdeclarative5-usermetrics0.1:TARGET",
+        "qtdeclarative5-xmllistmodel-plugin:TARGET",
         "qtlocation5-dev:TARGET",
         "qtmultimedia5-dev:TARGET",
         "qtscript5-dev:TARGET",
-        "libqt5sensors5-dev:TARGET",
         "qttools5-dev:TARGET",
         "qttools5-dev-tools:TARGET",
+        "ubuntu-html5-theme:TARGET",
+        "ubuntu-ui-toolkit-doc",
         ],
     }
 
@@ -129,6 +171,11 @@ def shell_escape(command):
         else:
             escaped.append("'%s'" % arg.replace("'", "'\\''"))
     return " ".join(escaped)
+
+
+def strip_dev_series_from_framework(framework):
+    """Remove trailing -dev[0-9]+ from a framework name"""
+    return re.sub(r'^(.*)-dev[0-9]+$', r'\1', framework)
 
 
 class ClickChrootException(Exception):
@@ -163,7 +210,7 @@ class ClickChroot:
     def __init__(self, target_arch, framework, name=None, series=None,
                  session=None, chroots_dir=None):
         self.target_arch = target_arch
-        self.framework = framework
+        self.framework = strip_dev_series_from_framework(framework)
         if name is None:
             name = "click"
         self.name = name

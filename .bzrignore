@@ -8,7 +8,9 @@ __pycache__
 ./config.log
 ./config.status
 ./configure
-./coverage.xml
+./coverage.info
+./coverage*.xml
+./coveragereport
 ./libtool
 ./setup.py
 ./stamp-h1
@@ -31,6 +33,7 @@ dist
 click/paths.py
 click/tests/config.py
 click/tests/preload.gir
+click/tests/test_paths.py
 build-aux/compile
 build-aux/config.guess
 build-aux/config.rpath
@@ -67,7 +70,12 @@ lib/click/click-0.4.vapi
 lib/click/libclick_0_4_la_vala.stamp
 lib/click/paths.vala
 lib/click/valac-wrapper
-m4/*
+m4/intltool.m4
+m4/libtool.m4
+m4/ltoptions.m4
+m4/ltsugar.m4
+m4/ltversion.m4
+m4/lt~obsolete.m4
 pk-plugin/com.ubuntu.click.policy
 po/.intltool-merge-cache
 po/ChangeLog

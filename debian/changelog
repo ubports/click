@@ -1,12 +1,128 @@
-click (0.4.29) UNRELEASED; urgency=medium
+click (0.4.33) UNRELEASED; urgency=medium
+
+  [ Pete Woods ]
+  * Add scope-facing APIs to chroot build (LP: #1370727).
+
+  [ Colin Watson ]
+  * Warn that "click install" without a registration may result in later
+    garbage-collection.
+  * Rearrange garbage-collection to remove versions of packages that have no
+    user registrations and are not running, rather than using the artificial
+    @gcinuse registration which never really worked properly.
+  * Run garbage-collection immediately before running system hooks on system
+    startup (LP: #1342858).
+  * Add new -n/--name option to "click chroot", defaulting to "click"
+    (LP: #1364327).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 10 Sep 2014 12:47:46 +0100
+
+click (0.4.32.1) utopic; urgency=low
+
+  [ Michael Vogt ]
+  * fix autopkgtest failure found in 0.4.32
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 09 Sep 2014 10:02:00 +0000
+
+click (0.4.32) utopic; urgency=medium
+
+  [ Daniel Holbach ]
+  * Run click-review after a successful build of a click package. Offer
+    --no-validate as an option.
+
+  [ Colin Watson ]
+  * Move integration tests to a location where they won't end up being
+    installed into inappropriate places on the system module path
+    (LP: #1337696).
+  * Use six.with_metaclass for TestBuildCoreApps, so that it doesn't make
+    pyflakes angry when running tests under Python 2.
+
+  [ Michael Vogt ]
+  * Add more integration tests for "click {list,register,verify,info}".
+  * Only install trusted click packages by default. To override you
+    can run "pkcon --allow-untrusted" (LP: #1360582)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 08 Sep 2014 09:50:43 +0000
+
+click (0.4.31.3) utopic; urgency=medium
+
+  * Reinstate most of 0.4.31.2; instead, just always pass
+    --allow-unauthenticated to "click install" from the PackageKit plugin
+    for now, until we can sort out sideloading (see LP #1360582).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 25 Aug 2014 12:25:21 -0700
+
+click (0.4.31.2.is.0.4.30) utopic; urgency=medium
+
+  * Temporary everting to previous version as the current one makes installing
+    click packages locally through pkcon install-local impossible, which is
+    breaking some other projects relying on this functionality. Needs to be
+    revisited.
+
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 25 Aug 2014 17:34:07 +0200
+
+click (0.4.31.2) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Add "click info" interface to get manifest corresponding to file in
+    installed package (LP: #1324853).
+  * Add support for click package gpg signatures (LP: #1330770).
+
+  [ Colin Watson ]
+  * Ugly hack to get coverage reporting working again with gcovr 3.1.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 22 Aug 2014 17:19:06 +0000
+
+click (0.4.30) utopic; urgency=medium
+
+  [ Colin Watson ]
+  * Add many more unit tests to fill in some gaps in the coverage report.
+  
+  [ Michael Vogt ]
+  * Exclude non-existing users from User.get_user_names() 
+    (LP: #1334611)
+
+  [ Zoltan Balogh ]
+  * Add a set of APIs to the 14.10 frameworks.  Add ubuntu-ui-toolkit-doc to
+    all frameworks.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 23:33:22 +0000
+
+click (0.4.29.1) utopic; urgency=medium
+
+  [ Michael Vogt ]
+  * Trivial fix for the current autopkgtest failure.  The ADT environment
+    does not have the USER environment set.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 04 Jul 2014 15:10:01 +0000
+
+click (0.4.29) utopic; urgency=medium
 
   [ Michael Vogt ]
   * Refactor click/chroot.py and improve tests.
+  * Test-build two ubuntu-system-apps in a click chroot as part of the
+    integration tests.
+  * Generalise handling of -devN frameworks in "click chroot".
+  * Add integration test for "click hook install".
 
   [ Colin Watson ]
   * Various adjustments for improved PEP-8 compliance.
+  * Produce coverage only on request via ./configure --enable-gcov.  Extend
+    it to cover C code as well, and produce a merged coverage.xml.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 23 Jun 2014 22:01:04 +0100
+  [ Brendan Donegan ]
+  * Clean up integration tests - have one file per command and make some
+    things clearer.
+
+  [ Dimitri John Ledkov ]
+  * Seed runtime target arch SDK app launcher, to enable remote debugging.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 03 Jul 2014 13:10:21 +0000
 
 click (0.4.28) utopic; urgency=medium
 

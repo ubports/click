@@ -9,3 +9,13 @@ preload.gir: preload.h
 		-I$(top_builddir)/lib/click -L$(top_builddir)/lib/click \
 		--accept-unprefixed --warn-all \
 		$< --output $@
+
+noinst_SCRIPTS = test_paths.py
+CLEANFILES += $(noinst_SCRIPTS)
+
+do_subst = sed \
+	-e 's,[@]sysconfdir[@],$(sysconfdir),g' \
+	-e 's,[@]pkgdatadir[@],$(pkgdatadir),g'
+
+test_paths.py: test_paths.py.in Makefile
+	$(do_subst) < $(srcdir)/test_paths.py.in > $@

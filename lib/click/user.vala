@@ -599,7 +599,7 @@ public class User : Object {
 	}
 
 	private bool
-    stop_running_app (string package, string version)
+	stop_running_app (string package, string version)
 	{
 		var res = true;
 		if (! find_on_path ("ubuntu-app-stop"))
@@ -618,8 +618,7 @@ public class User : Object {
 			return false;
 		}
 		var hooks = manifest.get_object_member ("hooks");
-		foreach (unowned string app_name in
-				 hooks.get_members ())
+		foreach (unowned string app_name in hooks.get_members ())
 		{
 			// FIXME: move this into a "stop_single_app" helper
 			string[] command = {
@@ -628,10 +627,11 @@ public class User : Object {
 			};
 			try {
 				int exit_status;
-				Process.spawn_sync (null, command, null,
-									SpawnFlags.SEARCH_PATH |
-									SpawnFlags.STDOUT_TO_DEV_NULL,
-									null, null, null, out exit_status);
+				Process.spawn_sync
+					(null, command, null,
+					 SpawnFlags.SEARCH_PATH |
+					 SpawnFlags.STDOUT_TO_DEV_NULL,
+					 null, null, null, out exit_status);
 				res &= Process.check_exit_status (exit_status);
 			} catch (Error e) {
 				res &= false;

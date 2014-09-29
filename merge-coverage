@@ -1,0 +1,98 @@
+#! /usr/bin/python3
+
+from optparse import OptionParser
+import re
+import sys
+from xml.etree import ElementTree as ET
+
+
+class CoverageTreeBuilder(ET.TreeBuilder):
+    def doctype(self, name, pubid, system):
+        self._doctype = (name, pubid, system)
+
+
+class Coverage:
+    def __init__(self):
+        self._tree = None
+        self._builder = None
+
+    def _merge_children(self, left, right):
+        assert left.tag == right.tag
+        if left.tag == "coverage":
+            for right_child in right:
+                left_child = left.find(right_child.tag)
+                if left_child is not None:
+                    self._merge_children(left_child, right_child)
+                else:
+                    left.append(right_child)
+            # Re-compute rates from scratch.
+            lnum, lhits = 0, 0
+            bnum, bhits = 0, 0
+            condition_re = re.compile(r"\(([0-9]+)/([0-9]+)\)")
+            for package in left.find("packages").findall("package"):
+                for cclass in package.find("classes").findall("class"):
+                    for line in cclass.find("lines").findall("line"):
+                        lnum += 1
+                        if line.get("hits", "0") != "0":
+                            lhits += 1
+                        if line.get("branch", "false") == "true":
+                            match = condition_re.search(
+                                line.get("condition-coverage"))
+                            if match is not None:
+                                bhits += int(match.group(1))
+                                bnum += int(match.group(2))
+            left.set("branch-rate", "%.4g" % (float(bhits) / (bnum or 1.0)))
+            left.set("line-rate", "%.4g" % (float(lhits) / (lnum or 1.0)))
+        elif left.tag == "sources":
+            pass  # just ignore this for now
+        elif left.tag == "packages":
+            left_names = []
+            for left_child in left:
+                assert left_child.tag == "package"
+                left_names.append(left_child.get("name"))
+            for right_child in right:
+                assert right_child.tag == "package"
+                assert right_child.get("name") not in left_names
+                left.append(right_child)
+
+    def merge(self, arg):
+        builder = CoverageTreeBuilder()
+        tree = ET.parse(arg, parser=ET.XMLParser(target=builder))
+        if self._tree is None:
+            self._tree = tree
+            self._builder = builder
+        else:
+            self._merge_children(self._tree.getroot(), tree.getroot())
+
+    def write(self, outfilename):
+        if outfilename is None:
+            outfile = sys.stdout
+        else:
+            outfile = open(outfilename, "w")
+        outfile.write('<?xml version="1.0" ?>\n')
+        doctype = self._builder._doctype
+        outfile.write("<!DOCTYPE %s%s%s>\n" % (
+            doctype[0],
+            "" if doctype[1] is None else "\n PUBLIC '%s'" % doctype[1],
+            "" if doctype[2] is None else "\n SYSTEM '%s'" % doctype[2]))
+        try:
+            self._tree.write(outfile, encoding="unicode")
+        finally:
+            outfile.close()
+
+
+def main():
+    parser = OptionParser(usage="%prog FILE [...]")
+    parser.add_option(
+        "-o", "--output", help="output file name (default: stdout)")
+    options, args = parser.parse_args()
+    if not args:
+        parser.error("need at least one input file")
+    coverage = Coverage()
+    for arg in args:
+        coverage.merge(arg)
+    coverage.write(options.output)
+
+
+if __name__ == "__main__":
+    main()

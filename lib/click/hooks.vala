@@ -1170,6 +1170,7 @@ package_remove_hooks (DB db, string package, string old_version,
 public void
 run_system_hooks (DB db) throws Error
 {
+	db.gc ();
 	db.ensure_ownership ();
 	string[] failed = {};
 	foreach (var hook in Hook.open_all (db)) {

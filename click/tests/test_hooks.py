@@ -164,7 +164,18 @@ class TestClickHookSystemLevel(TestClickHookBase):
             self.assertEqual(
                 "/usr/share/test/${id}.test", hook.get_field("pattern"))
             self.assertEqual("test-update", hook.get_field("exec"))
+            self.assertRaisesHooksError(
+                Click.HooksError.MISSING_FIELD, hook.get_field, "nonexistent")
             self.assertFalse(hook.props.is_user_level)
+
+    def test_open_unopenable_file(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            os.symlink("nonexistent", os.path.join(self.hooks_dir, "foo.hook"))
+            self.assertRaisesHooksError(
+                Click.HooksError.NO_SUCH_HOOK, Click.Hook.open, self.db, "foo")
 
     def test_hook_name_absent(self):
         with self.run_in_subprocess(
@@ -204,6 +215,12 @@ class TestClickHookSystemLevel(TestClickHookBase):
                 "package", "0.1", "app_name")
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
+                "package", "0.1", "app/name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
+                "package", "0.1", "app_name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
                 "package", "0.1", "app/name")
 
     def test_short_id_invalid(self):
@@ -249,6 +266,21 @@ class TestClickHookSystemLevel(TestClickHookBase):
             hook.run_commands(user_name=None)
             self.assertEqual(
                 [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
+
+    def test_run_commands_fail(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "g_spawn_sync") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 1})
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("Exec: test-update", file=f)
+                print("User: root", file=f)
+            hook = Click.Hook.open(self.db, "test")
+            self.assertRaisesHooksError(
+                Click.HooksError.COMMAND_FAILED, hook.run_commands,
+                user_name=None)
 
     def test_install_package(self):
         with self.run_in_subprocess(
@@ -481,6 +513,8 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "${home}/.local/share/test/${id}.test",
                 hook.get_field("pattern"))
             self.assertEqual("test-update", hook.get_field("exec"))
+            self.assertRaisesHooksError(
+                Click.HooksError.MISSING_FIELD, hook.get_field, "nonexistent")
             self.assertTrue(hook.props.is_user_level)
 
     def test_hook_name_absent(self):
@@ -523,6 +557,12 @@ class TestClickHookUserLevel(TestClickHookBase):
             self.assertRaisesHooksError(
                 Click.HooksError.BAD_APP_NAME, hook.get_app_id,
                 "package", "0.1", "app/name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
+                "package", "0.1", "app_name")
+            self.assertRaisesHooksError(
+                Click.HooksError.BAD_APP_NAME, hook.get_pattern,
+                "package", "0.1", "app/name")
 
     def test_short_id_valid(self):
         with self.run_in_subprocess(
@@ -558,6 +598,21 @@ class TestClickHookUserLevel(TestClickHookBase):
             hook.run_commands(user_name=self.TEST_USER)
             self.assertEqual(
                 [[b"/bin/sh", b"-c", b"test-update"]], self.spawn_calls)
+
+    def test_run_commands_fail(self):
+        with self.run_in_subprocess(
+                "click_get_hooks_dir", "g_spawn_sync") as (enter, preloads):
+            enter()
+            self._setup_hooks_dir(preloads)
+            preloads["g_spawn_sync"].side_effect = partial(
+                self.g_spawn_sync_side_effect, {b"/bin/sh": 1})
+            with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
+                print("User-Level: yes", file=f)
+                print("Exec: test-update", file=f)
+            hook = Click.Hook.open(self.db, "test")
+            self.assertRaisesHooksError(
+                Click.HooksError.COMMAND_FAILED, hook.run_commands,
+                user_name=self.TEST_USER)
 
     def test_install_package(self):
         with self.run_in_subprocess(
@@ -693,12 +748,14 @@ class TestClickHookUserLevel(TestClickHookBase):
 
     def test_install(self):
         with self.run_in_subprocess(
-                "click_get_hooks_dir", "click_get_user_home",
+                "click_get_hooks_dir", "click_get_user_home", "getpwnam"
                 ) as (enter, preloads):
             enter()
             # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
             preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.new" % self.temp_dir, file=f)

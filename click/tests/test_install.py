@@ -75,6 +75,12 @@ class TestClickInstaller(TestCase):
         self.use_temp_dir()
         self.db = Click.DB()
         self.db.add(self.temp_dir)
+        # mock signature checks during the tests
+        self.debsig_patcher = mock.patch("click.install.DebsigVerify")
+        self.debsig_patcher.start()
+
+    def tearDown(self):
+        self.debsig_patcher.stop()
 
     def make_fake_package(self, control_fields=None, manifest=None,
                           control_scripts=None, data_files=None):
@@ -231,6 +237,23 @@ class TestClickInstaller(TestCase):
                 ClickInstallerAuditError,
                 'Framework "missing" not present on system.*',
                 ClickInstaller(self.db).audit, path)
+
+    # FIXME: we really want a unit test with a valid signature too
+    def test_audit_no_signature(self):
+        if not Click.find_on_path("debsig-verify"):
+            self.skipTest("this test needs debsig-verify")
+        path = self.make_fake_package(
+            control_fields={"Click-Version": "0.4"},
+            manifest={
+                "name": "test-package",
+                "version": "1.0",
+                "framework": "",
+            })
+        self.debsig_patcher.stop()
+        self.assertRaisesRegex(
+            ClickInstallerAuditError, "Signature verification error",
+            ClickInstaller(self.db).audit, path)
+        self.debsig_patcher.start()
 
     @disable_logging
     def test_audit_missing_framework_force(self):

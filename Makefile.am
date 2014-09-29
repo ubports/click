@@ -15,6 +15,9 @@ check-local:
 		$$python setup.py test; \
 	done
 
+coverage-python.xml:
+	$(MAKE) $(AM_MAKEFLAGS) check
+
 # setuptools likes to leave some debris around, which confuses things.
 install-exec-hook:
 	find build -name \*.pyc -print0 | xargs -0r rm -f
@@ -28,3 +31,6 @@ clean-local:
 	rm -rf build *.egg-info .tox
 	find -name \*.pyc -print0 | xargs -0r rm -f
 	find -name __pycache__ -print0 | xargs -0r rm -rf
+	rm -f .coverage coverage-python.xml
+
+include $(top_srcdir)/Makefile.am.coverage

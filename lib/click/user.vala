@@ -598,6 +598,48 @@ public class User : Object {
 					       old_version, version, name);
 	}
 
+	private bool
+	stop_running_app (string package, string version)
+	{
+		var res = true;
+		if (! find_on_path ("ubuntu-app-stop"))
+			return false;
+
+		Json.Object manifest;
+		try {
+			manifest = get_manifest (package);
+		} catch (Error e) {
+			warning ("Can not get manifest for %s", package);
+			return false;
+		}
+		
+		if (! manifest.has_member ("hooks")) {
+			warning ("No hooks in manifest %s", package);
+			return false;
+		}
+		var hooks = manifest.get_object_member ("hooks");
+		foreach (unowned string app_name in hooks.get_members ())
+		{
+			// FIXME: move this into a "stop_single_app" helper
+			string[] command = {
+				"ubuntu-app-stop",
+				@"$(package)_$(app_name)_$(version)"
+			};
+			try {
+				int exit_status;
+				Process.spawn_sync
+					(null, command, null,
+					 SpawnFlags.SEARCH_PATH |
+					 SpawnFlags.STDOUT_TO_DEV_NULL,
+					 null, null, null, out exit_status);
+				res &= Process.check_exit_status (exit_status);
+			} catch (Error e) {
+				res &= false;
+			}
+		}
+		return res;
+	}
+
 	/**
 	 * remove:
 	 * @package: A package name.
@@ -636,6 +678,14 @@ public class User : Object {
 				regain_privileges ();
 			}
 		}
+
+		drop_privileges ();
+		try {
+			stop_running_app (package, old_version);
+		} finally {
+			regain_privileges ();
+		}
+
 		if (! is_pseudo_user)
 			package_remove_hooks (db, package, old_version, name);
 	}

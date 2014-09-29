@@ -77,6 +77,11 @@ extra_packages = {
         ],
     "ubuntu-sdk-14.04": [
         "cmake",
+        "google-mock:TARGET",
+        "libboost1.54-dev:TARGET",
+        "libjsoncpp-dev:TARGET",
+        "libprocess-cpp-dev:TARGET",
+        "libproperties-cpp-dev:TARGET",
         "libqt5svg5-dev:TARGET",
         "libqt5webkit5-dev:TARGET",
         "libqt5xmlpatterns5-dev:TARGET",
@@ -99,7 +104,13 @@ extra_packages = {
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
+        "google-mock:TARGET",
+        "libboost1.55-dev:TARGET",
         "libcontent-hub-dev:TARGET",
+        "libjsoncpp-dev:TARGET",
+        "libnet-cpp-dev:TARGET",
+        "libprocess-cpp-dev:TARGET",
+        "libproperties-cpp-dev:TARGET",
         "libqt5keychain0:TARGET",
         "libqt5sensors5-dev:TARGET",
         "libqt5svg5-dev:TARGET",
@@ -546,12 +557,26 @@ class ClickChroot:
         return self.clean()
 
     def destroy(self):
-        if not self.exists():
-            raise ClickChrootDoesNotExistException(
-                "Chroot %s does not exist" % self.full_name)
-        os.remove(self.chroot_config)
-        mount = "%s/%s" % (self.chroots_dir, self.full_name)
-        shutil.rmtree(mount)
+        # remove config
+        if os.path.exists(self.chroot_config):
+            os.remove(self.chroot_config)
+        # find all schroot mount points, this is actually quite complicated
+        mount_dir = os.path.abspath(
+            os.path.join(self.chroots_dir, "..", "mount"))
+        needle = os.path.join(mount_dir, self.full_name)
+        all_mounts = []
+        with open("/proc/mounts") as f:
+            for line in f.readlines():
+                mp = line.split()[1]
+                if mp.startswith(needle):
+                    all_mounts.append(mp)
+        # reverse order is important in case of submounts
+        for mp in sorted(all_mounts, key=len, reverse=True):
+            subprocess.call(["umount", mp])
+        # now remove the rest
+        chroot_dir = "%s/%s" % (self.chroots_dir, self.full_name)
+        if os.path.exists(chroot_dir):
+            shutil.rmtree(chroot_dir)
         return 0
 
     def begin_session(self):

@@ -326,3 +326,11 @@ def mkfile_utf8(path, mode="w"):
 def touch(path):
     with mkfile(path, mode="a"):
         pass
+
+
+def make_file_with_content(filename, content, mode=0o644):
+    """Create a file with the given content and mode"""
+    Click.ensuredir(os.path.dirname(filename))
+    with open(filename, "w") as f:
+        f.write(content)
+    os.chmod(filename, mode)

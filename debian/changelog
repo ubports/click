@@ -1,3 +1,27 @@
+click (0.4.33) UNRELEASED; urgency=medium
+
+  [ Pete Woods ]
+  * Add scope-facing APIs to chroot build (LP: #1370727).
+
+  [ Colin Watson ]
+  * Warn that "click install" without a registration may result in later
+    garbage-collection.
+  * Rearrange garbage-collection to remove versions of packages that have no
+    user registrations and are not running, rather than using the artificial
+    @gcinuse registration which never really worked properly.
+  * Run garbage-collection immediately before running system hooks on system
+    startup (LP: #1342858).
+  * Add new -n/--name option to "click chroot", defaulting to "click"
+    (LP: #1364327).
+
+  [ Michael Vogt ]
+  * Make click destroy more robust by unmounting any mounted filesystem
+    inside the schroot first (LP: #1346723).
+  * Stop apps if necessary when uninstalling them (LP: #1232130).
+  * Add new "click framework {info,get-field}" subcommands.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 10 Sep 2014 12:47:46 +0100
+
 click (0.4.32.1) utopic; urgency=low
 
   [ Michael Vogt ]

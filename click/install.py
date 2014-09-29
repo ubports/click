@@ -38,6 +38,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+from textwrap import dedent
 
 from contextlib import closing
 
@@ -450,6 +451,12 @@ class ClickInstaller:
             else:
                 registry = Click.User.for_user(self.db, name=user)
             registry.set_version(package_name, package_version)
+        else:
+            print(dedent("""\
+                %s %s has not been registered for any users.
+                It may be garbage-collected the next time the system starts.
+                To avoid this, use "click register".
+                """) % (package_name, package_version))
 
         if old_version is not None:
             self.db.maybe_remove(package_name, old_version)

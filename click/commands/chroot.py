@@ -61,7 +61,8 @@ def create(parser, args):
             "debootstrap not installed and configured; install click-dev and "
             "debootstrap")
     requires_root(parser)
-    chroot = ClickChroot(args.architecture, args.framework, series=args.series)
+    chroot = ClickChroot(
+        args.architecture, args.framework, name=args.name, series=args.series)
     with message_on_error(
             ClickChrootAlreadyExistsException, ErrorMessages.EXISTS):
         return chroot.create(args.keep_broken_chroot)
@@ -71,7 +72,7 @@ def create(parser, args):
 
 def install(parser, args):
     packages = args.packages
-    chroot = ClickChroot(args.architecture, args.framework)
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.install(*packages)
@@ -82,7 +83,7 @@ def install(parser, args):
 def destroy(parser, args):
     requires_root(parser)
     # ask for confirmation?
-    chroot = ClickChroot(args.architecture, args.framework)
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.destroy()
@@ -95,7 +96,8 @@ def execute(parser, args):
     if not program:
         program = ["/bin/bash"]
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.run(*program)
@@ -108,7 +110,8 @@ def maint(parser, args):
     if not program:
         program = ["/bin/bash"]
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.maint(*program)
@@ -117,7 +120,7 @@ def maint(parser, args):
 
 
 def upgrade(parser, args):
-    chroot = ClickChroot(args.architecture, args.framework)
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.upgrade()
@@ -127,7 +130,8 @@ def upgrade(parser, args):
 
 def begin_session(parser, args):
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.begin_session()
@@ -137,7 +141,8 @@ def begin_session(parser, args):
 
 def end_session(parser, args):
     chroot = ClickChroot(
-        args.architecture, args.framework, session=args.session)
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.end_session()
@@ -146,7 +151,7 @@ def end_session(parser, args):
 
 
 def exists(parser, args):
-    chroot = ClickChroot(args.architecture, args.framework)
+    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
     # return shell exit codes 0 on success, 1 on failure
     if chroot.exists():
         return 0
@@ -169,6 +174,11 @@ def run(argv):
         "-s", "--series",
         help="series to use for a newly-created chroot (defaults to a series "
              "appropriate for the framework)")
+    parser.add_argument(
+        "-n", "--name", default="click",
+        help=(
+            "name of the chroot (default: click; the framework and "
+            "architecture will be appended)"))
     create_parser = subparsers.add_parser(
         "create",
         help="create a chroot of the provided architecture")

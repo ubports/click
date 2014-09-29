@@ -333,4 +333,4 @@ def make_file_with_content(filename, content, mode=0o644):
     Click.ensuredir(os.path.dirname(filename))
     with open(filename, "w") as f:
         f.write(content)
-    os.chmod(filename, 0o755)
+    os.chmod(filename, mode)

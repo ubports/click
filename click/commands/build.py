@@ -20,7 +20,9 @@ from __future__ import print_function
 from optparse import OptionParser
 import os
 import sys
+import subprocess
 
+from gi.repository import Click
 from click.build import ClickBuildError, ClickBuilder
 
 
@@ -29,6 +31,9 @@ def run(argv):
     parser.add_option(
         "-m", "--manifest", metavar="PATH", default="manifest.json",
         help="read package manifest from PATH (default: manifest.json)")
+    parser.add_option(
+        "--no-validate", action="store_false", default=True, dest="validate",
+        help="Don't run click-reviewers-tools check on resulting .click")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need directory")
@@ -48,5 +53,20 @@ def run(argv):
     except ClickBuildError as e:
         print(e, file=sys.stderr)
         return 1
+    if options.validate and Click.find_on_path('click-review'):
+        print("Now executing: click-review %s" % path)
+        try:
+            subprocess.check_call(['click-review', path])
+        except subprocess.CalledProcessError:
+            # qtcreator-plugin-ubuntu relies on return code 0
+            # to establish if a .click package has been built
+            # at all.
+            #
+            # If we want to distinguish between
+            # - click build failed
+            # - click build succeeded, but validation failed
+            # both tools will have to learn this at the same
+            # time.
+            pass
     print("Successfully built package in '%s'." % path)
     return 0

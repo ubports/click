@@ -63,14 +63,14 @@ class TestClickBuilderBaseMixin:
         with mkfile(manifest_path) as manifest:
             print(dedent("""\
                 {
-                    "name": "com.ubuntu.test",
+                    "name": "com.example.test",
                     "version": "1.0",
                     "maintainer": "Foo Bar <foo@example.org>",
                     "title": "test title",
                     "framework": "ubuntu-sdk-13.10"
                 }"""), file=manifest)
         self.builder.read_manifest(manifest_path)
-        self.assertEqual("com.ubuntu.test", self.builder.name)
+        self.assertEqual("com.example.test", self.builder.name)
         self.assertEqual("1.0", self.builder.version)
         self.assertEqual("Foo Bar <foo@example.org>", self.builder.maintainer)
         self.assertEqual("test title", self.builder.title)
@@ -90,7 +90,7 @@ class TestClickBuilderBaseMixin:
             with mkfile(manifest_path) as manifest:
                 print(dedent("""\
                     {
-                        "name": "com.ubuntu.test",
+                        "name": "com.example.test",
                         "version": "%s",
                         "maintainer": "Foo Bar <foo@example.org>",
                         "title": "test title",
@@ -106,7 +106,7 @@ class TestClickBuilderBaseMixin:
             # The comma after the "name" entry is intentionally missing.
             print(dedent("""\
                 {
-                    "name": "com.ubuntu.test"
+                    "name": "com.example.test"
                     "version": "1.0"
                 }"""), file=manifest)
         self.assertRaises(
@@ -136,7 +136,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             f.write("test /toplevel\n")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -146,11 +146,11 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "/")
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_all.click")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0_all.click")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         for key, value in (
-            ("Package", "com.ubuntu.test"),
+            ("Package", "com.example.test"),
             ("Version", "1.0"),
             ("Click-Version", "0.4"),
             ("Architecture", "all"),
@@ -212,7 +212,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         touch(os.path.join(scratch, ".click", "evil-file"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -231,7 +231,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         scratch = os.path.join(self.temp_dir, "scratch")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -239,7 +239,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
                 "framework": "ubuntu-sdk-13.10",
             }, f)
         self.builder.add_file(scratch, "/")
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0_multi.click")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0_multi.click")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         self.assertEqual("multi", self.extract_field(path, "Architecture"))
@@ -260,7 +260,7 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         scratch = os.path.join(self.temp_dir, "scratch")
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -322,7 +322,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
         touch(os.path.join(scratch, ".git", "config"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
-                "name": "com.ubuntu.test",
+                "name": "com.example.test",
                 "version": "1.0",
                 "maintainer": "Foo Bar <foo@example.org>",
                 "title": "test title",
@@ -332,7 +332,7 @@ class TestClickSourceBuilder(TestCase, TestClickBuilderBaseMixin):
             # build() overrides this back to 0o644
             os.fchmod(f.fileno(), 0o600)
         self.builder.add_file(scratch, "./")
-        path = os.path.join(self.temp_dir, "com.ubuntu.test_1.0.tar.gz")
+        path = os.path.join(self.temp_dir, "com.example.test_1.0.tar.gz")
         self.assertEqual(path, self.builder.build(self.temp_dir))
         self.assertTrue(os.path.exists(path))
         with tarfile.open(path, mode="r:gz") as tar:

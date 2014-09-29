@@ -331,14 +331,6 @@ class TestClickSingleDB(TestCase):
                 self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 0})
             preloads["click_find_on_path"].return_value = True
             self.db.maybe_remove("a", "1.0")
-            gcinuse_path = os.path.join(
-                self.temp_dir, ".click", "users", "@gcinuse", "a")
-            self.assertTrue(os.path.islink(gcinuse_path))
-            self.assertEqual(version_path, os.readlink(gcinuse_path))
-            self.assertTrue(os.path.exists(version_path))
-            self.db.maybe_remove("a", "1.0")
-            self.assertTrue(os.path.islink(gcinuse_path))
-            self.assertEqual(version_path, os.readlink(gcinuse_path))
             self.assertTrue(os.path.exists(version_path))
 
     def test_maybe_remove_not_running(self):
@@ -358,9 +350,6 @@ class TestClickSingleDB(TestCase):
                 self.g_spawn_sync_side_effect, {b"ubuntu-app-pid": 1 << 8})
             preloads["click_find_on_path"].return_value = True
             self.db.maybe_remove("a", "1.0")
-            gcinuse_path = os.path.join(
-                self.temp_dir, ".click", "users", "@gcinuse", "a")
-            self.assertFalse(os.path.islink(gcinuse_path))
             self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "a")))
 
     def test_gc(self):
@@ -399,8 +388,9 @@ class TestClickSingleDB(TestCase):
             preloads["click_find_on_path"].return_value = True
             self.db.gc()
             self.assertTrue(os.path.exists(a_path))
+            self.assertFalse(os.path.exists(b_gcinuse_path))
             self.assertFalse(os.path.exists(b_path))
-            self.assertTrue(os.path.exists(c_path))
+            self.assertFalse(os.path.exists(c_path))
 
     def test_gc_ignores_non_directory(self):
         with self.run_in_subprocess(

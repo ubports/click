@@ -13,21 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Integration tests for the click CLI contents command."""
+"""Integration tests for the click CLI list command."""
 
-import re
+import os
 import subprocess
 
 from .helpers import ClickTestCase
 
 
-class TestContents(ClickTestCase):
-    def test_contents(self):
-        name = "com.example.contents"
-        path_to_click = self._make_click(name)
-        output = subprocess.check_output([
-            self.click_binary, "contents", path_to_click],
+class TestList(ClickTestCase):
+    def test_list_simple(self):
+        name = "com.ubuntu.verify-ok"
+        path_to_click = self._make_click(name, framework="")
+        user = os.environ.get("USER", "root")
+        self.click_install(path_to_click, name, user)
+        output = subprocess.check_output(
+            [self.click_binary, "list", "--user=%s" % user],
             universal_newlines=True)
-        self.assertTrue(re.search(
-            r'-rw-r[-w]-r-- root/root\s+[0-9]+\s+[0-9-]+ [0-9:]+ ./README',
-            output))
+        self.assertIn(name, output)

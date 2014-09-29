@@ -519,7 +519,10 @@ click_install_file (PkPlugin *plugin, PkTransaction *transaction,
 	i = 0;
 	argv[i++] = g_strdup ("click");
 	argv[i++] = g_strdup ("install");
-	argv[i++] = g_strdup ("--allow-unauthenticated");
+	if (!pk_bitfield_contain (pk_transaction_get_transaction_flags (transaction),
+				  PK_TRANSACTION_FLAG_ENUM_ONLY_TRUSTED)) {
+		argv[i++] = g_strdup ("--allow-unauthenticated");
+	}
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
 	if (username)

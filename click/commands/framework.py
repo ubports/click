@@ -50,17 +50,17 @@ def run(argv):
         "info",
         help="show info about a specific framework")
     info_parser.add_argument(
-        "framework_name", 
+        "framework_name",
         help="framework name with the information")
     info_parser.set_defaults(func=info)
     get_field_parser = subparsers.add_parser(
         "get-field",
         help="get a field from a given framework")
     get_field_parser.add_argument(
-        "framework_name", 
+        "framework_name",
         help="framework name with the information")
     get_field_parser.add_argument(
-        "field_name", 
+        "field_name",
         help="the field name (e.g. base-version)")
     get_field_parser.set_defaults(func=get_field)
 

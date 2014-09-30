@@ -28,6 +28,17 @@ def list(parser, args):
     return 0
 
 
+def info(parser, args):
+    framework = Click.Framework.open(args.framework_name)
+    for field in sorted(framework.get_fields()):
+        print("%s: %s" % (field, framework.get_field(field)))
+
+
+def get_field(parser, args):
+    framework = Click.Framework.open(args.framework_name)
+    print(framework.get_field(args.field_name))
+
+
 def run(argv):
     parser = ArgumentParser("click framework")
     subparsers = parser.add_subparsers()
@@ -35,6 +46,24 @@ def run(argv):
         "list",
         help="list available frameworks")
     list_parser.set_defaults(func=list)
+    info_parser = subparsers.add_parser(
+        "info",
+        help="show info about a specific framework")
+    info_parser.add_argument(
+        "framework_name",
+        help="framework name with the information")
+    info_parser.set_defaults(func=info)
+    get_field_parser = subparsers.add_parser(
+        "get-field",
+        help="get a field from a given framework")
+    get_field_parser.add_argument(
+        "framework_name",
+        help="framework name with the information")
+    get_field_parser.add_argument(
+        "field_name",
+        help="the field name (e.g. base-version)")
+    get_field_parser.set_defaults(func=get_field)
+
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()

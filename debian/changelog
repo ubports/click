@@ -1,3 +1,11 @@
+click (0.4.34) UNRELEASED; urgency=medium
+
+  [ Michael Vogt ]
+  * Demote ubuntu-app-launch-tools from a click recommends to a suggests,
+    since they are not needed on server installs.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 01 Oct 2014 12:28:42 +0100
+
 click (0.4.33) utopic; urgency=medium
 
   [ Pete Woods ]

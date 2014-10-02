@@ -557,12 +557,26 @@ class ClickChroot:
         return self.clean()
 
     def destroy(self):
-        if not self.exists():
-            raise ClickChrootDoesNotExistException(
-                "Chroot %s does not exist" % self.full_name)
-        os.remove(self.chroot_config)
-        mount = "%s/%s" % (self.chroots_dir, self.full_name)
-        shutil.rmtree(mount)
+        # remove config
+        if os.path.exists(self.chroot_config):
+            os.remove(self.chroot_config)
+        # find all schroot mount points, this is actually quite complicated
+        mount_dir = os.path.abspath(
+            os.path.join(self.chroots_dir, "..", "mount"))
+        needle = os.path.join(mount_dir, self.full_name)
+        all_mounts = []
+        with open("/proc/mounts") as f:
+            for line in f.readlines():
+                mp = line.split()[1]
+                if mp.startswith(needle):
+                    all_mounts.append(mp)
+        # reverse order is important in case of submounts
+        for mp in sorted(all_mounts, key=len, reverse=True):
+            subprocess.call(["umount", mp])
+        # now remove the rest
+        chroot_dir = "%s/%s" % (self.chroots_dir, self.full_name)
+        if os.path.exists(chroot_dir):
+            shutil.rmtree(chroot_dir)
         return 0
 
     def begin_session(self):

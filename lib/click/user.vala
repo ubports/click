@@ -598,9 +598,28 @@ public class User : Object {
 					       old_version, version, name);
 	}
 
+	private string
+	get_dbus_session_bus_env_for_current_user()
+	{
+		string uid = "%i".printf((int)Posix.getuid());
+		var dbus_session_file = Path.build_filename(
+			"/run", "user", uid, "dbus-session");
+		string session_env;
+		try {
+			FileUtils.get_contents(dbus_session_file, out session_env);
+		} catch (Error e) {
+			warning("Can not get the dbus session to stop app (%s)", e.message);
+		}
+		return session_env;
+	}
+
 	private bool
 	stop_single_app (string app_id)
 	{
+		// get the users dbus session when we run as root first as this
+		// is where ubuntu-app-stop listens
+		string envp[1] = {get_dbus_session_bus_env_for_current_user()};
+
 		string[] command = {
 			"ubuntu-app-stop", app_id
 		};
@@ -608,9 +627,8 @@ public class User : Object {
 		try {
 			int exit_status;
 			Process.spawn_sync
-			(null, command, null,
-			 SpawnFlags.SEARCH_PATH |
-			 SpawnFlags.STDOUT_TO_DEV_NULL,
+			(null, command, envp,
+			 SpawnFlags.SEARCH_PATH,
 			 null, null, null, out exit_status);
 			res = Process.check_exit_status (exit_status);
 		} catch (Error e) {

@@ -601,9 +601,9 @@ public class User : Object {
 	private string
 	get_dbus_session_bus_env_for_current_user()
 	{
-		string uid = "%i".printf((int)Posix.getuid());
+		string euid = "%i".printf((int)(Posix.geteuid ()));
 		var dbus_session_file = Path.build_filename(
-			"/run", "user", uid, "dbus-session");
+			"/run", "user", euid, "dbus-session");
 		string session_env;
 		try {
 			FileUtils.get_contents(dbus_session_file, out session_env);
@@ -618,7 +618,9 @@ public class User : Object {
 	{
 		// get the users dbus session when we run as root first as this
 		// is where ubuntu-app-stop listens
-		string envp[1] = {get_dbus_session_bus_env_for_current_user()};
+		string[] envp = {
+			get_dbus_session_bus_env_for_current_user()
+		};
 
 		string[] command = {
 			"ubuntu-app-stop", app_id

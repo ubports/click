@@ -607,6 +607,7 @@ public class User : Object {
 		string session_env;
 		try {
 			FileUtils.get_contents(dbus_session_file, out session_env);
+			session_env = session_env.strip();
 		} catch (Error e) {
 			warning("Can not get the dbus session to stop app (%s)", e.message);
 		}
@@ -618,9 +619,8 @@ public class User : Object {
 	{
 		// get the users dbus session when we run as root first as this
 		// is where ubuntu-app-stop listens
-		string[] envp = {
-			get_dbus_session_bus_env_for_current_user()
-		};
+		string[] envp = Environ.get();
+		envp + = get_dbus_session_bus_env_for_current_user();
 
 		string[] command = {
 			"ubuntu-app-stop", app_id

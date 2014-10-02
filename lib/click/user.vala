@@ -620,7 +620,7 @@ public class User : Object {
 		// get the users dbus session when we run as root first as this
 		// is where ubuntu-app-stop listens
 		string[] envp = Environ.get();
-		envp + = get_dbus_session_bus_env_for_current_user();
+		envp += get_dbus_session_bus_env_for_current_user();
 
 		string[] command = {
 			"ubuntu-app-stop", app_id

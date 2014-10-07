@@ -30,7 +30,6 @@ class TestInfo(ClickTestCase):
             self.click_binary, "info", path_to_click], universal_newlines=True)
         self.assertEqual(name, json.loads(output)["name"])
 
-
     def test_info_installed_click(self):
         name = "com.example.foo"
         user = os.environ.get("USER", "root")
@@ -54,4 +53,13 @@ class TestInfo(ClickTestCase):
             [self.click_binary, "info",
              "/opt/click.ubuntu.com/%s/%s/README" % (name, version)],
             universal_newlines=True)
+        self.assertEqual(name, json.loads(output)["name"])
+
+    def test_info_different_extension(self):
+        name = "org.example.info"
+        raw_path = self._make_click(name)
+        path = "%s.extra" % raw_path
+        os.rename(raw_path, path)
+        output = subprocess.check_output([
+            self.click_binary, "info", path], universal_newlines=True)
         self.assertEqual(name, json.loads(output)["name"])

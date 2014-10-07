@@ -4,6 +4,11 @@ click (0.4.34) UNRELEASED; urgency=medium
   * Demote ubuntu-app-launch-tools from a click recommends to a suggests,
     since they are not needed on server installs.
 
+  [ Colin Watson ]
+  * Make "click info" always try opening the input file as a package and
+    only try to interpret it as a file in an installed package if that
+    fails, rather than guessing by the input file extension.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 01 Oct 2014 12:28:42 +0100
 
 click (0.4.33) utopic; urgency=medium

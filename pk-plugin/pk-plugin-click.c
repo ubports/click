@@ -637,6 +637,11 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 	GError *error = NULL;
 	gchar *summary = NULL;
 
+	// PK does not set a PATH, but we need one for removal
+	const gchar *old_path = g_getenv("PATH");
+	if(old_path == NULL)
+		g_setenv("PATH", DEFAULT_PATH, 0);
+
 	username = click_get_username_for_uid
 		(pk_transaction_get_uid (transaction));
 	if (!username) {
@@ -701,6 +706,9 @@ click_remove_package (PkPlugin *plugin, PkTransaction *transaction,
 	ret = TRUE;
 
 out:
+	if(old_path == NULL)
+		g_unsetenv("PATH");
+
 	g_free (summary);
 	if (error)
 		g_error_free (error);

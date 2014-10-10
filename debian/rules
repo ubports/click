@@ -12,7 +12,7 @@ endif
 export DEB_LDFLAGS_MAINT_STRIP := -Wl,-Bsymbolic-functions
 
 %:
-	dh $@ --with autoreconf,gir,python3,sphinxdoc \
+	dh $@ --with autoreconf,gir,python3,sphinxdoc,systemd \
 		--buildsystem autoconf $(EXTRA_DH_OPTIONS)
 
 PY3REQUESTED := $(shell py3versions -r)

@@ -9,6 +9,9 @@ click (0.4.34) UNRELEASED; urgency=medium
     only try to interpret it as a file in an installed package if that
     fails, rather than guessing by the input file extension.
 
+  [ Pete Woods ]
+  * Include Canonical's cmake-extras project in the schroot.
+
  -- Colin Watson <cjwatson@ubuntu.com>  Wed, 01 Oct 2014 12:28:42 +0100
 
 click (0.4.33) utopic; urgency=medium

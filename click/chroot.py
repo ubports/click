@@ -104,6 +104,7 @@ extra_packages = {
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
+        "cmake-extras",
         "google-mock:TARGET",
         "libboost1.55-dev:TARGET",
         "libcontent-hub-dev:TARGET",

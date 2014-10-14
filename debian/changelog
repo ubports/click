@@ -3,6 +3,8 @@ click (0.4.34) UNRELEASED; urgency=medium
   [ Michael Vogt ]
   * Demote ubuntu-app-launch-tools from a click recommends to a suggests,
     since they are not needed on server installs.
+  * Use dh-systemd to enable click system and user hook integration
+    (LP: #1379657).
 
   [ Colin Watson ]
   * Make "click info" always try opening the input file as a package and

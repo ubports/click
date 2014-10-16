@@ -44,6 +44,7 @@ framework_base = {
     "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
     "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
     "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
+    "ubuntu-core-14.10": "ubuntu-core-14.10",
     }
 
 
@@ -51,6 +52,7 @@ framework_series = {
     "ubuntu-sdk-13.10": "saucy",
     "ubuntu-sdk-14.04": "trusty",
     "ubuntu-sdk-14.10": "utopic",
+    "ubuntu-core-14.10": "utopic",
     }
 
 
@@ -155,6 +157,8 @@ extra_packages = {
         "ubuntu-html5-theme:TARGET",
         "ubuntu-ui-toolkit-doc",
         ],
+    "ubuntu-core-14.10": [
+    ],
     }
 
 

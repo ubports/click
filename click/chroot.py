@@ -77,7 +77,6 @@ extra_packages = {
         ],
     "ubuntu-sdk-14.04": [
         "cmake",
-        "cmake-extras",
         "google-mock:TARGET",
         "intltool",
         "libboost1.54-dev:TARGET",

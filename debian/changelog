@@ -10,6 +10,8 @@ click (0.4.34) UNRELEASED; urgency=medium
   * Make "click info" always try opening the input file as a package and
     only try to interpret it as a file in an installed package if that
     fails, rather than guessing by the input file extension.
+  * Allow "click chroot install" and "click chroot upgrade" to operate on
+    sessions.
 
   [ Pete Woods ]
   * Include Canonical's cmake-extras project in the schroot.

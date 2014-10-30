@@ -72,7 +72,9 @@ def create(parser, args):
 
 def install(parser, args):
     packages = args.packages
-    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    chroot = ClickChroot(
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.install(*packages)
@@ -120,7 +122,9 @@ def maint(parser, args):
 
 
 def upgrade(parser, args):
-    chroot = ClickChroot(args.architecture, args.framework, name=args.name)
+    chroot = ClickChroot(
+        args.architecture, args.framework, name=args.name,
+        session=args.session)
     with message_on_error(
             ClickChrootDoesNotExistException, ErrorMessages.NOT_EXISTS):
         return chroot.upgrade()
@@ -194,10 +198,18 @@ def run(argv):
     upgrade_parser = subparsers.add_parser(
         "upgrade",
         help="upgrade the chroot")
+    upgrade_parser.add_argument(
+        "-n", "--session-name",
+        dest='session',
+        help="persistent chroot session name to upgrade")
     upgrade_parser.set_defaults(func=upgrade)
     install_parser = subparsers.add_parser(
         "install",
         help="install packages in the chroot")
+    install_parser.add_argument(
+        "-n", "--session-name",
+        dest='session',
+        help="persistent chroot session name to install packages in")
     install_parser.add_argument(
         "packages", nargs="+",
         help="packages to install")

@@ -5,6 +5,7 @@ click (0.4.34) UNRELEASED; urgency=medium
     since they are not needed on server installs.
   * Use dh-systemd to enable click system and user hook integration
     (LP: #1379657).
+  * add ubuntu-sdk-15.04 based on ubuntu-sdk-libs/ubuntu-sdk-libs-dev
 
   [ Colin Watson ]
   * Make "click info" always try opening the input file as a package and
@@ -21,7 +22,7 @@ click (0.4.34) UNRELEASED; urgency=medium
   [ Pete Woods ]
   * Include Canonical's cmake-extras project in the schroot.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 01 Oct 2014 12:28:42 +0100
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Thu, 30 Oct 2014 12:20:26 +0100
 
 click (0.4.33) utopic; urgency=medium
 

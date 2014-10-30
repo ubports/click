@@ -12,6 +12,11 @@ click (0.4.34) UNRELEASED; urgency=medium
     fails, rather than guessing by the input file extension.
   * Allow "click chroot install" and "click chroot upgrade" to operate on
     sessions.
+  
+  [ David Planella ]
+  * Adds internationalization tools and CMake macros required by the
+    new Qt Creator app and scope templates that provide internationalization
+    code.
 
   [ Pete Woods ]
   * Include Canonical's cmake-extras project in the schroot.

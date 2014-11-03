@@ -6,6 +6,9 @@ click (0.4.34) UNRELEASED; urgency=medium
   * Use dh-systemd to enable click system and user hook integration
     (LP: #1379657).
   * add ubuntu-sdk-15.04 based on ubuntu-sdk-libs/ubuntu-sdk-libs-dev
+  * click/tests/preload.h:
+    - replace deprecated "Attributes:" with annotations on the
+      identifier
 
   [ Colin Watson ]
   * Make "click info" always try opening the input file as a package and

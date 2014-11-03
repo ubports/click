@@ -8,6 +8,7 @@ preload.gir: preload.h
 		--pkg click-0.4 \
 		-I$(top_builddir)/lib/click -L$(top_builddir)/lib/click \
 		--accept-unprefixed --warn-all \
+		--libtool "$(LIBTOOL)" \
 		$< --output $@
 
 noinst_SCRIPTS = test_paths.py

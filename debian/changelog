@@ -1,4 +1,4 @@
-click (0.4.34.1) UNRELEASED; urgency=medium
+click (0.4.34.2) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Demote ubuntu-app-launch-tools from a click recommends to a suggests,
@@ -9,6 +9,10 @@ click (0.4.34.1) UNRELEASED; urgency=medium
   * click/tests/preload.h:
     - replace deprecated "Attributes:" with annotations on the
       identifier
+  * click/tests/Makefile.am:
+    - add --libtool to g-ir-scanner so that it uses the generated
+      libtool instead of the system libtool which is now part of
+      the libtool-bin package in vivid
 
   [ Colin Watson ]
   * Make "click info" always try opening the input file as a package and

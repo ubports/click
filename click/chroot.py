@@ -38,12 +38,18 @@ from textwrap import dedent
 
 framework_base = {
     "ubuntu-sdk-13.10": "ubuntu-sdk-13.10",
+    # 14.04
     "ubuntu-sdk-14.04-html": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-papi": "ubuntu-sdk-14.04",
     "ubuntu-sdk-14.04-qml": "ubuntu-sdk-14.04",
+    # 14.10
     "ubuntu-sdk-14.10-html": "ubuntu-sdk-14.10",
     "ubuntu-sdk-14.10-papi": "ubuntu-sdk-14.10",
     "ubuntu-sdk-14.10-qml": "ubuntu-sdk-14.10",
+    # 15.04
+    "ubuntu-sdk-15.04-html": "ubuntu-sdk-15.04",
+    "ubuntu-sdk-15.04-papi": "ubuntu-sdk-15.04",
+    "ubuntu-sdk-15.04-qml": "ubuntu-sdk-15.04",
     }
 
 
@@ -51,6 +57,7 @@ framework_series = {
     "ubuntu-sdk-13.10": "saucy",
     "ubuntu-sdk-14.04": "trusty",
     "ubuntu-sdk-14.10": "utopic",
+    "ubuntu-sdk-15.04": "vivid",
     }
 
 
@@ -78,6 +85,7 @@ extra_packages = {
     "ubuntu-sdk-14.04": [
         "cmake",
         "google-mock:TARGET",
+        "intltool",
         "libboost1.54-dev:TARGET",
         "libjsoncpp-dev:TARGET",
         "libprocess-cpp-dev:TARGET",
@@ -104,7 +112,9 @@ extra_packages = {
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
+        "cmake-extras",
         "google-mock:TARGET",
+        "intltool",
         "libboost1.55-dev:TARGET",
         "libcontent-hub-dev:TARGET",
         "libjsoncpp-dev:TARGET",
@@ -153,6 +163,11 @@ extra_packages = {
         "qttools5-dev-tools:TARGET",
         "ubuntu-html5-theme:TARGET",
         "ubuntu-ui-toolkit-doc",
+        ],
+    "ubuntu-sdk-15.04": [
+        # the sdk libs
+        "ubuntu-sdk-libs:TARGET",
+        "ubuntu-sdk-libs-dev:TARGET",
         ],
     }
 

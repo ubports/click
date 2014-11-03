@@ -10,6 +10,10 @@ if [ "$1" = configure ]; then
 
 	mkdir -p -m 755 /opt/click.ubuntu.com
 	chown clickpkg:clickpkg /opt/click.ubuntu.com
+
+	# dh-systemd has no support yet for user systemd units
+	# so we need to do this manually here
+	systemctl --global enable click-user-hooks.service || true
 fi
 
 #DEBHELPER#

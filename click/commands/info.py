@@ -49,12 +49,12 @@ def get_manifest(options, arg):
         if registry.has_package_name(arg):
             return json_object_to_python(registry.get_manifest(arg))
 
-    if arg.endswith(".click"):
+    try:
         with closing(DebFile(filename=arg)) as package:
             with package.control.get_file(
                     "manifest", encoding="UTF-8") as manifest_file:
                 return _load_manifest(manifest_file)
-    else:
+    except Exception:
         pkgdir = Click.find_package_directory(arg)
         manifest_path = glob.glob(
             os.path.join(pkgdir, ".click", "info", "*.manifest"))

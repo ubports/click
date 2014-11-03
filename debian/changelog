@@ -1,4 +1,4 @@
-click (0.4.34) UNRELEASED; urgency=medium
+click (0.4.34.1) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Demote ubuntu-app-launch-tools from a click recommends to a suggests,

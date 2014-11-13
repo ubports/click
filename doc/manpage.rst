@@ -124,7 +124,7 @@ destroy
 end-session SESSION
     End a persistent chroot session.
 
-install PACKAGES
+install [-n SESSION] PACKAGES
     Install packages in the chroot.
 
 maint [-n SESSION] COMMAND ARGUMENTS
@@ -143,7 +143,7 @@ run [-n SESSION] COMMAND ARGUMENTS
     session must previously have been created by ``click chroot
     begin-session``.
 
-upgrade
+upgrade [-n SESSION]
     Upgrade the chroot.
 
 click contents PATH

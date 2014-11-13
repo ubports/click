@@ -1,20 +1,35 @@
-click (0.4.34) UNRELEASED; urgency=medium
+click (0.4.34.2) vivid; urgency=medium
 
   [ Michael Vogt ]
   * Demote ubuntu-app-launch-tools from a click recommends to a suggests,
     since they are not needed on server installs.
   * Use dh-systemd to enable click system and user hook integration
     (LP: #1379657).
+  * add ubuntu-sdk-15.04 based on ubuntu-sdk-libs/ubuntu-sdk-libs-dev
+  * click/tests/preload.h:
+    - replace deprecated "Attributes:" with annotations on the
+      identifier
+  * click/tests/Makefile.am:
+    - add --libtool to g-ir-scanner so that it uses the generated
+      libtool instead of the system libtool which is now part of
+      the libtool-bin package in vivid
 
   [ Colin Watson ]
   * Make "click info" always try opening the input file as a package and
     only try to interpret it as a file in an installed package if that
     fails, rather than guessing by the input file extension.
+  * Allow "click chroot install" and "click chroot upgrade" to operate on
+    sessions.
+  
+  [ David Planella ]
+  * Adds internationalization tools and CMake macros required by the
+    new Qt Creator app and scope templates that provide internationalization
+    code.
 
   [ Pete Woods ]
   * Include Canonical's cmake-extras project in the schroot.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 01 Oct 2014 12:28:42 +0100
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 03 Nov 2014 12:49:25 +0000
 
 click (0.4.33) utopic; urgency=medium
 

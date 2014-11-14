@@ -50,6 +50,8 @@ framework_base = {
     "ubuntu-sdk-15.04-html": "ubuntu-sdk-15.04",
     "ubuntu-sdk-15.04-papi": "ubuntu-sdk-15.04",
     "ubuntu-sdk-15.04-qml": "ubuntu-sdk-15.04",
+    # core
+    "ubuntu-core-15.04-dev1": "ubuntu-core-15.04",
     }
 
 
@@ -58,6 +60,7 @@ framework_series = {
     "ubuntu-sdk-14.04": "trusty",
     "ubuntu-sdk-14.10": "utopic",
     "ubuntu-sdk-15.04": "vivid",
+    "ubuntu-core-15.04": "vivid",
     }
 
 
@@ -168,6 +171,10 @@ extra_packages = {
         # the sdk libs
         "ubuntu-sdk-libs:TARGET",
         "ubuntu-sdk-libs-dev:TARGET",
+        ],
+    "ubuntu-core-15.04-dev1": [
+        "ubuntu-core-libs:TARGET",
+        "ubuntu-core-libs-dev:TARGET",
         ],
     }
 

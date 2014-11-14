@@ -1,3 +1,12 @@
+click (0.4.35) UNRELEASED; urgency=low
+
+  * lp:~mvo/click/add-run-shm:
+    - Ensure /run/shm is available in a click chroot
+  * lp:~mvo/click/ubuntu-core-framework:
+    - Add "ubuntu-core-15.04-dev1" click chroot
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 14 Nov 2014 13:10:51 +0100
+
 click (0.4.34.2) vivid; urgency=medium
 
   [ Michael Vogt ]

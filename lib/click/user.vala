@@ -616,7 +616,7 @@ public class User : Object {
 	}
 
 	private void
-	run_user_hooks_for_all_logged_in_users (string package, string old_version,
+	run_user_hooks_for_all_logged_in_users (string package, string? old_version,
 											string version) throws IOError
 	{
 		LogindManager logind = Bus.get_proxy_sync (BusType.SYSTEM,

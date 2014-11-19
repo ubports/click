@@ -619,18 +619,24 @@ public class User : Object {
 	run_user_hooks_for_all_logged_in_users (string package, string? old_version,
 											string version) throws IOError
 	{
-		LogindManager logind = Bus.get_proxy_sync (BusType.SYSTEM,
-												   "org.freedesktop.login1",
-												   "/org/freedesktop/login1");
-		var users = logind.ListUsers();
-		foreach (LogindUser user in users)
-		{
-			// FIXME: ideally we would read from /etc/adduser.conf
-			if(user.uid >= 1000 && user.uid <= 30000)
+		try {
+			LogindManager logind = Bus.get_proxy_sync (
+				BusType.SYSTEM,
+				"org.freedesktop.login1",
+				"/org/freedesktop/login1");
+			var users = logind.ListUsers();
+			foreach (LogindUser user in users)
 			{
-				package_install_hooks (db, package,
-									   old_version, version, user.name);
+				// FIXME: ideally we would read from /etc/adduser.conf
+				if(user.uid >= 1000 && user.uid <= 30000)
+				{
+					package_install_hooks (db, package,
+										   old_version, version, user.name);
+				}
 			}
+		} catch (Error e) {
+			warning ("Can not connect to logind");
+			return;
 		}
 	}
 

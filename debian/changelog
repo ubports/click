@@ -1,3 +1,9 @@
+click (0.4.35.1) UNRELEASED; urgency=low
+
+  * add qt5-qmake-arm-linux-gnueabihf to chroot (LP: #1393698)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Tue, 02 Dec 2014 10:59:49 +0100
+
 click (0.4.35) vivid; urgency=low
 
   [ Michael Vogt ]

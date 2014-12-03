@@ -179,6 +179,8 @@ extra_packages = {
         # we help the apt resolver here until the 
         #  oxideqt-codecs/oxidec-codecs-extras is sorted
         "oxideqt-codecs-extra",
+        # FIXME: we need a native python or we can't byte compile
+        "python3.4",
         ],
     "ubuntu-core-15.04-dev1": [
         "ubuntu-core-libs:TARGET",

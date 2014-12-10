@@ -287,13 +287,15 @@ class TestClickFrameworkValidation(TestCase):
         self.builder = ClickBuilder()
         for framework_name in ("ubuntu-sdk-13.10",
                                "ubuntu-sdk-14.04-papi",
-                               "ubuntu-sdk-14.04-html"):
+                               "ubuntu-sdk-14.04-html",
+                               "docker-sdk-1.3"):
             self._create_mock_framework_file(framework_name)
 
     def test_validate_framework_good(self):
         valid_framework_values = (
             "ubuntu-sdk-13.10",
             "ubuntu-sdk-14.04-papi, ubuntu-sdk-14.04-html",
+            "ubuntu-sdk-13.10, docker-sdk-1.3",
         )
         for framework in valid_framework_values:
             self.builder._validate_framework(framework)

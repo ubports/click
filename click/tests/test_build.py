@@ -134,6 +134,8 @@ class TestClickBuilder(TestCase, TestClickBuilderBaseMixin):
         touch(os.path.join(scratch, ".git", "config"))
         with mkfile(os.path.join(scratch, "toplevel")) as f:
             f.write("test /toplevel\n")
+        os.symlink(
+            "file-does-not-exist", os.path.join(scratch, "broken-symlink"))
         with mkfile(os.path.join(scratch, "manifest.json")) as f:
             json.dump({
                 "name": "com.example.test",

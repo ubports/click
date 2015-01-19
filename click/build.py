@@ -274,7 +274,10 @@ class ClickBuilder(ClickBuilderBase):
             with open(md5sums_path, "w") as md5sums:
                 for path in sorted(self.list_files(root_path)):
                     md5 = hashlib.md5()
-                    with open(os.path.join(root_path, path), "rb") as f:
+                    p = os.path.join(root_path, path)
+                    if not os.path.exists(p):
+                        continue
+                    with open(p, "rb") as f:
                         while True:
                             buf = f.read(16384)
                             if not buf:

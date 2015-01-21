@@ -46,6 +46,9 @@ def run(argv):
     parser.add_option(
         "--allow-unauthenticated", default=False, action="store_true",
         help="allow installing packages with no signatures")
+    parser.add_option(
+        "--verbose", default=False, action="store_true",
+        help="be more verbose on install")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need package file name")
@@ -59,7 +62,8 @@ def run(argv):
         allow_unauthenticated=options.allow_unauthenticated)
     try:
         installer.install(
-            package_path, user=options.user, all_users=options.all_users)
+            package_path, user=options.user, all_users=options.all_users,
+            quiet=not options.verbose)
     except ClickInstallerError as e:
         print("Cannot install %s: %s" % (package_path, e), file=sys.stderr)
         return 1

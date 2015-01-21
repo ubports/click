@@ -10,6 +10,8 @@ click (0.4.35) vivid; urgency=low
   * lp:~mvo/click/do-not-crash-in-build-on-broken-symlinks:
     - do not crash when building a click package that contains broken
       symlinks
+  * lp:~mvo/click/dpkg-less-verbose:
+    - do not show dpkg output on install unless --verbose is used
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

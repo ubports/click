@@ -7,6 +7,9 @@ click (0.4.35) vivid; urgency=low
     - Add "ubuntu-core-15.04-dev1" click chroot
   * lp:~mvo/click/no-error-no-missing-systemctl:
     - fix a spurious error message on systems without systemctl
+  * lp:~mvo/click/do-not-crash-in-build-on-broken-symlinks:
+    - do not crash when building a click package that contains broken
+      symlinks
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

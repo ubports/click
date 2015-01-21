@@ -17,6 +17,8 @@ click (0.4.36) UNRELEASED; urgency=low
     - add ubuntu-sdk-libs-tools and oxide-codecs-extra to the chroot
   * lp:~mvo/click/lp1394256-run-user-hooks-on-remove-too:
     - Run the click remove user hooks for all logged in users.
+  * click/chroot.py:
+    - use string.format() for chroot TARGET selection
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

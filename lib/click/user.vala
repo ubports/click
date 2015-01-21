@@ -612,13 +612,13 @@ public class User : Object {
 
 		// run user hooks for all logged in users
 		if (name == ALL_USERS)
-			run_user_hooks_for_all_logged_in_users (package, old_version, version);
+			run_user_install_hooks_for_all_logged_in_users (package, old_version, version);
 	}
 
-	private void
-	run_user_hooks_for_all_logged_in_users (string package, string? old_version,
-											string version) throws IOError
+	private string[]
+	get_logged_in_users()
 	{
+		string[] logged_in_users = {};
 		try {
 			LogindManager logind = Bus.get_proxy_sync (
 				BusType.SYSTEM,
@@ -630,14 +630,32 @@ public class User : Object {
 				// FIXME: ideally we would read from /etc/adduser.conf
 				if(user.uid >= 1000 && user.uid <= 30000)
 				{
-					package_install_hooks (db, package,
-										   old_version, version, user.name);
+					logged_in_users += user.name;
 				}
 			}
 		} catch (Error e) {
 			warning ("Can not connect to logind");
-			return;
 		}
+		return logged_in_users;
+	}
+
+	private void
+	run_user_install_hooks_for_all_logged_in_users (string package, 
+													string? old_version,
+													string version) throws IOError
+	{
+		foreach (string username in get_logged_in_users())
+			package_install_hooks (db, package,
+								   old_version, version, username);
+	}
+
+	private void
+	run_user_remove_hooks_for_all_logged_in_users (string package, 
+												   string old_version) throws IOError
+	{
+		foreach (string username in get_logged_in_users())
+			package_remove_hooks (db, package,
+								  old_version, username);
 	}
 
 	private bool
@@ -730,6 +748,10 @@ public class User : Object {
 
 		if (! is_pseudo_user)
 			package_remove_hooks (db, package, old_version, name);
+
+		// run user hooks for all logged in users
+		if (name == ALL_USERS)
+			run_user_remove_hooks_for_all_logged_in_users (package, old_version);
 	}
 
 	/**

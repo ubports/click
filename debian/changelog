@@ -15,6 +15,8 @@ click (0.4.36) UNRELEASED; urgency=low
     - add qt5-qmake-arm-linux-gnueabihf to chroot (LP: #1393698)
   * lp:~mvo/click/chroot-15.04-multiarch:
     - add ubuntu-sdk-libs-tools and oxide-codecs-extra to the chroot
+  * lp:~mvo/click/lp1394256-run-user-hooks-on-remove-too:
+    - Run the click remove user hooks for all logged in users.
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

@@ -5,6 +5,8 @@ click (0.4.35) vivid; urgency=low
     - Ensure /run/shm is available in a click chroot
   * lp:~mvo/click/ubuntu-core-framework:
     - Add "ubuntu-core-15.04-dev1" click chroot
+  * lp:~mvo/click/no-error-no-missing-systemctl:
+    - fix a spurious error message on systems without systemctl
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

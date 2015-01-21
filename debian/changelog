@@ -12,6 +12,9 @@ click (0.4.35) vivid; urgency=low
       symlinks
   * lp:~mvo/click/dpkg-less-verbose:
     - do not show dpkg output on install unless --verbose is used
+  * lp:~mvo/click/lp1394256-run-user-hooks:
+    - ensures that click user hooks are run for all logged in users when
+      click is used with "--all-users".
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 

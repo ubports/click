@@ -171,6 +171,9 @@ extra_packages = {
         # the sdk libs
         "ubuntu-sdk-libs:TARGET",
         "ubuntu-sdk-libs-dev:TARGET",
+        # FIXME: this is only available on i386/amd64 currently
+        # FIXME2: this will be installed but useless on non armhf chroots
+        "qt5-qmake-arm-linux-gnueabihf",
         ],
     "ubuntu-core-15.04-dev1": [
         "ubuntu-core-libs:TARGET",

@@ -171,9 +171,16 @@ extra_packages = {
         # the sdk libs
         "ubuntu-sdk-libs:TARGET",
         "ubuntu-sdk-libs-dev:TARGET",
+        # the native build tools
+        "ubuntu-sdk-libs-tools",
         # FIXME: this is only available on i386/amd64 currently
         # FIXME2: this will be installed but useless on non armhf chroots
         "qt5-qmake-arm-linux-gnueabihf",
+        # FIXME: see
+        #  http://pad.lv/~mvo/oxide/crossbuild-friendly/+merge/234093
+        # we help the apt resolver here until the
+        #  oxideqt-codecs/oxidec-codecs-extras is sorted
+        "oxideqt-codecs-extra",
         ],
     "ubuntu-core-15.04-dev1": [
         "ubuntu-core-libs:TARGET",

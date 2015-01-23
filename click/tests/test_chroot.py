@@ -28,6 +28,7 @@ from textwrap import dedent
 
 from click.chroot import (
     ClickChroot,
+    generate_sources,
     strip_dev_series_from_framework,
 )
 from click.tests.helpers import TestCase, mock
@@ -48,7 +49,7 @@ class FakeClickChroot(ClickChroot):
         self._maint_kwargs = kwargs
         return 0
 
-    def _debootstrap(self, components, mount):
+    def _debootstrap(self, components, mount, archive_server):
         os.makedirs(os.path.join(mount, "etc", "apt"))
         os.makedirs(os.path.join(mount, "usr", "sbin"))
         os.makedirs(os.path.join(mount, "sbin"))
@@ -110,8 +111,10 @@ class TestClickChroot(TestCase):
     def test_gen_sources_archive_only(self):
         chroot = ClickChroot("amd64", "ubuntu-sdk-13.10", series="trusty")
         chroot.native_arch = "i386"
-        sources = chroot._generate_sources(
+        sources = generate_sources(
             chroot.series, chroot.native_arch, chroot.target_arch,
+            "http://archive.ubuntu.com/ubuntu",
+            "http://ports.ubuntu.com/ubuntu-ports",
             "main")
         self.assertEqual([
             'deb [arch=amd64] http://archive.ubuntu.com/ubuntu trusty main',
@@ -128,8 +131,10 @@ class TestClickChroot(TestCase):
     def test_gen_sources_mixed_archive_ports(self):
         chroot = ClickChroot("armhf", "ubuntu-sdk-13.10", series="trusty")
         chroot.native_arch = "i386"
-        sources = chroot._generate_sources(
+        sources = generate_sources(
             chroot.series, chroot.native_arch, chroot.target_arch,
+            "http://archive.ubuntu.com/ubuntu",
+            "http://ports.ubuntu.com/ubuntu-ports",
             "main")
         self.assertEqual([
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty main',
@@ -146,8 +151,10 @@ class TestClickChroot(TestCase):
     def test_gen_sources_ports_only(self):
         chroot = ClickChroot("armhf", "ubuntu-sdk-13.10", series="trusty")
         chroot.native_arch = "armel"
-        sources = chroot._generate_sources(
+        sources = generate_sources(
             chroot.series, chroot.native_arch, chroot.target_arch,
+            "http://archive.ubuntu.com/ubuntu",
+            "http://ports.ubuntu.com/ubuntu-ports",
             "main")
         self.assertEqual([
             'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty main',
@@ -164,8 +171,10 @@ class TestClickChroot(TestCase):
     def test_gen_sources_native(self):
         chroot = ClickChroot("i386", "ubuntu-sdk-14.04", series="trusty")
         chroot.native_arch = "i386"
-        sources = chroot._generate_sources(
+        sources = generate_sources(
             chroot.series, chroot.native_arch, chroot.target_arch,
+            "http://archive.ubuntu.com/ubuntu",
+            "http://ports.ubuntu.com/ubuntu-ports",
             "main")
         self.assertEqual([
             'deb [arch=i386] http://archive.ubuntu.com/ubuntu trusty main',

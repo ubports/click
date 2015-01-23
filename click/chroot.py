@@ -26,6 +26,8 @@ __all__ = [
     "ClickChrootDoesNotExistException",
     ]
 
+import urllib
+import urllib.request
 import os
 import pwd
 import re
@@ -34,6 +36,7 @@ import stat
 import subprocess
 import sys
 from textwrap import dedent
+from xml.etree import ElementTree
 
 
 framework_base = {
@@ -195,6 +198,54 @@ primary_arches = ["amd64", "i386"]
 non_meta_re = re.compile(r'^[a-zA-Z0-9+,./:=@_-]+$')
 
 
+GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+
+
+def get_geoip_country_code_prefix():
+    try:
+        with urllib.request.urlopen(GEOIP_SERVER) as f:
+            xml_data = f.read()
+        et = ElementTree.fromstring(xml_data)
+        return et.find("CountryCode").text.lower()+"."
+    except (ElementTree.ParseError, urllib.error.URLError):
+        pass
+    return ""
+
+
+def generate_sources(series, native_arch, target_arch,
+                     archive_mirror, ports_mirror, components):
+    """Generate a list of strings for apts sources.list.
+    Arguments:
+    series -- the distro series (e.g. vivid)
+    native_arch -- the native architecture (e.g. amd64)
+    target_arch -- the target architecture (e.g. armhf)
+    archive_mirror -- main mirror, e.g. http://archive.ubuntu.com/ubuntu
+    ports_mirror -- ports mirror, e.g. http://ports.ubuntu.com/ubuntu-ports
+    components -- the components as string, e.g. "main restricted universe"
+    """
+    pockets = ['%s' % series]
+    for pocket in ['updates', 'security']:
+        pockets.append('%s-%s' % (series, pocket))
+    sources = []
+    # write binary lines
+    arches = [target_arch]
+    if native_arch != target_arch:
+        arches.append(native_arch)
+    for arch in arches:
+        if arch not in primary_arches:
+            mirror = ports_mirror
+        else:
+            mirror = archive_mirror
+        for pocket in pockets:
+            sources.append("deb [arch=%s] %s %s %s" %
+                           (arch, mirror, pocket, components))
+    # write source lines
+    for pocket in pockets:
+        sources.append("deb-src %s %s %s" %
+                       (archive_mirror, pocket, components))
+    return sources
+
+
 def shell_escape(command):
     escaped = []
     for arg in command:
@@ -257,11 +308,7 @@ class ClickChroot:
         if chroots_dir is None:
             chroots_dir = "/var/lib/schroot/chroots"
         self.chroots_dir = chroots_dir
-        # this doesn't work because we are running this under sudo
-        if 'DEBOOTSTRAP_MIRROR' in os.environ:
-            self.archive = os.environ['DEBOOTSTRAP_MIRROR']
-        else:
-            self.archive = "http://archive.ubuntu.com/ubuntu"
+
         if "SUDO_USER" in os.environ:
             self.user = os.environ["SUDO_USER"]
         elif "PKEXEC_UID" in os.environ:
@@ -340,31 +387,6 @@ class ClickChroot:
                         users="\n".join(users),
                         mount=mount))
 
-    def _generate_sources(self, series, native_arch, target_arch, components):
-        ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
-        pockets = ['%s' % series]
-        for pocket in ['updates', 'security']:
-            pockets.append('%s-%s' % (series, pocket))
-        sources = []
-        # write binary lines
-        arches = [target_arch]
-        if native_arch != target_arch:
-            arches.append(native_arch)
-        for arch in arches:
-            if arch not in primary_arches:
-                mirror = ports_mirror
-            else:
-                mirror = self.archive
-            for pocket in pockets:
-                sources.append("deb [arch=%s] %s %s %s" %
-                               (arch, mirror, pocket, components))
-        # write source lines
-        for pocket in pockets:
-            sources.append("deb-src %s %s %s" %
-                           (self.archive, pocket, components))
-
-        return sources
-
     def _generate_daemon_policy(self, mount):
         daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
         with open(daemon_policy, "w") as policy:
@@ -419,7 +441,7 @@ class ClickChroot:
                         build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
-    def _debootstrap(self, components, mount):
+    def _debootstrap(self, components, mount, archive):
         subprocess.check_call([
             "debootstrap",
             "--arch", self.native_arch,
@@ -427,7 +449,7 @@ class ClickChroot:
             "--components=%s" % ','.join(components),
             self.series,
             mount,
-            self.archive
+            archive
             ])
 
     @property
@@ -477,7 +499,8 @@ class ClickChroot:
             proxy = os.environ["http_proxy"]
         if not proxy:
             proxy = subprocess.check_output(
-                'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
+                'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; \
+                 echo "$x"',
                 shell=True, universal_newlines=True).strip()
         build_pkgs = [
             # sort alphabetically
@@ -495,10 +518,18 @@ class ClickChroot:
             package = package.format(TARGET=self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)
-        self._debootstrap(components, mount)
-        sources = self._generate_sources(self.series, self.native_arch,
-                                         self.target_arch,
-                                         ' '.join(components))
+
+        country_code = get_geoip_country_code_prefix()
+        archive = "http://%sarchive.ubuntu.com/ubuntu" % country_code
+        ports_mirror = "http://%sports.ubuntu.com/ubuntu-ports" % country_code
+        # this doesn't work because we are running this under sudo
+        if 'DEBOOTSTRAP_MIRROR' in os.environ:
+            archive = os.environ['DEBOOTSTRAP_MIRROR']
+        self._debootstrap(components, mount, archive)
+        sources = generate_sources(self.series, self.native_arch,
+                                   self.target_arch,
+                                   archive, ports_mirror,
+                                   ' '.join(components))
         with open("%s/etc/apt/sources.list" % mount, "w") as sources_list:
             for line in sources:
                 print(line, file=sources_list)

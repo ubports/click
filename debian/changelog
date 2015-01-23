@@ -20,6 +20,11 @@ click (0.4.36) UNRELEASED; urgency=low
   * click/chroot.py:
     - use string.format() for chroot TARGET selection
 
+  [ Zoltan Balogh ]
+  * lp:~bzoltan/click/vivid-transition_mirrors:
+    - use geoip to guess the most suitable country mirror when creating
+      the click chroot
+
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
 
 click (0.4.35) vivid; urgency=low

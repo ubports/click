@@ -26,6 +26,8 @@ __all__ = [
     "ClickChrootDoesNotExistException",
     ]
 
+import urllib
+import urllib.request
 import os
 import pwd
 import re
@@ -34,6 +36,7 @@ import stat
 import subprocess
 import sys
 from textwrap import dedent
+from xml.etree import ElementTree
 
 
 framework_base = {
@@ -67,114 +70,121 @@ framework_series = {
 # Please keep the lists of package names sorted.
 extra_packages = {
     "ubuntu-sdk-13.10": [
-        "libqt5opengl5-dev:TARGET",
-        "libqt5svg5-dev:TARGET",
-        "libqt5v8-5-dev:TARGET",
-        "libqt5webkit5-dev:TARGET",
-        "libqt5xmlpatterns5-dev:TARGET",
-        "qmlscene:TARGET",
-        "qt3d5-dev:TARGET",
-        "qt5-default:TARGET",
-        "qt5-qmake:TARGET",
-        "qtbase5-dev:TARGET",
-        "qtdeclarative5-dev:TARGET",
-        "qtmultimedia5-dev:TARGET",
-        "qtquick1-5-dev:TARGET",
-        "qtscript5-dev:TARGET",
-        "qtsensors5-dev:TARGET",
-        "qttools5-dev:TARGET",
+        "libqt5opengl5-dev:{TARGET}",
+        "libqt5svg5-dev:{TARGET}",
+        "libqt5v8-5-dev:{TARGET}",
+        "libqt5webkit5-dev:{TARGET}",
+        "libqt5xmlpatterns5-dev:{TARGET}",
+        "qmlscene:{TARGET}",
+        "qt3d5-dev:{TARGET}",
+        "qt5-default:{TARGET}",
+        "qt5-qmake:{TARGET}",
+        "qtbase5-dev:{TARGET}",
+        "qtdeclarative5-dev:{TARGET}",
+        "qtmultimedia5-dev:{TARGET}",
+        "qtquick1-5-dev:{TARGET}",
+        "qtscript5-dev:{TARGET}",
+        "qtsensors5-dev:{TARGET}",
+        "qttools5-dev:{TARGET}",
         "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.04": [
         "cmake",
-        "google-mock:TARGET",
+        "google-mock:{TARGET}",
         "intltool",
-        "libboost1.54-dev:TARGET",
-        "libjsoncpp-dev:TARGET",
-        "libprocess-cpp-dev:TARGET",
-        "libproperties-cpp-dev:TARGET",
-        "libqt5svg5-dev:TARGET",
-        "libqt5webkit5-dev:TARGET",
-        "libqt5xmlpatterns5-dev:TARGET",
-        "libunity-scopes-dev:TARGET",
+        "libboost1.54-dev:{TARGET}",
+        "libjsoncpp-dev:{TARGET}",
+        "libprocess-cpp-dev:{TARGET}",
+        "libproperties-cpp-dev:{TARGET}",
+        "libqt5svg5-dev:{TARGET}",
+        "libqt5webkit5-dev:{TARGET}",
+        "libqt5xmlpatterns5-dev:{TARGET}",
+        "libunity-scopes-dev:{TARGET}",
         # bug #1316930, needed for autopilot
         "python3",
-        "qmlscene:TARGET",
-        "qt3d5-dev:TARGET",
-        "qt5-default:TARGET",
-        "qtbase5-dev:TARGET",
-        "qtdeclarative5-dev:TARGET",
+        "qmlscene:{TARGET}",
+        "qt3d5-dev:{TARGET}",
+        "qt5-default:{TARGET}",
+        "qtbase5-dev:{TARGET}",
+        "qtdeclarative5-dev:{TARGET}",
         "qtdeclarative5-dev-tools",
-        "qtlocation5-dev:TARGET",
-        "qtmultimedia5-dev:TARGET",
-        "qtscript5-dev:TARGET",
-        "qtsensors5-dev:TARGET",
-        "qttools5-dev:TARGET",
-        "qttools5-dev-tools:TARGET",
+        "qtlocation5-dev:{TARGET}",
+        "qtmultimedia5-dev:{TARGET}",
+        "qtscript5-dev:{TARGET}",
+        "qtsensors5-dev:{TARGET}",
+        "qttools5-dev:{TARGET}",
+        "qttools5-dev-tools:{TARGET}",
         "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-14.10": [
         "cmake",
         "cmake-extras",
-        "google-mock:TARGET",
+        "google-mock:{TARGET}",
         "intltool",
-        "libboost1.55-dev:TARGET",
-        "libcontent-hub-dev:TARGET",
-        "libjsoncpp-dev:TARGET",
-        "libnet-cpp-dev:TARGET",
-        "libprocess-cpp-dev:TARGET",
-        "libproperties-cpp-dev:TARGET",
-        "libqt5keychain0:TARGET",
-        "libqt5sensors5-dev:TARGET",
-        "libqt5svg5-dev:TARGET",
-        "libqt5webkit5-dev:TARGET",
-        "libqt5xmlpatterns5-dev:TARGET",
-        "libunity-scopes-dev:TARGET",
+        "libboost1.55-dev:{TARGET}",
+        "libcontent-hub-dev:{TARGET}",
+        "libjsoncpp-dev:{TARGET}",
+        "libnet-cpp-dev:{TARGET}",
+        "libprocess-cpp-dev:{TARGET}",
+        "libproperties-cpp-dev:{TARGET}",
+        "libqt5keychain0:{TARGET}",
+        "libqt5sensors5-dev:{TARGET}",
+        "libqt5svg5-dev:{TARGET}",
+        "libqt5webkit5-dev:{TARGET}",
+        "libqt5xmlpatterns5-dev:{TARGET}",
+        "libunity-scopes-dev:{TARGET}",
         # bug #1316930, needed for autopilot
         "python3",
-        "qml-module-qt-labs-settings:TARGET",
-        "qml-module-qtmultimedia:TARGET",
-        "qml-module-qtquick-layouts:TARGET",
-        "qml-module-qtsensors:TARGET",
-        "qml-module-qtwebkit:TARGET",
-        "qmlscene:TARGET",
-        "qt3d5-dev:TARGET",
-        "qt5-default:TARGET",
-        "qtdeclarative5-accounts-plugin:TARGET",
+        "qml-module-qt-labs-settings:{TARGET}",
+        "qml-module-qtmultimedia:{TARGET}",
+        "qml-module-qtquick-layouts:{TARGET}",
+        "qml-module-qtsensors:{TARGET}",
+        "qml-module-qtwebkit:{TARGET}",
+        "qmlscene:{TARGET}",
+        "qt3d5-dev:{TARGET}",
+        "qt5-default:{TARGET}",
+        "qtdeclarative5-accounts-plugin:{TARGET}",
         "qtdeclarative5-dev-tools",
-        "qtdeclarative5-folderlistmodel-plugin:TARGET",
-        "qtdeclarative5-localstorage-plugin:TARGET",
-        "qtdeclarative5-online-accounts-client0.1:TARGET",
-        "qtdeclarative5-particles-plugin:TARGET",
-        "qtdeclarative5-poppler1.0:TARGET",
-        "qtdeclarative5-qtlocation-plugin:TARGET",
-        "qtdeclarative5-qtorganizer-plugin:TARGET",
-        "qtdeclarative5-qtpositioning-plugin:TARGET",
-        "qtdeclarative5-u1db1.0:TARGET",
-        "qtdeclarative5-ubuntu-content0.1:TARGET",
-        "qtdeclarative5-ubuntu-download-manager0.1:TARGET",
-        "qtdeclarative5-ubuntu-mediascanner0.1:TARGET",
-        "qtdeclarative5-ubuntu-syncmonitor0.1:TARGET",
-        "qtdeclarative5-ubuntu-telephony-phonenumber0.1:TARGET",
-        "qtdeclarative5-ubuntu-ui-toolkit-plugin:TARGET",
-        "qtdeclarative5-usermetrics0.1:TARGET",
-        "qtdeclarative5-xmllistmodel-plugin:TARGET",
-        "qtlocation5-dev:TARGET",
-        "qtmultimedia5-dev:TARGET",
-        "qtscript5-dev:TARGET",
-        "qttools5-dev:TARGET",
-        "qttools5-dev-tools:TARGET",
-        "ubuntu-html5-theme:TARGET",
+        "qtdeclarative5-folderlistmodel-plugin:{TARGET}",
+        "qtdeclarative5-localstorage-plugin:{TARGET}",
+        "qtdeclarative5-online-accounts-client0.1:{TARGET}",
+        "qtdeclarative5-particles-plugin:{TARGET}",
+        "qtdeclarative5-poppler1.0:{TARGET}",
+        "qtdeclarative5-qtlocation-plugin:{TARGET}",
+        "qtdeclarative5-qtorganizer-plugin:{TARGET}",
+        "qtdeclarative5-qtpositioning-plugin:{TARGET}",
+        "qtdeclarative5-u1db1.0:{TARGET}",
+        "qtdeclarative5-ubuntu-content0.1:{TARGET}",
+        "qtdeclarative5-ubuntu-download-manager0.1:{TARGET}",
+        "qtdeclarative5-ubuntu-mediascanner0.1:{TARGET}",
+        "qtdeclarative5-ubuntu-syncmonitor0.1:{TARGET}",
+        "qtdeclarative5-ubuntu-telephony-phonenumber0.1:{TARGET}",
+        "qtdeclarative5-ubuntu-ui-toolkit-plugin:{TARGET}",
+        "qtdeclarative5-usermetrics0.1:{TARGET}",
+        "qtdeclarative5-xmllistmodel-plugin:{TARGET}",
+        "qtlocation5-dev:{TARGET}",
+        "qtmultimedia5-dev:{TARGET}",
+        "qtscript5-dev:{TARGET}",
+        "qttools5-dev:{TARGET}",
+        "qttools5-dev-tools:{TARGET}",
+        "ubuntu-html5-theme:{TARGET}",
         "ubuntu-ui-toolkit-doc",
         ],
     "ubuntu-sdk-15.04": [
         # the sdk libs
-        "ubuntu-sdk-libs:TARGET",
-        "ubuntu-sdk-libs-dev:TARGET",
+        "ubuntu-sdk-libs:{TARGET}",
+        "ubuntu-sdk-libs-dev:{TARGET}",
+        # the native build tools
+        "ubuntu-sdk-libs-tools",
+        # FIXME: see
+        #  http://pad.lv/~mvo/oxide/crossbuild-friendly/+merge/234093
+        # we help the apt resolver here until the
+        #  oxideqt-codecs/oxidec-codecs-extras is sorted
+        "oxideqt-codecs-extra",
         ],
     "ubuntu-core-15.04-dev1": [
-        "ubuntu-core-libs:TARGET",
-        "ubuntu-core-libs-dev:TARGET",
+        "ubuntu-core-libs:{TARGET}",
+        "ubuntu-core-libs-dev:{TARGET}",
         ],
     }
 
@@ -183,6 +193,56 @@ primary_arches = ["amd64", "i386"]
 
 
 non_meta_re = re.compile(r'^[a-zA-Z0-9+,./:=@_-]+$')
+
+
+GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+
+
+def get_geoip_country_code_prefix():
+    click_no_local_mirror = os.environ.get('CLICK_NO_LOCAL_MIRROR', 'auto')
+    if click_no_local_mirror == '1':
+        return ""
+    try:
+        with urllib.request.urlopen(GEOIP_SERVER) as f:
+            xml_data = f.read()
+        et = ElementTree.fromstring(xml_data)
+        return et.find("CountryCode").text.lower()+"."
+    except (ElementTree.ParseError, urllib.error.URLError):
+        pass
+    return ""
+
+def generate_sources(series, native_arch, target_arch,
+                     archive_mirror, ports_mirror, components):
+    """Generate a list of strings for apts sources.list.
+    Arguments:
+    series -- the distro series (e.g. vivid)
+    native_arch -- the native architecture (e.g. amd64)
+    target_arch -- the target architecture (e.g. armhf)
+    archive_mirror -- main mirror, e.g. http://archive.ubuntu.com/ubuntu
+    ports_mirror -- ports mirror, e.g. http://ports.ubuntu.com/ubuntu-ports
+    components -- the components as string, e.g. "main restricted universe"
+    """
+    pockets = ['%s' % series]
+    for pocket in ['updates', 'security']:
+        pockets.append('%s-%s' % (series, pocket))
+    sources = []
+    # write binary lines
+    arches = [target_arch]
+    if native_arch != target_arch:
+        arches.append(native_arch)
+    for arch in arches:
+        if arch not in primary_arches:
+            mirror = ports_mirror
+        else:
+            mirror = archive_mirror
+        for pocket in pockets:
+            sources.append("deb [arch=%s] %s %s %s" %
+                           (arch, mirror, pocket, components))
+    # write source lines
+    for pocket in pockets:
+        sources.append("deb-src %s %s %s" %
+                       (archive_mirror, pocket, components))
+    return sources
 
 
 def shell_escape(command):
@@ -247,11 +307,7 @@ class ClickChroot:
         if chroots_dir is None:
             chroots_dir = "/var/lib/schroot/chroots"
         self.chroots_dir = chroots_dir
-        # this doesn't work because we are running this under sudo
-        if 'DEBOOTSTRAP_MIRROR' in os.environ:
-            self.archive = os.environ['DEBOOTSTRAP_MIRROR']
-        else:
-            self.archive = "http://archive.ubuntu.com/ubuntu"
+
         if "SUDO_USER" in os.environ:
             self.user = os.environ["SUDO_USER"]
         elif "PKEXEC_UID" in os.environ:
@@ -330,31 +386,6 @@ class ClickChroot:
                         users="\n".join(users),
                         mount=mount))
 
-    def _generate_sources(self, series, native_arch, target_arch, components):
-        ports_mirror = "http://ports.ubuntu.com/ubuntu-ports"
-        pockets = ['%s' % series]
-        for pocket in ['updates', 'security']:
-            pockets.append('%s-%s' % (series, pocket))
-        sources = []
-        # write binary lines
-        arches = [target_arch]
-        if native_arch != target_arch:
-            arches.append(native_arch)
-        for arch in arches:
-            if arch not in primary_arches:
-                mirror = ports_mirror
-            else:
-                mirror = self.archive
-            for pocket in pockets:
-                sources.append("deb [arch=%s] %s %s %s" %
-                               (arch, mirror, pocket, components))
-        # write source lines
-        for pocket in pockets:
-            sources.append("deb-src %s %s %s" %
-                           (self.archive, pocket, components))
-
-        return sources
-
     def _generate_daemon_policy(self, mount):
         daemon_policy = "%s/usr/sbin/policy-rc.d" % mount
         with open(daemon_policy, "w") as policy:
@@ -409,7 +440,7 @@ class ClickChroot:
                         build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
-    def _debootstrap(self, components, mount):
+    def _debootstrap(self, components, mount, archive):
         subprocess.check_call([
             "debootstrap",
             "--arch", self.native_arch,
@@ -417,7 +448,7 @@ class ClickChroot:
             "--components=%s" % ','.join(components),
             self.series,
             mount,
-            self.archive
+            archive
             ])
 
     @property
@@ -467,22 +498,37 @@ class ClickChroot:
             proxy = os.environ["http_proxy"]
         if not proxy:
             proxy = subprocess.check_output(
-                'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; echo "$x"',
+                'unset x; eval "$(apt-config shell x Acquire::HTTP::Proxy)"; \
+                 echo "$x"',
                 shell=True, universal_newlines=True).strip()
         build_pkgs = [
-            "build-essential", "fakeroot",
-            "apt-utils", self._make_cross_package("g++"),
-            self._make_cross_package("pkg-config"), "cmake",
-            "dpkg-cross", "libc-dev:%s" % self.target_arch
-            ]
+            # sort alphabetically
+            "apt-utils",
+            "build-essential",
+            "cmake",
+            "dpkg-cross",
+            "fakeroot",
+            "libc-dev:%s" % self.target_arch,
+            # build pkg names dynamically
+            self._make_cross_package("g++"),
+            self._make_cross_package("pkg-config"),
+        ]
         for package in extra_packages.get(self.framework_base, []):
-            package = package.replace(":TARGET", ":%s" % self.target_arch)
+            package = package.format(TARGET=self.target_arch)
             build_pkgs.append(package)
         os.makedirs(mount)
-        self._debootstrap(components, mount)
-        sources = self._generate_sources(self.series, self.native_arch,
-                                         self.target_arch,
-                                         ' '.join(components))
+
+        country_code = get_geoip_country_code_prefix()
+        archive = "http://%sarchive.ubuntu.com/ubuntu" % country_code
+        ports_mirror = "http://%sports.ubuntu.com/ubuntu-ports" % country_code
+        # this doesn't work because we are running this under sudo
+        if 'DEBOOTSTRAP_MIRROR' in os.environ:
+            archive = os.environ['DEBOOTSTRAP_MIRROR']
+        self._debootstrap(components, mount, archive)
+        sources = generate_sources(self.series, self.native_arch,
+                                   self.target_arch,
+                                   archive, ports_mirror,
+                                   ' '.join(components))
         with open("%s/etc/apt/sources.list" % mount, "w") as sources_list:
             for line in sources:
                 print(line, file=sources_list)

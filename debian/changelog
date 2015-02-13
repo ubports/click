@@ -1,3 +1,33 @@
+click (0.4.37) UNRELEASED; urgency=low
+
+  [ Michael Vogt ]
+  * lp:~mvo/click/no-error-no-missing-systemctl:
+    - fix a spurious error message on systems without systemctl
+  * lp:~mvo/click/do-not-crash-in-build-on-broken-symlinks:
+    - do not crash when building a click package that contains broken
+      symlinks
+  * lp:~mvo/click/dpkg-less-verbose:
+    - do not show dpkg output on install unless --verbose is used
+  * lp:~mvo/click/lp1394256-run-user-hooks:
+    - ensures that click user hooks are run for all logged in users when
+      click is used with "--all-users".
+  * lp:~mvo/click/qt5-qmake-cross-armhf:
+    - add qt5-qmake-arm-linux-gnueabihf to chroot (LP: #1393698)
+  * lp:~mvo/click/chroot-15.04-multiarch:
+    - add ubuntu-sdk-libs-tools and oxide-codecs-extra to the chroot
+  * lp:~mvo/click/lp1394256-run-user-hooks-on-remove-too:
+    - Run the click remove user hooks for all logged in users.
+  * click/chroot.py:
+    - use string.format() for chroot TARGET selection
+  * skip 0.4.36 version and go straight to 0.4.37 (LP: #1418086)
+
+  [ Zoltan Balogh ]
+  * lp:~bzoltan/click/vivid-transition_mirrors:
+    - use geoip to guess the most suitable country mirror when creating
+      the click chroot
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
+
 click (0.4.35) vivid; urgency=low
 
   [ Michael Vogt ]

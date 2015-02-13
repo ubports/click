@@ -347,7 +347,7 @@ class ClickInstaller:
             os.mkdir(os.path.join(admin_dir, "updates"))
             os.mkdir(os.path.join(admin_dir, "triggers"))
 
-    def _unpack(self, path, user=None, all_users=False):
+    def _unpack(self, path, user=None, all_users=False, quiet=True):
         package_name, package_version = self.audit(path, check_arch=True)
 
         # Is this package already unpacked in an underlay (non-topmost)
@@ -401,9 +401,20 @@ class ClickInstaller:
             kwargs = {}
             if sys.version >= "3.2":
                 kwargs["pass_fds"] = (fd.fileno(),)
-            subprocess.check_call(
-                command, preexec_fn=partial(self._install_preexec, inst_dir),
-                env=env, **kwargs)
+            if quiet:
+                fn = subprocess.check_output
+                kwargs["stderr"] = subprocess.STDOUT
+            else:
+                fn = subprocess.check_call
+            try:
+                fn(command,
+                    preexec_fn=partial(self._install_preexec, inst_dir),
+                    env=env, universal_newlines=True,
+                    **kwargs)
+            except subprocess.CalledProcessError as e:
+                logging.error("%s failed with exit_code %s:\n%s" % (
+                    command, e.returncode, e.output))
+                raise
         for dirpath, dirnames, filenames in os.walk(inst_dir):
             for entry in dirnames + filenames:
                 entry_path = os.path.join(dirpath, entry)
@@ -441,9 +452,9 @@ class ClickInstaller:
 
         return package_name, package_version, old_version
 
-    def install(self, path, user=None, all_users=False):
+    def install(self, path, user=None, all_users=False, quiet=True):
         package_name, package_version, old_version = self._unpack(
-            path, user=user, all_users=all_users)
+            path, user=user, all_users=all_users, quiet=quiet)
 
         if user is not None or all_users:
             if all_users:

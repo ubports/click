@@ -33,7 +33,20 @@
  * symlinks per user.
  */
 
+
 namespace Click {
+
+	struct LogindUser {
+		uint32 uid;
+		string name;
+		string ObjectPath;
+	}
+
+	/* the logind dbus interface */
+	[DBus (name = "org.freedesktop.login1.Manager")]
+	interface LogindManager : Object {
+		public abstract LogindUser[] ListUsers () throws IOError;
+	}
 
 /* Pseudo-usernames selected to be invalid as a real username, and alluding
  * to group syntaxes used in other systems.
@@ -596,6 +609,53 @@ public class User : Object {
 		if (! is_pseudo_user)
 			package_install_hooks (db, package,
 					       old_version, version, name);
+
+		// run user hooks for all logged in users
+		if (name == ALL_USERS)
+			run_user_install_hooks_for_all_logged_in_users (package, old_version, version);
+	}
+
+	private string[]
+	get_logged_in_users()
+	{
+		string[] logged_in_users = {};
+		try {
+			LogindManager logind = Bus.get_proxy_sync (
+				BusType.SYSTEM,
+				"org.freedesktop.login1",
+				"/org/freedesktop/login1");
+			var users = logind.ListUsers();
+			foreach (LogindUser user in users)
+			{
+				// FIXME: ideally we would read from /etc/adduser.conf
+				if(user.uid >= 1000 && user.uid <= 30000)
+				{
+					logged_in_users += user.name;
+				}
+			}
+		} catch (Error e) {
+			warning ("Can not connect to logind");
+		}
+		return logged_in_users;
+	}
+
+	private void
+	run_user_install_hooks_for_all_logged_in_users (string package, 
+													string? old_version,
+													string version) throws IOError
+	{
+		foreach (string username in get_logged_in_users())
+			package_install_hooks (db, package,
+								   old_version, version, username);
+	}
+
+	private void
+	run_user_remove_hooks_for_all_logged_in_users (string package, 
+												   string old_version) throws IOError
+	{
+		foreach (string username in get_logged_in_users())
+			package_remove_hooks (db, package,
+								  old_version, username);
 	}
 
 	private bool
@@ -688,6 +748,10 @@ public class User : Object {
 
 		if (! is_pseudo_user)
 			package_remove_hooks (db, package, old_version, name);
+
+		// run user hooks for all logged in users
+		if (name == ALL_USERS)
+			run_user_remove_hooks_for_all_logged_in_users (package, old_version);
 	}
 
 	/**

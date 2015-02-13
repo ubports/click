@@ -13,7 +13,9 @@ if [ "$1" = configure ]; then
 
 	# dh-systemd has no support yet for user systemd units
 	# so we need to do this manually here
-	systemctl --global enable click-user-hooks.service || true
+        if which systemctl >/dev/null 2>&1; then
+	    systemctl --global enable click-user-hooks.service || true
+        fi
 fi
 
 #DEBHELPER#

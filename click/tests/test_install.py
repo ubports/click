@@ -456,18 +456,12 @@ class TestClickInstaller(TestCase):
         with self.run_in_subprocess(
                 "click_get_frameworks_dir") as (enter, preloads):
             enter()
-            original_call = subprocess.call
+            original_call = subprocess.check_output
 
             def call_side_effect(*args, **kwargs):
-                if "TEST_VERBOSE" in os.environ:
-                    return original_call(
-                        ["touch", os.path.join(self.temp_dir, "sentinel")],
-                        **kwargs)
-                else:
-                    with open("/dev/null", "w") as devnull:
-                        return original_call(
-                            ["touch", os.path.join(self.temp_dir, "sentinel")],
-                            stdout=devnull, stderr=devnull, **kwargs)
+                return original_call(
+                    ["touch", os.path.join(self.temp_dir, "sentinel")],
+                    **kwargs)
 
             path = self.make_fake_package(
                 control_fields={
@@ -490,7 +484,7 @@ class TestClickInstaller(TestCase):
             db.add(root)
             installer = ClickInstaller(db)
             self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
-            with mock.patch("subprocess.call") as mock_call:
+            with mock.patch("subprocess.check_output") as mock_call:
                 mock_call.side_effect = call_side_effect
                 self.assertRaises(
                     subprocess.CalledProcessError, installer.install, path)

@@ -176,9 +176,6 @@ extra_packages = {
         "ubuntu-sdk-libs-dev:{TARGET}",
         # the native build tools
         "ubuntu-sdk-libs-tools",
-        # FIXME: this is only available on i386/amd64 currently
-        # FIXME2: this will be installed but useless on non armhf chroots
-        "qt5-qmake-arm-linux-gnueabihf",
         # FIXME: see
         #  http://pad.lv/~mvo/oxide/crossbuild-friendly/+merge/234093
         # we help the apt resolver here until the
@@ -202,6 +199,9 @@ GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
 
 def get_geoip_country_code_prefix():
+    click_no_local_mirror = os.environ.get('CLICK_NO_LOCAL_MIRROR', 'auto')
+    if click_no_local_mirror == '1':
+        return ""
     try:
         with urllib.request.urlopen(GEOIP_SERVER) as f:
             xml_data = f.read()
@@ -210,7 +210,6 @@ def get_geoip_country_code_prefix():
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
     return ""
-
 
 def generate_sources(series, native_arch, target_arch,
                      archive_mirror, ports_mirror, components):

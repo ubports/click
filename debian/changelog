@@ -1,4 +1,4 @@
-click (0.4.36) UNRELEASED; urgency=low
+click (0.4.37) UNRELEASED; urgency=low
 
   [ Michael Vogt ]
   * lp:~mvo/click/no-error-no-missing-systemctl:
@@ -19,6 +19,7 @@ click (0.4.36) UNRELEASED; urgency=low
     - Run the click remove user hooks for all logged in users.
   * click/chroot.py:
     - use string.format() for chroot TARGET selection
+  * skip 0.4.36 version and go straight to 0.4.37 (LP: #1418086)
 
   [ Zoltan Balogh ]
   * lp:~bzoltan/click/vivid-transition_mirrors:

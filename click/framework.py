@@ -31,13 +31,6 @@ class ClickFrameworkInvalid(Exception):
     pass
 
 
-# FIXME: use native lib if available
-#from gi.repository import Click
-#click_framework_get_base_version = Click.framework_get_base_version
-#click_framework_get_base_name = Click.framework_get_base_name
-#click_framework_has_framework = Click.has_framework
-
-
 # python version of the vala parse_deb822_file()
 def parse_deb822_file(filename):
     data = {}
@@ -122,8 +115,8 @@ def validate_framework(framework_string, ignore_missing_frameworks=False):
             framework_name)
         framework_base_version = click_framework_get_base_version(
             framework_name)
-        if (framework_base_name in base_name_versions and
-            framework_base_version != base_name_versions[framework_base_name]):
+        prev =  base_name_versions.get(framework_base_name, None)
+        if prev and prev != framework_base_version:
             raise ClickFrameworkInvalid(
                 'Multiple frameworks with different base versions are not '
                 'allowed. Found: {} ({} != {})'.format(

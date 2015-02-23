@@ -5,6 +5,9 @@ click (0.4.38) UNRELEASED; urgency=low
   * lp:~mvo/click/dont-crash-for-empty-db:
     - Do not crash when no database configuration is used and
       Click.DB.{get,props.overlay,gc,ensure_ownership} are called.
+  * lp:~mvo/click/lp1219912-build-exclude:
+    - add a new --ignore option to click {build,buildsource}
+      (LP: #1219912)
 
  -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 23 Feb 2015 08:20:04 +0100
 

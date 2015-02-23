@@ -83,6 +83,42 @@ class ClickBuildError(Exception):
 class ClickBuilderBase:
     def __init__(self):
         self.file_map = {}
+        # From @Dpkg::Source::Package::tar_ignore_default_pattern.
+        # (more in ClickSourceBuilder)
+        self._ignore_patterns = [
+            "*.click",
+            ".*.sw?",
+            "*~",
+            ",,*",
+            ".[#~]*",
+            ".arch-ids",
+            ".arch-inventory",
+            ".bzr",
+            ".bzr-builddeb",
+            ".bzr.backup",
+            ".bzr.tags",
+            ".bzrignore",
+            ".cvsignore",
+            ".git",
+            ".gitattributes",
+            ".gitignore",
+            ".gitmodules",
+            ".hg",
+            ".hgignore",
+            ".hgsigs",
+            ".hgtags",
+            ".shelf",
+            ".svn",
+            "CVS",
+            "DEADJOE",
+            "RCS",
+            "_MTN",
+            "_darcs",
+            "{arch}",
+        ]
+
+    def add_ignore_pattern(self, pattern):
+        self._ignore_patterns.append(pattern)
 
     def add_file(self, source_path, dest_path):
         self.file_map[source_path] = dest_path
@@ -132,39 +168,6 @@ class ClickBuilderBase:
 
 
 class ClickBuilder(ClickBuilderBase):
-    # TODO: This should be configurable, or at least extensible.
-    _ignore_patterns = [
-        "*.click",
-        ".*.sw?",
-        "*~",
-        ",,*",
-        ".[#~]*",
-        ".arch-ids",
-        ".arch-inventory",
-        ".be",
-        ".bzr",
-        ".bzr-builddeb",
-        ".bzr.backup",
-        ".bzr.tags",
-        ".bzrignore",
-        ".cvsignore",
-        ".git",
-        ".gitattributes",
-        ".gitignore",
-        ".gitmodules",
-        ".hg",
-        ".hgignore",
-        ".hgsigs",
-        ".hgtags",
-        ".shelf",
-        ".svn",
-        "CVS",
-        "DEADJOE",
-        "RCS",
-        "_MTN",
-        "_darcs",
-        "{arch}",
-        ]
 
     def list_files(self, root_path):
         for dirpath, _, filenames in os.walk(root_path):
@@ -298,44 +301,18 @@ class ClickBuilder(ClickBuilderBase):
 
 
 class ClickSourceBuilder(ClickBuilderBase):
-    # From @Dpkg::Source::Package::tar_ignore_default_pattern.
-    # TODO: This should be configurable, or at least extensible.
-    _ignore_patterns = [
-        "*.a",
-        "*.click",
-        "*.la",
-        "*.o",
-        "*.so",
-        ".*.sw?",
-        "*~",
-        ",,*",
-        ".[#~]*",
-        ".arch-ids",
-        ".arch-inventory",
-        ".be",
-        ".bzr",
-        ".bzr-builddeb",
-        ".bzr.backup",
-        ".bzr.tags",
-        ".bzrignore",
-        ".cvsignore",
-        ".deps",
-        ".git",
-        ".gitattributes",
-        ".gitignore",
-        ".gitmodules",
-        ".hg",
-        ".hgignore",
-        ".hgsigs",
-        ".hgtags",
-        ".shelf",
-        ".svn",
-        "CVS",
-        "DEADJOE",
-        "RCS",
-        "_MTN",
-        "_darcs",
-        "{arch}",
+
+    def __init__(self):
+        super(ClickSourceBuilder, self).__init__()
+        # From @Dpkg::Source::Package::tar_ignore_default_pattern.
+        # (more in ClickBuilderBase)
+        self._ignore_patterns += [
+            "*.a",
+            ".be",
+            ".deps",
+            "*.la",
+            "*.o",
+            "*.so",
         ]
 
     def build(self, dest_dir, manifest_path=None):

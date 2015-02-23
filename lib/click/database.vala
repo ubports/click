@@ -34,7 +34,11 @@ public errordomain DatabaseError {
 	/**
 	 * Package manifest cannot be parsed.
 	 */
-	BAD_MANIFEST
+	BAD_MANIFEST,
+	/**
+	 * No database available for the given request
+	 */
+	INVALID
 }
 
 private string? app_pid_command = null;
@@ -602,8 +606,11 @@ public class DB : Object {
 	public int size { get { return db.size; } }
 
 	public new SingleDB
-	@get (int index)
+	@get (int index) throws DatabaseError
 	{
+		if (index >= db.size)
+			throw new DatabaseError.INVALID
+                ("invalid index %i for db of size %i", index, db.size);
 		return db.get (index);
 	}
 
@@ -618,7 +625,15 @@ public class DB : Object {
 	 *
 	 * The directory where changes should be written.
 	 */
-	public string overlay { get { return db.last ().root; } }
+	public string overlay 
+	{ 
+		get {
+			if (db.size == 0)
+				return "";
+			else
+				return db.last ().root;
+		}
+	}
 
 	/**
 	 * get_path:
@@ -812,21 +827,32 @@ public class DB : Object {
 		return generator.to_data (null);
 	}
 
+	private void
+	ensure_db () throws Error
+	{
+		if (db.size == 0)
+			throw new DatabaseError.INVALID
+                ("no database loaded");
+	}
+
 	public void
 	maybe_remove (string package, string version) throws Error
 	{
+		ensure_db();
 		db.last ().maybe_remove (package, version);
 	}
 
 	public void
 	gc () throws Error
 	{
+		ensure_db();
 		db.last ().gc ();
 	}
 
 	public void
 	ensure_ownership () throws Error
 	{
+		ensure_db();
 		db.last ().ensure_ownership ();
 	}
 }

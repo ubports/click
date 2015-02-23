@@ -1,4 +1,4 @@
-click (0.4.37) UNRELEASED; urgency=low
+click (0.4.37) vivid; urgency=low
 
   [ Michael Vogt ]
   * lp:~mvo/click/no-error-no-missing-systemctl:
@@ -26,7 +26,7 @@ click (0.4.37) UNRELEASED; urgency=low
     - use geoip to guess the most suitable country mirror when creating
       the click chroot
 
- -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Nov 2014 12:29:14 +0000
+ -- CI Train Bot <ci-train-bot@canonical.com>  Fri, 13 Feb 2015 14:46:34 +0000
 
 click (0.4.35) vivid; urgency=low
 

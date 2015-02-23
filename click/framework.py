@@ -31,12 +31,6 @@ class ClickFrameworkInvalid(Exception):
     pass
 
 
-# FIXME: use native lib if available
-#from gi.repository import Click
-#click_framework_get_base_version = Click.framework_get_base_version
-#click_framework_has_framework = Click.has_framework
-
-
 # python version of the vala parse_deb822_file()
 def parse_deb822_file(filename):
     data = {}
@@ -76,6 +70,12 @@ def click_framework_get_base_version(framework_name):
     return deb822.get("base-version", None)
 
 
+# python version of the vala click_framework_get_base_version()
+def click_framework_get_base_name(framework_name):
+    deb822 = parse_deb822_file(get_framework_path(framework_name))
+    return deb822.get("base-name", None)
+
+
 # python version of the vala click_framework_has_framework
 def click_framework_has_framework(framework_name):
     return os.path.exists(get_framework_path(framework_name))
@@ -94,7 +94,7 @@ def validate_framework(framework_string, ignore_missing_frameworks=False):
         raise ClickFrameworkInvalid(
             'Could not parse framework "%s"' % framework_string)
 
-    framework_base_versions = set()
+    base_name_versions = {}
     missing_frameworks = []
     for or_dep in parsed_framework:
         if len(or_dep) > 1:
@@ -110,9 +110,20 @@ def validate_framework(framework_string, ignore_missing_frameworks=False):
         if not click_framework_has_framework(framework_name):
             missing_frameworks.append(framework_name)
             continue
+        # ensure we do not use different base versions for the same base-name
+        framework_base_name = click_framework_get_base_name(
+            framework_name)
         framework_base_version = click_framework_get_base_version(
             framework_name)
-        framework_base_versions.add(framework_base_version)
+        prev =  base_name_versions.get(framework_base_name, None)
+        if prev and prev != framework_base_version:
+            raise ClickFrameworkInvalid(
+                'Multiple frameworks with different base versions are not '
+                'allowed. Found: {} ({} != {})'.format(
+                    framework_base_name,
+                    framework_base_version,
+                    base_name_versions[framework_base_name]))
+        base_name_versions[framework_base_name] = framework_base_version
 
     if not ignore_missing_frameworks:
         if len(missing_frameworks) > 1:
@@ -132,8 +143,3 @@ def validate_framework(framework_string, ignore_missing_frameworks=False):
         elif missing_frameworks:
             logging.warning('Ignoring missing framework "%s"' % (
                 missing_frameworks[0]))
-
-    if len(framework_base_versions) > 1:
-        raise ClickFrameworkInvalid(
-            'Multiple frameworks with different base versions are not '
-            'allowed. Found: {0}'.format(framework_base_versions))

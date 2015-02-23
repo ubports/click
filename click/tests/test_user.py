@@ -34,6 +34,7 @@ from click.json_helpers import json_array_to_python, json_object_to_python
 from click.tests.gimock_types import Passwd
 from click.tests.helpers import (
     TestCase,
+    make_installed_click,
     mkfile,
     make_file_with_content,
     touch,
@@ -557,21 +558,34 @@ class TestClickUser(TestCase):
         self.assertEqual(b_overlay, registry.get_path("b"))
         self.assertTrue(registry.is_removable("b"))
 
-    def test_app_stops_on_remove(self):
+
+class StopAppTestCase(TestCase):
+
+    def setUp(self):
+        super(StopAppTestCase, self).setUp()
+        self.use_temp_dir()
+        self.db = Click.DB()
+        self.db.add(self.temp_dir)
+
+        # setup fake app_stop
         fake_app_stop = os.path.join(self.temp_dir, "bin", "ubuntu-app-stop")
-        fake_app_stop_output = os.path.join(self.temp_dir, "fake-app-stop.out")
+        self.fake_app_stop_output = os.path.join(
+            self.temp_dir, "fake-app-stop.out")
         fake_app_stop_content = dedent("""\
         #!/bin/sh
         echo "$@" >> %s
-        """ % fake_app_stop_output)
+        """ % self.fake_app_stop_output)
         make_file_with_content(fake_app_stop, fake_app_stop_content, 0o755)
         # its ok to modify env here, click.helpers.TestCase will take care
         # of it
         os.environ["PATH"] = "%s:%s" % (
             os.path.dirname(fake_app_stop), os.environ["PATH"])
-        # get a app with manifest etc all
-        _, registry = self._setUpMultiDB()
-        registry.remove("a")
+
+    def test_app_stops_on_remove(self):
+        make_installed_click(self.db, self.temp_dir, "meep", "2.0",
+                             {"hooks": {"a-app": {}}})
+        registry = Click.User.for_user(self.db, "user")
+        registry.remove("meep")
         # ensure that stop was called with the right app
-        with open(fake_app_stop_output) as f:
-            self.assertEqual("a_a-app_1.1", f.read().strip())
+        with open(self.fake_app_stop_output) as f:
+            self.assertEqual("meep_a-app_2.0", f.read().strip())

@@ -1,3 +1,10 @@
+click (0.4.38) UNRELEASED; urgency=low
+
+  * lp:~mvo/click/lp1232130-kill-on-remove-2:
+    - When uninstalling a app, stop it if its running (LP: #1232130)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 23 Feb 2015 08:20:04 +0100
+
 click (0.4.37) vivid; urgency=low
 
   [ Michael Vogt ]

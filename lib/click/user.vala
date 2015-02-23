@@ -658,8 +658,49 @@ public class User : Object {
 								  old_version, username);
 	}
 
+	private string
+	get_dbus_session_bus_env_for_current_user()
+	{
+		string euid = "%i".printf((int)(Posix.geteuid ()));
+		var dbus_session_file = Path.build_filename(
+			"/run", "user", euid, "dbus-session");
+		string session_env;
+		try {
+			FileUtils.get_contents(dbus_session_file, out session_env);
+			session_env = session_env.strip();
+		} catch (Error e) {
+			warning("Can not get the dbus session to stop app (%s)", e.message);
+		}
+		return session_env;
+	}
+
 	private bool
-	stop_running_app (string package, string version)
+	stop_single_app (string app_id)
+	{
+		// get the users dbus session when we run as root first as this
+		// is where ubuntu-app-stop listens
+		string[] envp = Environ.get();
+		envp += get_dbus_session_bus_env_for_current_user();
+
+		string[] command = {
+			"ubuntu-app-stop", app_id
+		};
+		bool res = false;
+		try {
+			int exit_status;
+			Process.spawn_sync
+			(null, command, envp,
+			 SpawnFlags.SEARCH_PATH,
+			 null, null, null, out exit_status);
+			res = Process.check_exit_status (exit_status);
+		} catch (Error e) {
+			res = false;
+		}
+		return res;
+	}
+
+	private bool
+	stop_running_apps_for_package (string package, string version)
 	{
 		var res = true;
 		if (! find_on_path ("ubuntu-app-stop"))
@@ -679,24 +720,7 @@ public class User : Object {
 		}
 		var hooks = manifest.get_object_member ("hooks");
 		foreach (unowned string app_name in hooks.get_members ())
-		{
-			// FIXME: move this into a "stop_single_app" helper
-			string[] command = {
-				"ubuntu-app-stop",
-				@"$(package)_$(app_name)_$(version)"
-			};
-			try {
-				int exit_status;
-				Process.spawn_sync
-					(null, command, null,
-					 SpawnFlags.SEARCH_PATH |
-					 SpawnFlags.STDOUT_TO_DEV_NULL,
-					 null, null, null, out exit_status);
-				res &= Process.check_exit_status (exit_status);
-			} catch (Error e) {
-				res &= false;
-			}
-		}
+			res &= stop_single_app (@"$(package)_$(app_name)_$(version)");
 		return res;
 	}
 
@@ -718,6 +742,8 @@ public class User : Object {
 			old_version = Path.get_basename (target);
 			drop_privileges ();
 			try {
+				// stop before removing the path to the manifest
+				stop_running_apps_for_package (package, old_version);
 				unlink_force (path);
 			} finally {
 				regain_privileges ();
@@ -733,17 +759,12 @@ public class User : Object {
 			ensure_db ();
 			drop_privileges ();
 			try {
+				// stop before removing the path to the manifest
+				stop_running_apps_for_package (package, old_version);
 				symlink_force (HIDDEN_VERSION, path);
 			} finally {
 				regain_privileges ();
 			}
-		}
-
-		drop_privileges ();
-		try {
-			stop_running_app (package, old_version);
-		} finally {
-			regain_privileges ();
 		}
 
 		if (! is_pseudo_user)

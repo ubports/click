@@ -1,6 +1,6 @@
 #! /usr/bin/make -f
 
-PACKAGEKIT := $(shell debian/packagekit-check)
+PACKAGEKIT := $(shell sh debian/packagekit-check)
 ifeq ($(PACKAGEKIT),yes)
 EXTRA_DH_OPTIONS :=
 else

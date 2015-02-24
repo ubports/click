@@ -1,4 +1,4 @@
-click (0.4.38.2) UNRELEASED; urgency=low
+click (0.4.38.3) UNRELEASED; urgency=low
 
   * lp:~mvo/click/lp1232130-kill-on-remove-2:
     - When uninstalling a app, stop it if its running (LP: #1232130)
@@ -10,6 +10,8 @@ click (0.4.38.2) UNRELEASED; urgency=low
       (LP: #1219912)
   * lp:~mvo/click/fix-multiple-framework-validation:
     - fix framework validation for snappy
+  * run debian/packagekit-check with "sh" as something in jenkins
+    made it mode 0644
 
  -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 23 Feb 2015 08:20:04 +0100
 

@@ -35,7 +35,7 @@ def run(argv):
         "--no-validate", action="store_false", default=True, dest="validate",
         help="Don't run click-reviewers-tools check on resulting .click")
     parser.add_option(
-        "-I", "--ignore", metavar="file-pattern", action='append',
+        "-I", "--ignore", metavar="file-pattern", action='append', default=[],
         help="Ignore the given pattern when building the package")
     options, args = parser.parse_args(argv)
     if len(args) < 1:

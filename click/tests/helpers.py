@@ -30,6 +30,7 @@ __all__ = [
 
 import contextlib
 from functools import wraps
+import json
 import os
 import re
 import shutil
@@ -57,6 +58,26 @@ def disable_logging(func):
         finally:
             logging.disable(logging.NOTSET)
     return wrapper
+
+
+def make_installed_click(db, db_dir, package="test-1", version="1.0",
+                         json_data={}, make_current=True, user="@all"):
+    """Create a fake installed click package for the given db/db_dir"""
+    json_data["name"] = package
+    json_data["version"] = version
+    with mkfile_utf8(os.path.join(
+            db_dir, package, version, ".click", "info",
+            "%s.manifest" % package)) as f:
+        json.dump(json_data, f, ensure_ascii=False)
+    if make_current:
+        os.symlink(
+            version, os.path.join(db_dir, package, "current"))
+    if user == "@all":
+        registry = Click.User.for_all_users(db)
+    else:
+        registry = Click.User.for_user(db, user)
+    registry.set_version(package, version)
+    return os.path.join(db_dir, package, version)
 
 
 class TestCase(gimock.GIMockTestCase):

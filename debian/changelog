@@ -1,3 +1,20 @@
+click (0.4.38.4) UNRELEASED; urgency=low
+
+  * lp:~mvo/click/lp1232130-kill-on-remove-2:
+    - When uninstalling a app, stop it if its running (LP: #1232130)
+  * lp:~mvo/click/dont-crash-for-empty-db:
+    - Do not crash when no database configuration is used and
+      Click.DB.{get,props.overlay,gc,ensure_ownership} are called.
+  * lp:~mvo/click/lp1219912-build-exclude:
+    - add a new --ignore option to click {build,buildsource}
+      (LP: #1219912)
+  * lp:~mvo/click/fix-multiple-framework-validation:
+    - fix framework validation for snappy
+  * run debian/packagekit-check with "sh" as something in jenkins
+    made it mode 0644
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 23 Feb 2015 08:20:04 +0100
+
 click (0.4.37) vivid; urgency=low
 
   [ Michael Vogt ]

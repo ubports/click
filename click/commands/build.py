@@ -34,6 +34,9 @@ def run(argv):
     parser.add_option(
         "--no-validate", action="store_false", default=True, dest="validate",
         help="Don't run click-reviewers-tools check on resulting .click")
+    parser.add_option(
+        "-I", "--ignore", metavar="file-pattern", action='append', default=[],
+        help="Ignore the given pattern when building the package")
     options, args = parser.parse_args(argv)
     if len(args) < 1:
         parser.error("need directory")
@@ -48,6 +51,8 @@ def run(argv):
             (directory, options.manifest))
     builder = ClickBuilder()
     builder.add_file(directory, "./")
+    for ignore in options.ignore:
+        builder.add_ignore_pattern(ignore)
     try:
         path = builder.build(".", manifest_path=options.manifest)
     except ClickBuildError as e:

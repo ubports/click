@@ -1,3 +1,9 @@
+click (0.4.38.5) UNRELEASED; urgency=medium
+
+  * Don't try to replace initctl if it's not there (lp: #1430436)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Tue, 10 Mar 2015 19:47:49 +0100
+
 click (0.4.38.4) vivid; urgency=low
 
   [ Michael Vogt ]

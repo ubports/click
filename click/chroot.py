@@ -537,8 +537,10 @@ class ClickChroot:
         self._generate_chroot_config(mount)
         daemon_policy = self._generate_daemon_policy(mount)
         self._make_executable(daemon_policy)
-        os.remove("%s/sbin/initctl" % mount)
-        os.symlink("%s/bin/true" % mount, "%s/sbin/initctl" % mount)
+        initctl = "%s/sbin/initctl" % mount
+        if os.path.exists(initctl):
+            os.remove(initctl)
+            os.symlink("%s/bin/true" % mount, initctl)
         self._generate_apt_proxy_file(mount, proxy)
         finish_script = self._generate_finish_script(mount, build_pkgs)
         self._make_executable(finish_script)

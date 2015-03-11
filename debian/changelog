@@ -1,5 +1,6 @@
-click (0.4.38.4) UNRELEASED; urgency=low
+click (0.4.38.4) vivid; urgency=low
 
+  [ Michael Vogt ]
   * lp:~mvo/click/lp1232130-kill-on-remove-2:
     - When uninstalling a app, stop it if its running (LP: #1232130)
   * lp:~mvo/click/dont-crash-for-empty-db:
@@ -13,7 +14,10 @@ click (0.4.38.4) UNRELEASED; urgency=low
   * run debian/packagekit-check with "sh" as something in jenkins
     made it mode 0644
 
- -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 23 Feb 2015 08:20:04 +0100
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 26 Feb 2015 17:07:09 +0000
 
 click (0.4.37) vivid; urgency=low
 

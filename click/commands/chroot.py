@@ -172,8 +172,8 @@ def run(argv):
         "-a", "--architecture", required=True,
         help="architecture for the chroot")
     parser.add_argument(
-        "-f", "--framework", default="ubuntu-sdk-13.10",
-        help="framework for the chroot (default: ubuntu-sdk-13.10)")
+        "-f", "--framework", default="ubuntu-sdk-14.04",
+        help="framework for the chroot (default: ubuntu-sdk-14.04)")
     parser.add_argument(
         "-s", "--series",
         help="series to use for a newly-created chroot (defaults to a series "

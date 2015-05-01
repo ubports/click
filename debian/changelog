@@ -3,6 +3,9 @@ click (0.4.39) UNRELEASED; urgency=low
   [ Marco Trevisan (Treviño) ]
   * handle "IP NOT FOUND" error (LP: #1433234)
 
+  [ Michael Vogt ]
+  * switch the default click chroot framework to ubuntu-sdk-14.04
+
  -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 01 May 2015 09:18:36 +0200
 
 click (0.4.38.5) vivid; urgency=medium

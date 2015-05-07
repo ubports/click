@@ -206,7 +206,10 @@ def get_geoip_country_code_prefix():
         with urllib.request.urlopen(GEOIP_SERVER) as f:
             xml_data = f.read()
         et = ElementTree.fromstring(xml_data)
-        return et.find("CountryCode").text.lower()+"."
+        cc = et.find("CountryCode")
+        if not cc:
+            return ""
+        return cc.text.lower()+"."
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
     return ""

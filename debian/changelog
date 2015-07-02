@@ -1,4 +1,4 @@
-click (0.4.39.1) UNRELEASED; urgency=medium
+click (0.4.39.1-0ubuntu1) UNRELEASED; urgency=medium
 
   * lp:~mvo/click/lp1456328-15.10-devlibs:
     - add ubuntu-sdk-15.10-dev1

@@ -1,6 +1,7 @@
 # Copyright (C) 2013 Canonical Ltd.
 # Authors: Colin Watson <cjwatson@ubuntu.com>,
 #          Brian Murray <brian@ubuntu.com>
+#          Michael Vogt <mvo@ubuntu.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,8 +54,10 @@ framework_base = {
     "ubuntu-sdk-15.04-html": "ubuntu-sdk-15.04",
     "ubuntu-sdk-15.04-papi": "ubuntu-sdk-15.04",
     "ubuntu-sdk-15.04-qml": "ubuntu-sdk-15.04",
-    # core
-    "ubuntu-core-15.04-dev1": "ubuntu-core-15.04",
+    # 15.10
+    "ubuntu-sdk-15.10-html-dev1": "ubuntu-sdk-15.10-dev1",
+    "ubuntu-sdk-15.10-papi-dev1": "ubuntu-sdk-15.10-dev1",
+    "ubuntu-sdk-15.10-qml-dev1": "ubuntu-sdk-15.10-dev1",
     }
 
 
@@ -63,7 +66,7 @@ framework_series = {
     "ubuntu-sdk-14.04": "trusty",
     "ubuntu-sdk-14.10": "utopic",
     "ubuntu-sdk-15.04": "vivid",
-    "ubuntu-core-15.04": "vivid",
+    "ubuntu-sdk-15.10": "wily",
     }
 
 
@@ -182,9 +185,17 @@ extra_packages = {
         #  oxideqt-codecs/oxidec-codecs-extras is sorted
         "oxideqt-codecs-extra",
         ],
-    "ubuntu-core-15.04-dev1": [
-        "ubuntu-core-libs:{TARGET}",
-        "ubuntu-core-libs-dev:{TARGET}",
+    "ubuntu-sdk-15.10-dev1": [
+        # the sdk libs
+        "ubuntu-sdk-libs:{TARGET}",
+        "ubuntu-sdk-libs-dev:{TARGET}",
+        # the native build tools
+        "ubuntu-sdk-libs-tools",
+        # FIXME: see
+        #  http://pad.lv/~mvo/oxide/crossbuild-friendly/+merge/234093
+        # we help the apt resolver here until the
+        #  oxideqt-codecs/oxidec-codecs-extras is sorted
+        "oxideqt-codecs-extra",
         ],
     }
 

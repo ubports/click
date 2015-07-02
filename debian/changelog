@@ -1,3 +1,11 @@
+click (0.4.39.1-0ubuntu1) UNRELEASED; urgency=medium
+
+  * lp:~mvo/click/lp1456328-15.10-devlibs:
+    - add ubuntu-sdk-15.10-dev1
+    - remove ubuntu-core-15.04-dev1
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Thu, 02 Jul 2015 09:05:10 +0200
+
 click (0.4.39) vivid; urgency=low
 
   [ Marco Trevisan (Treviño) ]

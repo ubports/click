@@ -435,6 +435,12 @@ class ClickChroot:
             apt-get update || true
             # Pull down signature requirements
             apt-get -y --force-yes install gnupg ubuntu-keyring
+            apt-get -y --force-yes install software-properties-common
+            add-apt-repository -y ppa:ci-train-ppa-service/stable-phone-overlay
+            echo "Package: *"  > /etc/apt/preferences.d/silo.pref
+            echo "Pin: release o=LP-PPA-ci-train-ppa-service-stable-phone-overlay" \ 
+            >> /etc/apt/preferences.d/silo.pref
+            echo "Pin-Priority: 1001" >> /etc/apt/preferences.d/silo.pref
             # Reload package lists
             apt-get update || true
             # Disable debconf questions so that automated builds won't prompt

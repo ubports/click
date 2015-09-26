@@ -436,8 +436,8 @@ class ClickChroot:
             apt-get update || true
             # Pull down signature requirements
             apt-get -y --force-yes install gnupg ubuntu-keyring
-            if  [[ $(cat /etc/lsb-release|grep DISTRIB_RELEASE| sed \
-                's/DISTRIB_RELEASE=\(.*\)/\1/') == "15.04" ]]; then
+            if  [[ $(cat /etc/lsb-release|grep DISTRIB_RELEASE) == \
+                "DISTRIB_RELEASE=15.04" ]]; then
             apt-get -y --force-yes install software-properties-common
             add-apt-repository -y ppa:ci-train-ppa-service/stable-phone-overlay
             echo "Package: *"  \

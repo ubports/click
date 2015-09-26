@@ -438,12 +438,14 @@ class ClickChroot:
             apt-get -y --force-yes install gnupg ubuntu-keyring
             apt-get -y --force-yes install software-properties-common
             add-apt-repository -y ppa:ci-train-ppa-service/stable-phone-overlay
-            echo "Package: *"  > /etc/apt/preferences.d/silo.pref
+            echo "Package: *"  \
+                > /etc/apt/preferences.d/stable-phone-overlay.pref
             echo \
-            "Pin: release o=LP-PPA-ci-train-ppa-service-stable-phone-overlay" \
-            >> /etc/apt/preferences.d/silo.pref
+                "Pin: \
+                release o=LP-PPA-ci-train-ppa-service-stable-phone-overlay" \
+                >> /etc/apt/preferences.d/stable-phone-overlay.pref
             echo "Pin-Priority: 1001" \
-            >> /etc/apt/preferences.d/stable-phone-overlay.pref
+                >> /etc/apt/preferences.d/stable-phone-overlay.pref
             # Reload package lists
             apt-get update || true
             # Disable debconf questions so that automated builds won't prompt

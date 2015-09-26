@@ -436,6 +436,7 @@ class ClickChroot:
             apt-get update || true
             # Pull down signature requirements
             apt-get -y --force-yes install gnupg ubuntu-keyring
+            if [[ $(lsb_release --release | cut -f2) == "15.04" ]]; then 
             apt-get -y --force-yes install software-properties-common
             add-apt-repository -y ppa:ci-train-ppa-service/stable-phone-overlay
             echo "Package: *"  \
@@ -446,6 +447,7 @@ class ClickChroot:
                 >> /etc/apt/preferences.d/stable-phone-overlay.pref
             echo "Pin-Priority: 1001" \
                 >> /etc/apt/preferences.d/stable-phone-overlay.pref
+            fi
             # Reload package lists
             apt-get update || true
             # Disable debconf questions so that automated builds won't prompt

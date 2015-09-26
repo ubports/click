@@ -1,12 +1,9 @@
-click (0.4.39.2+15.04.20150926-0ubuntu1~0vivid1) vivid; urgency=medium
+click (0.4.40) UNRELEASED; urgency=medium
 
   [ Michael Vogt ]
   * Don't follow symlinks when stat()ing files. (LP: 1496976)
 
-  [ Zoltán Balogh ]
-  * Enable Overlay PPA in created chroots
-
- -- Zoltán Balogh <zoltan@bakter.hu>  Sat, 26 Sep 2015 07:57:10 +0300
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 18 Sep 2015 15:37:47 +0200
 
 click (0.4.39.1+15.10.20150702-0ubuntu1) wily; urgency=medium
 

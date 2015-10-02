@@ -448,8 +448,6 @@ class ClickChroot:
                     >> /etc/apt/preferences.d/stable-phone-overlay.pref
                 echo "Pin-Priority: 1001" \
                     >> /etc/apt/preferences.d/stable-phone-overlay.pref
-                fi
-
                 # Reload package lists
                 apt-get update || true
                 # Disable debconf questions

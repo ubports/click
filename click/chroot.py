@@ -464,13 +464,13 @@ class ClickChroot:
                 apt-get -y --force-yes install {build_pkgs}
                 # Set up expected /dev entries
                 if [ ! -r /dev/stdin ];  then
-                    ln -s /proc/self/fd/0 /dev/stdin;
+                    ln -s /proc/self/fd/0 /dev/stdin
                 fi
                 if [ ! -r /dev/stdout ]; then
-                     ln -s /proc/self/fd/1 /dev/stdout;
+                    ln -s /proc/self/fd/1 /dev/stdout
                 fi
                 if [ ! -r /dev/stderr ]; then
-                     ln -s /proc/self/fd/2 /dev/stderr;
+                    ln -s /proc/self/fd/2 /dev/stderr
                 fi
                 # Clean up
                 rm /finish.sh

@@ -1,6 +1,10 @@
 click (0.4.40) UNRELEASED; urgency=medium
 
+  [ Michael Vogt ]
   * Don't follow symlinks when stat()ing files. (LP: 1496976)
+
+  [ Zoltán Balogh ]
+  * Add and pin up the overlay PPA for vivid.
 
  -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 18 Sep 2015 15:37:47 +0200
 

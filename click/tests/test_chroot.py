@@ -238,16 +238,23 @@ class TestClickChroot(TestCase):
             apt-get -y --force-yes install gnupg ubuntu-keyring
             # Reload package lists
             apt-get update || true
-            # Disable debconf questions so that automated builds won't prompt
+            # Disable debconf questions
+            # so that automated builds won't prompt
             echo set debconf/frontend Noninteractive | debconf-communicate
             echo set debconf/priority critical | debconf-communicate
             apt-get -y --force-yes dist-upgrade
             # Install basic build tool set to match buildd
             apt-get -y --force-yes install build-pkg-1 build-pkg-2
             # Set up expected /dev entries
-            if [ ! -r /dev/stdin ];  then ln -s /proc/self/fd/0 /dev/stdin;  fi
-            if [ ! -r /dev/stdout ]; then ln -s /proc/self/fd/1 /dev/stdout; fi
-            if [ ! -r /dev/stderr ]; then ln -s /proc/self/fd/2 /dev/stderr; fi
+            if [ ! -r /dev/stdin ];  then
+                ln -s /proc/self/fd/0 /dev/stdin
+            fi
+            if [ ! -r /dev/stdout ]; then
+                ln -s /proc/self/fd/1 /dev/stdout
+            fi
+            if [ ! -r /dev/stderr ]; then
+                ln -s /proc/self/fd/2 /dev/stderr
+            fi
             # Clean up
             rm /finish.sh
             apt-get clean

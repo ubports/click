@@ -430,6 +430,40 @@ public class SingleDB : Object {
 	public void
 	gc () throws Error
 	{
+		// Clean up user registrations: registrations for old packages should
+		// be updated to point to the newest version available. TODO: Check
+		// registration timestamps and compare to package timestamps before
+		// blindly re-registering so old versions can still be registered if
+		// they were done so after the new package was installed.
+		foreach (var package in master_db.get_packages(true)) {
+			var users_db = new Users (master_db);
+			foreach (var name in users_db.get_user_names ()) {
+				var user_db = users_db.get_user (name);
+
+				try {
+					string registered_version = user_db.get_version (package.package);
+
+					string[] args = { "dpkg", "--compare-versions",
+					                  registered_version, "lt",
+					                  package.version };
+					int exit_status;
+					Process.spawn_sync (null, args, null,
+					                    SpawnFlags.SEARCH_PATH, null, null,
+					                    null, out exit_status);
+
+					// This will throw if non-zero
+					Process.check_exit_status (exit_status);
+
+					// Update the user's registered version if necessary.
+					user_db.set_version (package.package, package.version);
+				} catch {
+					// User was either not registered for this app or was
+					// registered for this version (or newer). Either way,
+					// skip it.
+				}
+			}
+		}
+
 		var users_db = new Users (master_db);
 		var user_reg = new Gee.HashMultiMap<string, string> ();
 		foreach (var user_name in users_db.get_user_names ()) {
@@ -625,8 +659,8 @@ public class DB : Object {
 	 *
 	 * The directory where changes should be written.
 	 */
-	public string overlay 
-	{ 
+	public string overlay
+	{
 		get {
 			if (db.size == 0)
 				return "";

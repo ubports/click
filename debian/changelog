@@ -1,3 +1,16 @@
+click (0.4.40) UNRELEASED; urgency=medium
+
+  [ Michael Vogt ]
+  * Don't follow symlinks when stat()ing files. (LP: 1496976)
+
+  [ Zoltán Balogh ]
+  * Add and pin up the overlay PPA for vivid.
+
+  [ Kyle Fazzari ]
+  * Garbage collect old user registrations. (LP: #1479001)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Tue, 06 Oct 2015 19:09:32 +0000
+
 click (0.4.39.1+15.10.20150702-0ubuntu1) wily; urgency=medium
 
   [ Michael Vogt ]

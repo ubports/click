@@ -208,6 +208,8 @@ non_meta_re = re.compile(r'^[a-zA-Z0-9+,./:=@_-]+$')
 
 GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
+overlay_ppa = "ci-train-ppa-service/stable-phone-overlay"
+
 
 def get_geoip_country_code_prefix():
     click_no_local_mirror = os.environ.get('CLICK_NO_LOCAL_MIRROR', 'auto')
@@ -224,6 +226,7 @@ def get_geoip_country_code_prefix():
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
     return ""
+
 
 def generate_sources(series, native_arch, target_arch,
                      archive_mirror, ports_mirror, components):
@@ -427,31 +430,52 @@ class ClickChroot:
         finish_script = "%s/finish.sh" % mount
         with open(finish_script, 'w') as finish:
             finish.write(dedent("""\
-            #!/bin/bash
-            set -e
-            # Configure target arch
-            dpkg --add-architecture {target_arch}
-            # Reload package lists
-            apt-get update || true
-            # Pull down signature requirements
-            apt-get -y --force-yes install gnupg ubuntu-keyring
-            # Reload package lists
-            apt-get update || true
-            # Disable debconf questions so that automated builds won't prompt
-            echo set debconf/frontend Noninteractive | debconf-communicate
-            echo set debconf/priority critical | debconf-communicate
-            apt-get -y --force-yes dist-upgrade
-            # Install basic build tool set to match buildd
-            apt-get -y --force-yes install {build_pkgs}
-            # Set up expected /dev entries
-            if [ ! -r /dev/stdin ];  then ln -s /proc/self/fd/0 /dev/stdin;  fi
-            if [ ! -r /dev/stdout ]; then ln -s /proc/self/fd/1 /dev/stdout; fi
-            if [ ! -r /dev/stderr ]; then ln -s /proc/self/fd/2 /dev/stderr; fi
-            # Clean up
-            rm /finish.sh
-            apt-get clean
-            """).format(target_arch=self.target_arch,
-                        build_pkgs=' '.join(build_pkgs)))
+                #!/bin/bash
+                set -e
+                # Configure target arch
+                dpkg --add-architecture {target_arch}
+                # Reload package lists
+                apt-get update || true
+                # Pull down signature requirements
+                apt-get -y --force-yes install gnupg ubuntu-keyring
+            """).format(target_arch=self.target_arch))
+            if self.series == "vivid":
+                finish.write(dedent("""\
+                    apt-get -y --force-yes install software-properties-common
+                    add-apt-repository -y ppa:{ppa}
+                    echo "Package: *"  \
+                        > /etc/apt/preferences.d/stable-phone-overlay.pref
+                    echo \
+                        "Pin: release o=LP-PPA-{pin_ppa}" \
+                        >> /etc/apt/preferences.d/stable-phone-overlay.pref
+                    echo "Pin-Priority: 1001" \
+                        >> /etc/apt/preferences.d/stable-phone-overlay.pref
+                """).format(ppa=overlay_ppa,
+                            pin_ppa=re.sub('/', '-', overlay_ppa)))
+            finish.write(dedent("""\
+                # Reload package lists
+                apt-get update || true
+                # Disable debconf questions
+                # so that automated builds won't prompt
+                echo set debconf/frontend Noninteractive | debconf-communicate
+                echo set debconf/priority critical | debconf-communicate
+                apt-get -y --force-yes dist-upgrade
+                # Install basic build tool set to match buildd
+                apt-get -y --force-yes install {build_pkgs}
+                # Set up expected /dev entries
+                if [ ! -r /dev/stdin ];  then
+                    ln -s /proc/self/fd/0 /dev/stdin
+                fi
+                if [ ! -r /dev/stdout ]; then
+                    ln -s /proc/self/fd/1 /dev/stdout
+                fi
+                if [ ! -r /dev/stderr ]; then
+                    ln -s /proc/self/fd/2 /dev/stderr
+                fi
+                # Clean up
+                rm /finish.sh
+                apt-get clean
+            """).format(build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
     def _debootstrap(self, components, mount, archive):

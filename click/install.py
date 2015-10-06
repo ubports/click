@@ -418,7 +418,7 @@ class ClickInstaller:
         for dirpath, dirnames, filenames in os.walk(inst_dir):
             for entry in dirnames + filenames:
                 entry_path = os.path.join(dirpath, entry)
-                entry_mode = os.stat(entry_path).st_mode
+                entry_mode = os.lstat(entry_path).st_mode
                 new_entry_mode = entry_mode | stat.S_IRGRP | stat.S_IROTH
                 if entry_mode & stat.S_IXUSR:
                     new_entry_mode |= stat.S_IXGRP | stat.S_IXOTH

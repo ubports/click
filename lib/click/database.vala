@@ -439,14 +439,27 @@ public class SingleDB : Object {
 			var users_db = new Users (master_db);
 			foreach (var name in users_db.get_user_names ()) {
 				var user_db = users_db.get_user (name);
+
 				try {
 					string registered_version = user_db.get_version (package.package);
+
+					string[] args = { "dpkg", "--compare-versions",
+					                  registered_version, "lt",
+					                  package.version };
+					int exit_status;
+					Process.spawn_sync (null, args, null,
+					                    SpawnFlags.SEARCH_PATH, null, null,
+					                    null, out exit_status);
+
+					// This will throw if non-zero
+					Process.check_exit_status (exit_status);
+
 					// Update the user's registered version if necessary.
-					if (registered_version < package.version) {
-						user_db.set_version (package.package, package.version);
-					}
-				} catch (UserError e) {
-					// User isn't registered for this app. Skip it.
+					user_db.set_version (package.package, package.version);
+				} catch {
+					// User was either not registered for this app or was
+					// registered for this version (or newer). Either way,
+					// skip it.
 				}
 			}
 		}

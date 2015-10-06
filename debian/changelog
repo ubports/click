@@ -1,4 +1,4 @@
-click (0.4.40) UNRELEASED; urgency=medium
+click (0.4.40+15.10.20151006-0ubuntu1) wily; urgency=medium
 
   [ Michael Vogt ]
   * Don't follow symlinks when stat()ing files. (LP: 1496976)
@@ -9,7 +9,10 @@ click (0.4.40) UNRELEASED; urgency=medium
   [ Kyle Fazzari ]
   * Garbage collect old user registrations. (LP: #1479001)
 
- -- Kyle Fazzari <kyle@canonical.com>  Tue, 06 Oct 2015 19:09:32 +0000
+  [ CI Train Bot ]
+  * No-change rebuild.
+
+ -- Kyle Fazzari <kyle@canonical.com>  Tue, 06 Oct 2015 19:44:52 +0000
 
 click (0.4.39.1+15.10.20150702-0ubuntu1) wily; urgency=medium
 

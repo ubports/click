@@ -412,6 +412,74 @@ class TestClickSingleDB(TestCase):
             self.db.gc()
             self.assertTrue(os.path.exists(a_path))
 
+    # Test that bug #1479001 is fixed. Uses the following scenario:
+    #
+    # - Two databases: db1 and db2.
+    # - One package, "test-package":
+    #    - Versions 1 and 3 installed in db1
+    #    - Version 2 installed in db2
+    #    - User has a registration in db2 for version 2, where the registration
+    #      timestamp precedes the installation of version 3.
+    #
+    # In this case, bug #1479001 expects that the user's registration would
+    # be updated to 3, since it was installed after the user registered for
+    # 2, which implies that the user would like the update to 3.
+    def test_gc_fixes_old_user_registrations(self):
+        with self.run_in_subprocess("getpwnam") as (enter, preloads):
+            enter()
+
+            # Setup the system hook
+            preloads["getpwnam"].side_effect = (
+                lambda name: self.make_pointer(Passwd(pw_dir=b"/foo")))
+
+            # Setup both databases
+            db1 = os.path.join(self.temp_dir, "db1")
+            db2 = os.path.join(self.temp_dir, "db2")
+            db = Click.DB()
+            db.add(db1)
+            db.add(db2)
+
+            # Prepare common manifest for the packages
+            manifest = {"hooks": {"test-app": {"test": "foo"}}}
+
+            # Setup versions 1.0 and 3.0 of package in db1
+            version1 = os.path.join(db1, "test-package", "1.0")
+            with mkfile(os.path.join(version1, ".click", "info",
+                        "test-package.manifest")) as f:
+                json.dump(manifest, f)
+
+            version3 = os.path.join(db1, "test-package", "3.0")
+            with mkfile(os.path.join(version3, ".click", "info",
+                        "test-package.manifest")) as f:
+                json.dump(manifest, f)
+
+            # Setup version 0.2 of package in db2
+            version2 = os.path.join(db2, "test-package", "2.0")
+            with mkfile(os.path.join(version2, ".click", "info",
+                        "test-package.manifest")) as f:
+                json.dump(manifest, f)
+
+            # Setup the user registration for 2.0 in db2.
+            registrationPath = os.path.join(
+                db2, ".click", "users", "foo", "test-package")
+            os.makedirs(os.path.dirname(registrationPath))
+            os.symlink(version2, registrationPath)
+
+            # Run the garbage collection to update the registrations.
+            db.gc()
+
+            # Verify that the user still has a registration for the package,
+            # and that it's now registered for version 3.0.
+            self.assertTrue(os.path.lexists(registrationPath))
+            self.assertEqual(version3, os.readlink(registrationPath))
+
+            user_db = Click.User.for_user(db, "foo")
+            try:
+                version = user_db.get_version("test-package")
+                self.assertEqual("3.0", version)
+            except:
+                self.fail("No user registration for 'test-package'")
+
     def _make_ownership_test(self):
         path = os.path.join(self.temp_dir, "a", "1.0")
         touch(os.path.join(path, ".click", "info", "a.manifest"))

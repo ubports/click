@@ -276,6 +276,16 @@ class ClickInstaller:
                             'with system architecture "%s"' %
                             (architecture, dpkg_architecture))
 
+            # This isn't ideally quick, since it has to decompress the data
+            # part of the package, but dpkg's path filtering code assumes
+            # that all paths start with "./" so we must check it before
+            # passing the package to dpkg.
+            for data_name in package.data:
+                if data_name != "." and not data_name.startswith("./"):
+                    raise ClickInstallerAuditError(
+                        'File name "%s" in package does not start with "./"' %
+                        data_name)
+
             if slow:
                 temp_dir = tempfile.mkdtemp(prefix="click")
                 try:

@@ -1,6 +1,7 @@
 click (0.4.41) UNRELEASED; urgency=medium
 
   * Fix spurious test_sync_without_user_db test failure.
+  * Fix test failures under Python 2.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
 

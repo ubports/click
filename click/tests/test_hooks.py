@@ -895,6 +895,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             preloads["click_get_user_home"].return_value = "/home/test-user"
+            self._setup_hooks_dir(preloads)
             with mkfile(
                     os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
                 print("User-Level: yes", file=f)

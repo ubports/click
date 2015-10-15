@@ -1,3 +1,9 @@
+click (0.4.41) UNRELEASED; urgency=medium
+
+  * Fix spurious test_sync_without_user_db test failure.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
+
 click (0.4.40+15.10.20151006-0ubuntu1) wily; urgency=medium
 
   [ Michael Vogt ]

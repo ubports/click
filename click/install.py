@@ -42,7 +42,6 @@ from textwrap import dedent
 
 from contextlib import closing
 
-import apt_pkg
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 from gi.repository import Click
@@ -71,9 +70,6 @@ except AttributeError:
         def close(self):
             self.control._DebPart__member.close()
             self.data._DebPart__member.close()
-
-
-apt_pkg.init_system()
 
 
 class DebsigVerifyError(Exception):

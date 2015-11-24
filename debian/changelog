@@ -4,6 +4,8 @@ click (0.4.41) UNRELEASED; urgency=medium
   * Fix test failures under Python 2.
   * Forbid installing packages with data tarball members whose names do not
     start with "./" (LP: #1506467).
+  * Take evasive action in case the conflicting "click" package has been
+    installed locally from PyPI (LP: #1486841).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
 

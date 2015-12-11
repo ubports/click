@@ -13,6 +13,7 @@ click (0.4.41) UNRELEASED; urgency=medium
   [ Dimitri John Ledkov ]
   * Require specific Click version, to avoid gi warnings that fail
     test-suite (LP: #1522608).
+  * Set Vcs-* fields to the actual development branch.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
 

@@ -23,19 +23,24 @@ __all__ = [
     ]
 
 
-from contextlib import contextmanager
+from contextlib import (
+    closing,
+    contextmanager,
+    )
 import hashlib
 import json
 import os
 import shutil
 import stat
 import subprocess
+import tarfile
 
 from unittest import skipUnless
 
 from debian.deb822 import Deb822
 from gi.repository import Click
 
+from click.arfile import ArFile
 from click.build import ClickBuilder
 from click.install import (
     ClickInstaller,
@@ -50,6 +55,7 @@ from click.tests.helpers import (
     TestCase,
     touch,
 )
+from click.versions import spec_version
 
 
 @contextmanager
@@ -104,6 +110,7 @@ class TestClickInstaller(TestCase):
                 script.write(contents)
         Click.ensuredir(data_dir)
         for name, path in data_files.items():
+            Click.ensuredir(os.path.dirname(os.path.join(data_dir, name)))
             if path is None:
                 touch(os.path.join(data_dir, name))
             elif os.path.isdir(path):
@@ -319,6 +326,46 @@ class TestClickInstaller(TestCase):
                     "ubuntu-sdk-14.04-webapps",
                     ])
             self.assertEqual(("test-package", "1.0"), installer.audit(path))
+
+    def test_audit_missing_dot_slash(self):
+        # Manually construct a package with data paths that do not start
+        # with "./", which could be used to bypass path filtering.
+        with self.run_in_subprocess(
+                "click_get_frameworks_dir") as (enter, preloads):
+            enter()
+            path = self.make_fake_package(
+                control_fields={"Click-Version": "0.2"},
+                manifest={
+                    "name": "test-package",
+                    "version": "1.0",
+                    "framework": "ubuntu-sdk-13.10",
+                },
+                control_scripts={"preinst": static_preinst},
+                data_files={".click/tmp.ci/manifest": None})
+            # Repack without the leading "./".
+            data_dir = os.path.join(self.temp_dir, "fake-package")
+            data_tar_path = os.path.join(self.temp_dir, "data.tar.gz")
+            control_tar_path = os.path.join(self.temp_dir, "control.tar.gz")
+            package_path = '%s.click' % data_dir
+            with closing(tarfile.TarFile.open(
+                    name=data_tar_path, mode="w:gz", format=tarfile.GNU_FORMAT
+                    )) as data_tar:
+                data_tar.add(
+                    os.path.join(data_dir, ".click"), arcname=".click")
+            with ArFile(name=package_path, mode="w") as package:
+                package.add_magic()
+                package.add_data("debian-binary", b"2.0\n")
+                package.add_data(
+                    "_click-binary", ("%s\n" % spec_version).encode("UTF-8"))
+                package.add_file("control.tar.gz", control_tar_path)
+                package.add_file("data.tar.gz", data_tar_path)
+            self._setup_frameworks(preloads, frameworks=["ubuntu-sdk-13.10"])
+            with mock_quiet_subprocess_call():
+                installer = ClickInstaller(self.db)
+                self.assertRaisesRegex(
+                    ClickInstallerAuditError,
+                    'File name ".click" in package does not start with "./"',
+                    installer.audit, path)
 
     def test_audit_broken_md5sums(self):
         with self.run_in_subprocess(

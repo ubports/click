@@ -1,3 +1,14 @@
+click (0.4.40+15.10.20151006-0ubuntu1.1) wily; urgency=medium
+
+  * SECURITY UPDATE: fix privilege escalation via crafted data.tar.gz that
+    can be used to install alternate security policy than what is defined
+    - click/install.py: Forbid installing packages with data tarball members
+      whose names do not start with "./". Patch thanks to Colin Watson.
+    - CVE-2015-XXXX
+    - LP: #1506467
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Thu, 15 Oct 2015 11:13:36 -0500
+
 click (0.4.40+15.10.20151006-0ubuntu1) wily; urgency=medium
 
   [ Michael Vogt ]

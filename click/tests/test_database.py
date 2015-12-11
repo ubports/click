@@ -32,6 +32,7 @@ import os
 import unittest
 
 from gi.repository import Click, GLib
+from six import integer_types
 
 from click.json_helpers import json_array_to_python, json_object_to_python
 from click.tests.gimock_types import Passwd
@@ -55,7 +56,7 @@ class TestClickInstalledPackage(TestCase):
             "bar", "1.0", "/path/to/foo/1.0", False)
 
     def test_hash(self):
-        self.assertIsInstance(self.foo.hash(), int)
+        self.assertIsInstance(self.foo.hash(), integer_types)
         self.assertEqual(self.foo.hash(), self.foo_clone.hash())
         self.assertNotEqual(self.foo.hash(), self.foo_different_version.hash())
         self.assertNotEqual(self.foo.hash(), self.foo_different_path.hash())

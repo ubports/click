@@ -27,8 +27,11 @@ __all__ = [
     "ClickChrootDoesNotExistException",
     ]
 
-import urllib
-import urllib.request
+try:
+    from urllib.error import URLError
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import URLError, urlopen
 import os
 import pwd
 import re
@@ -216,14 +219,14 @@ def get_geoip_country_code_prefix():
     if click_no_local_mirror == '1':
         return ""
     try:
-        with urllib.request.urlopen(GEOIP_SERVER) as f:
+        with urlopen(GEOIP_SERVER) as f:
             xml_data = f.read()
         et = ElementTree.fromstring(xml_data)
         cc = et.find("CountryCode")
         if not cc:
             return ""
         return cc.text.lower()+"."
-    except (ElementTree.ParseError, urllib.error.URLError):
+    except (ElementTree.ParseError, URLError):
         pass
     return ""
 

@@ -42,7 +42,6 @@ from textwrap import dedent
 
 from contextlib import closing
 
-import apt_pkg
 from debian.debfile import DebFile as _DebFile
 from debian.debian_support import Version
 from gi.repository import Click
@@ -71,9 +70,6 @@ except AttributeError:
         def close(self):
             self.control._DebPart__member.close()
             self.data._DebPart__member.close()
-
-
-apt_pkg.init_system()
 
 
 class DebsigVerifyError(Exception):
@@ -275,6 +271,16 @@ class ClickInstaller:
                             'Package architecture "%s" not compatible '
                             'with system architecture "%s"' %
                             (architecture, dpkg_architecture))
+
+            # This isn't ideally quick, since it has to decompress the data
+            # part of the package, but dpkg's path filtering code assumes
+            # that all paths start with "./" so we must check it before
+            # passing the package to dpkg.
+            for data_name in package.data:
+                if data_name != "." and not data_name.startswith("./"):
+                    raise ClickInstallerAuditError(
+                        'File name "%s" in package does not start with "./"' %
+                        data_name)
 
             if slow:
                 temp_dir = tempfile.mkdtemp(prefix="click")

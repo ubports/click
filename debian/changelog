@@ -1,3 +1,33 @@
+click (0.4.41) UNRELEASED; urgency=medium
+
+  [ Colin Watson ]
+  * Fix spurious test_sync_without_user_db test failure.
+  * Fix test failures under Python 2.
+  * Forbid installing packages with data tarball members whose names do not
+    start with "./" (LP: #1506467).
+  * Take evasive action in case the conflicting "click" package has been
+    installed locally from PyPI (LP: #1486841).
+  * Drop use of apt_pkg from click.install, since it's no longer needed
+    there (LP: #1510015).
+
+  [ Dimitri John Ledkov ]
+  * Require specific Click version, to avoid gi warnings that fail
+    test-suite (LP: #1522608).
+  * Set Vcs-* fields to the actual development branch.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
+
+click (0.4.40+15.10.20151006-0ubuntu1.1) wily; urgency=medium
+
+  * SECURITY UPDATE: fix privilege escalation via crafted data.tar.gz that
+    can be used to install alternate security policy than what is defined
+    - click/install.py: Forbid installing packages with data tarball members
+      whose names do not start with "./". Patch thanks to Colin Watson.
+    - CVE-2015-XXXX
+    - LP: #1506467
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Thu, 15 Oct 2015 11:13:36 -0500
+
 click (0.4.40+15.10.20151006-0ubuntu1) wily; urgency=medium
 
   [ Michael Vogt ]

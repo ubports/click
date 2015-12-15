@@ -1,4 +1,4 @@
-click (0.4.41) UNRELEASED; urgency=medium
+click (0.4.41+16.04.20151211-0ubuntu1) xenial; urgency=medium
 
   [ Colin Watson ]
   * Fix spurious test_sync_without_user_db test failure.
@@ -15,7 +15,10 @@ click (0.4.41) UNRELEASED; urgency=medium
     test-suite (LP: #1522608).
   * Set Vcs-* fields to the actual development branch.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 15 Oct 2015 12:46:54 +0100
+  [ CI Train Bot ]
+  * No-change rebuild.
+
+ -- Colin Watson <cjwatson@canonical.com>  Fri, 11 Dec 2015 01:31:29 +0000
 
 click (0.4.40+15.10.20151006-0ubuntu1.1) wily; urgency=medium
 

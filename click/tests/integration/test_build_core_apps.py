@@ -20,6 +20,7 @@ import json
 import os
 import shutil
 import subprocess
+import unittest
 
 from six import with_metaclass
 
@@ -44,6 +45,9 @@ CORE_APP_CONFIGURE_CMD = [
 CLICK_TARGET_DIR = "click-package"
 CORE_APP_MAKE_CMD = [
     "make", "DESTDIR=%s" % CLICK_TARGET_DIR, "install"]
+
+# architectures with native- or cross-compiling support for armhf
+ALLOW_ARCHITECTURES = ["amd64", "arm64", "armhf", "i386"]
 
 
 def find_manifest(start_dir):
@@ -104,6 +108,10 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
         self.assertEqual(len(glob("*.click")), 1)
 
     def _testbuild_branch(self, branch):
+        system_arch = subprocess.check_output(
+            ["dpkg", "--print-architecture"], universal_newlines=True).strip()
+        if system_arch not in ALLOW_ARCHITECTURES:
+            unittest.skip("%s has no armhf build support" % system_arch)
         # get and parse
         branch_dir = branch[len("lp:"):]
         build_dir = os.path.join(branch_dir, "build-tree")

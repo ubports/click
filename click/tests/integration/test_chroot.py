@@ -81,7 +81,8 @@ class TestChroot(ClickTestCase):
 
     def test_exists_no(self):
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_call(self.command("arch-that-does-not-exist"))
+            subprocess.check_call(
+                self.command("arch-that-does-not-exist", "exists"))
 
 
 class TestChrootName(TestChroot):

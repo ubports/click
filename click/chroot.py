@@ -481,7 +481,11 @@ class ClickChroot:
             """).format(build_pkgs=' '.join(build_pkgs)))
         return finish_script
 
-    def _debootstrap(self, components, mount, archive):
+    def _debootstrap(self, components, mount, archive_mirror, ports_mirror):
+        if self.native_arch in primary_arches:
+            mirror = archive_mirror
+        else:
+            mirror = ports_mirror
         subprocess.check_call([
             "debootstrap",
             "--arch", self.native_arch,
@@ -489,7 +493,7 @@ class ClickChroot:
             "--components=%s" % ','.join(components),
             self.series,
             mount,
-            archive
+            mirror,
             ])
 
     @property
@@ -560,15 +564,15 @@ class ClickChroot:
         os.makedirs(mount)
 
         country_code = get_geoip_country_code_prefix()
-        archive = "http://%sarchive.ubuntu.com/ubuntu" % country_code
+        archive_mirror = "http://%sarchive.ubuntu.com/ubuntu" % country_code
         ports_mirror = "http://%sports.ubuntu.com/ubuntu-ports" % country_code
         # this doesn't work because we are running this under sudo
         if 'DEBOOTSTRAP_MIRROR' in os.environ:
-            archive = os.environ['DEBOOTSTRAP_MIRROR']
-        self._debootstrap(components, mount, archive)
+            archive_mirror = os.environ['DEBOOTSTRAP_MIRROR']
+        self._debootstrap(components, mount, archive_mirror, ports_mirror)
         sources = generate_sources(self.series, self.native_arch,
                                    self.target_arch,
-                                   archive, ports_mirror,
+                                   archive_mirror, ports_mirror,
                                    ' '.join(components))
         with open("%s/etc/apt/sources.list" % mount, "w") as sources_list:
             for line in sources:

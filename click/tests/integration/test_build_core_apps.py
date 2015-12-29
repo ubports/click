@@ -20,6 +20,7 @@ import json
 import os
 import shutil
 import subprocess
+import unittest
 
 from six import with_metaclass
 
@@ -44,6 +45,9 @@ CORE_APP_CONFIGURE_CMD = [
 CLICK_TARGET_DIR = "click-package"
 CORE_APP_MAKE_CMD = [
     "make", "DESTDIR=%s" % CLICK_TARGET_DIR, "install"]
+
+# architectures with native- or cross-compiling support for armhf
+ALLOW_ARCHITECTURES = ["amd64", "arm64", "armhf", "i386"]
 
 
 def find_manifest(start_dir):
@@ -104,21 +108,25 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
         self.assertEqual(len(glob("*.click")), 1)
 
     def _testbuild_branch(self, branch):
-            # get and parse
-            branch_dir = branch[len("lp:"):]
-            build_dir = os.path.join(branch_dir, "build-tree")
-            if os.path.exists(branch_dir):
-                subprocess.check_call(["bzr", "pull"], cwd=branch_dir)
-            else:
-                subprocess.check_call(["bzr", "branch", branch])
-            manifest = find_manifest(branch_dir)
-            # build it
-            self._set_arch_and_framework_from_manifest(manifest)
-            if os.path.exists(build_dir):
-                shutil.rmtree(build_dir)
-            os.makedirs(build_dir)
-            with chdir(build_dir):
-                self._ensure_click_chroot()
-                self.configure()
-                self.make()
-                self.create_click()
+        system_arch = subprocess.check_output(
+            ["dpkg", "--print-architecture"], universal_newlines=True).strip()
+        if system_arch not in ALLOW_ARCHITECTURES:
+            unittest.skip("%s has no armhf build support" % system_arch)
+        # get and parse
+        branch_dir = branch[len("lp:"):]
+        build_dir = os.path.join(branch_dir, "build-tree")
+        if os.path.exists(branch_dir):
+            subprocess.check_call(["bzr", "pull"], cwd=branch_dir)
+        else:
+            subprocess.check_call(["bzr", "branch", branch])
+        manifest = find_manifest(branch_dir)
+        # build it
+        self._set_arch_and_framework_from_manifest(manifest)
+        if os.path.exists(build_dir):
+            shutil.rmtree(build_dir)
+        os.makedirs(build_dir)
+        with chdir(build_dir):
+            self._ensure_click_chroot()
+            self.configure()
+            self.make()
+            self.create_click()

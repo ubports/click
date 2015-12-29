@@ -1,6 +1,8 @@
 click (0.4.42.1) UNRELEASED; urgency=medium
 
   * Fix test skipping in build_core_apps integration tests.
+  * Skip chroot integration tests on architectures that were not present in
+    14.04.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Tue, 29 Dec 2015 04:08:50 +0000
 

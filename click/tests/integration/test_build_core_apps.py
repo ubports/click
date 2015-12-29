@@ -104,21 +104,21 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
         self.assertEqual(len(glob("*.click")), 1)
 
     def _testbuild_branch(self, branch):
-            # get and parse
-            branch_dir = branch[len("lp:"):]
-            build_dir = os.path.join(branch_dir, "build-tree")
-            if os.path.exists(branch_dir):
-                subprocess.check_call(["bzr", "pull"], cwd=branch_dir)
-            else:
-                subprocess.check_call(["bzr", "branch", branch])
-            manifest = find_manifest(branch_dir)
-            # build it
-            self._set_arch_and_framework_from_manifest(manifest)
-            if os.path.exists(build_dir):
-                shutil.rmtree(build_dir)
-            os.makedirs(build_dir)
-            with chdir(build_dir):
-                self._ensure_click_chroot()
-                self.configure()
-                self.make()
-                self.create_click()
+        # get and parse
+        branch_dir = branch[len("lp:"):]
+        build_dir = os.path.join(branch_dir, "build-tree")
+        if os.path.exists(branch_dir):
+            subprocess.check_call(["bzr", "pull"], cwd=branch_dir)
+        else:
+            subprocess.check_call(["bzr", "branch", branch])
+        manifest = find_manifest(branch_dir)
+        # build it
+        self._set_arch_and_framework_from_manifest(manifest)
+        if os.path.exists(build_dir):
+            shutil.rmtree(build_dir)
+        os.makedirs(build_dir)
+        with chdir(build_dir):
+            self._ensure_click_chroot()
+            self.configure()
+            self.make()
+            self.create_click()

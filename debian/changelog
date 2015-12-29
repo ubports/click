@@ -1,3 +1,10 @@
+click (0.4.42) UNRELEASED; urgency=medium
+
+  * chroot: Point debootstrap at ports.ubuntu.com for non-primary
+    architectures.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 29 Dec 2015 01:05:36 +0000
+
 click (0.4.41+16.04.20151211-0ubuntu1) xenial; urgency=medium
 
   [ Colin Watson ]

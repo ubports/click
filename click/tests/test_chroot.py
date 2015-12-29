@@ -49,7 +49,7 @@ class FakeClickChroot(ClickChroot):
         self._maint_kwargs = kwargs
         return 0
 
-    def _debootstrap(self, components, mount, archive_server):
+    def _debootstrap(self, components, mount, archive_mirror, ports_mirror):
         os.makedirs(os.path.join(mount, "etc", "apt"))
         os.makedirs(os.path.join(mount, "usr", "sbin"))
         os.makedirs(os.path.join(mount, "sbin"))

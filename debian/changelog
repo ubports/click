@@ -1,3 +1,9 @@
+click (0.4.42.1) UNRELEASED; urgency=medium
+
+  * Fix test skipping in build_core_apps integration tests.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 29 Dec 2015 04:08:50 +0000
+
 click (0.4.42+16.04.20151229-0ubuntu1) xenial; urgency=medium
 
   [ Colin Watson ]

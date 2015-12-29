@@ -20,7 +20,6 @@ import json
 import os
 import shutil
 import subprocess
-import unittest
 
 from six import with_metaclass
 

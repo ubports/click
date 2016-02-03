@@ -1,3 +1,19 @@
+click (0.4.43) UNRELEASED; urgency=medium
+
+  * Fix test skipping in build_core_apps integration tests.
+  * Skip chroot integration tests on architectures that were not present in
+    14.04.
+  * Fix TestChroot.test_exists_no integration test to be more meaningful
+    rather than just testing a command syntax error.
+  * Rename python3-click back to its original name of python3-click-package
+    to get it out of the way of PyPI's "click" package, conflicting with
+    python3-click and python3-click-cli; this is unfortunate and
+    non-compliant with the Python policy, but from that point of view the
+    package that owns the name in the upstream packaging system ought to
+    win.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 29 Dec 2015 04:08:50 +0000
+
 click (0.4.42+16.04.20151229-0ubuntu1) xenial; urgency=medium
 
   [ Colin Watson ]

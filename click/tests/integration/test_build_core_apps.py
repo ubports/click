@@ -20,7 +20,6 @@ import json
 import os
 import shutil
 import subprocess
-import unittest
 
 from six import with_metaclass
 
@@ -111,7 +110,7 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
         system_arch = subprocess.check_output(
             ["dpkg", "--print-architecture"], universal_newlines=True).strip()
         if system_arch not in ALLOW_ARCHITECTURES:
-            unittest.skip("%s has no armhf build support" % system_arch)
+            self.skipTest("%s has no armhf build support" % system_arch)
         # get and parse
         branch_dir = branch[len("lp:"):]
         build_dir = os.path.join(branch_dir, "build-tree")

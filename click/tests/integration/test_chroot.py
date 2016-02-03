@@ -16,6 +16,7 @@
 """Integration tests for the click chroot feature."""
 
 import subprocess
+import unittest
 
 from .helpers import (
     require_network,
@@ -23,7 +24,21 @@ from .helpers import (
     ClickTestCase,
 )
 
+# architectures present in 14.04 (current default framework)
+ALLOW_ARCHITECTURES = [
+    "amd64", "arm64", "armhf", "i386", "powerpc", "ppc64el"]
 
+
+def skipUnlessAllowedArchitecture():
+    system_arch = subprocess.check_output(
+        ["dpkg", "--print-architecture"], universal_newlines=True).strip()
+    if system_arch in ALLOW_ARCHITECTURES:
+        return lambda func: func
+    else:
+        return unittest.skip("%s does not exist in 14.04")
+
+
+@skipUnlessAllowedArchitecture()
 class TestChroot(ClickTestCase):
 
     @classmethod
@@ -66,7 +81,8 @@ class TestChroot(ClickTestCase):
 
     def test_exists_no(self):
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_call(self.command("arch-that-does-not-exist"))
+            subprocess.check_call(
+                self.command("arch-that-does-not-exist", "exists"))
 
 
 class TestChrootName(TestChroot):

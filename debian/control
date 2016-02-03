@@ -13,7 +13,7 @@ XS-Testsuite: autopkgtest
 Package: click
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click (= ${binary:Version}), adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}, python3-click-package (= ${binary:Version}), adduser
 Recommends: click-apparmor
 Suggests: click-reviewers-tools (>= 0.9), ubuntu-app-launch-tools | upstart-app-launch-tools
 Conflicts: click-package
@@ -28,7 +28,7 @@ Description: Click packages
 Package: click-dev
 Architecture: any
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${perl:Depends}, python3-click (= ${binary:Version})
+Depends: ${misc:Depends}, ${perl:Depends}, python3-click-package (= ${binary:Version})
 Recommends: debootstrap, schroot, dpkg-dev
 Description: build Click packages
  Click is a simplified packaging format that installs in a separate part of
@@ -36,13 +36,12 @@ Description: build Click packages
  .
  click-dev provides support for building these packages.
 
-Package: python3-click
+Package: python3-click-package
 Section: python
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, gir1.2-click-0.4 (= ${binary:Version}), gir1.2-glib-2.0, python3-apt, python3-debian, python3-gi
-Conflicts: python3-click-package
-Replaces: python3-click-package
-Provides: python3-click-package
+Conflicts: python3-click, python3-click-cli
+Replaces: python3-click (<< 0.4.42)
 Description: Click packages (Python 3 interface)
  Click is a simplified packaging format that installs in a separate part of
  the file system, suitable for third-party applications.

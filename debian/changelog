@@ -1,3 +1,10 @@
+click (0.4.43+16.04.20160203-0ubuntu2) xenial; urgency=medium
+
+  * Fix python3-click-package -> python3-click Replaces version
+    (LP: #1544776).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 12 Feb 2016 11:10:43 +0000
+
 click (0.4.43+16.04.20160203-0ubuntu1) xenial; urgency=medium
 
   [ Colin Watson ]

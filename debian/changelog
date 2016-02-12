@@ -1,5 +1,6 @@
-click (0.4.43) UNRELEASED; urgency=medium
+click (0.4.43+16.04.20160203-0ubuntu1) xenial; urgency=medium
 
+  [ Colin Watson ]
   * Fix test skipping in build_core_apps integration tests.
   * Skip chroot integration tests on architectures that were not present in
     14.04.
@@ -12,7 +13,10 @@ click (0.4.43) UNRELEASED; urgency=medium
     package that owns the name in the upstream packaging system ought to
     win.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 29 Dec 2015 04:08:50 +0000
+  [ CI Train Bot ]
+  * No-change rebuild.
+
+ -- Colin Watson <cjwatson@canonical.com>  Wed, 03 Feb 2016 11:17:48 +0000
 
 click (0.4.42+16.04.20151229-0ubuntu1) xenial; urgency=medium
 

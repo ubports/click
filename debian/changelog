@@ -1,3 +1,9 @@
+click (0.4.44) UNRELEASED; urgency=medium
+
+  * Chase redirection for click.readthedocs.org -> click.readthedocs.io.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 28 Apr 2016 02:46:20 +0100
+
 click (0.4.43+16.04.20160203-0ubuntu2) xenial; urgency=medium
 
   * Fix python3-click-package -> python3-click Replaces version

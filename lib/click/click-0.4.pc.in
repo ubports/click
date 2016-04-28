@@ -22,7 +22,7 @@ includedir=@includedir@
 Name: @PACKAGE_NAME@
 Description: Click package manipulation library
 Version: @PACKAGE_VERSION@
-URL: https://click.readthedocs.org/en/latest/
+URL: https://click.readthedocs.io/en/latest/
 Requires.private: glib-2.0 gobject-2.0 json-glib-1.0
 Libs: -L${libdir} -lclick-0.4
 Cflags: -I${includedir}/click-0.4

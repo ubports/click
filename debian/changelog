@@ -1,8 +1,13 @@
-click (0.4.44) UNRELEASED; urgency=medium
+click (0.4.44+16.10.20160809.1-0ubuntu1) yakkety; urgency=medium
 
+  [ Colin Watson ]
   * Chase redirection for click.readthedocs.org -> click.readthedocs.io.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 28 Apr 2016 02:46:20 +0100
+  [ Antti Kaijanmäki ]
+  * As PK 1.0 does not support plugins anymore, drop the click plugin.
+    (LP: #1470655, #1496292)
+
+ -- Timo Jyrinki <timo.jyrinki@canonical.com>  Tue, 09 Aug 2016 11:22:15 +0000
 
 click (0.4.43+16.04.20160203-0ubuntu2) xenial; urgency=medium
 

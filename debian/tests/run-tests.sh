@@ -7,6 +7,7 @@ set -e
 ./configure --prefix=/usr \
         --sysconfdir=/etc \
         --with-systemdsystemunitdir=/lib/systemd/system \
-        --with-systemduserunitdir=/usr/lib/systemd/user
+        --with-systemduserunitdir=/usr/lib/systemd/user \
+        --disable-packagekit
 
 TEST_INTEGRATION=1 python3 -m unittest discover -vv click.tests.integration

@@ -1,3 +1,10 @@
+click (0.4.44+16.10.20160810-0ubuntu1) yakkety; urgency=medium
+
+  * Don't use @ in debian/tests/control since packagekit plugin is still
+    in debian/control.
+
+ -- Timo Jyrinki <timo.jyrinki@canonical.com>  Wed, 10 Aug 2016 08:21:34 +0000
+
 click (0.4.44+16.10.20160809.1-0ubuntu1) yakkety; urgency=medium
 
   [ Colin Watson ]

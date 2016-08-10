@@ -1,3 +1,9 @@
+click (0.4.44+16.10.20160810.1-0ubuntu1) yakkety; urgency=medium
+
+  * Add --disable-packagekit to the autopkgtests.
+
+ -- Timo Jyrinki <timo.jyrinki@canonical.com>  Wed, 10 Aug 2016 12:36:49 +0000
+
 click (0.4.44+16.10.20160810-0ubuntu1) yakkety; urgency=medium
 
   * Don't use @ in debian/tests/control since packagekit plugin is still

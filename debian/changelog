@@ -1,3 +1,10 @@
+click (0.4.44+16.10.20160811.1-0ubuntu1) yakkety; urgency=medium
+
+  [ Colin Watson ]
+  * Handle new policy URL in debsig-verify 0.15. (LP: #1608281)
+
+ -- Timo Jyrinki <timo.jyrinki@canonical.com>  Thu, 11 Aug 2016 10:50:58 +0000
+
 click (0.4.44+16.10.20160810.1-0ubuntu1) yakkety; urgency=medium
 
   * Add --disable-packagekit to the autopkgtests.

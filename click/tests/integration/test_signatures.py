@@ -22,6 +22,8 @@ import subprocess
 import tarfile
 from textwrap import dedent
 
+import apt
+
 from .helpers import (
     require_root,
     ClickTestCase,
@@ -66,10 +68,14 @@ class Debsigs:
 
     def install_signature_policy(self):
         """Install/update the system-wide signature policy"""
+        if apt.Cache()["debsig-verify"].installed >= "0.15":
+            debsig_xmlns = "https://www.debian.org/debsig/1.0/"
+        else:
+            debsig_xmlns = "http://www.debian.org/debsig/1.0/"
         xmls = dedent("""\
         <?xml version="1.0"?>
-        <!DOCTYPE Policy SYSTEM "http://www.debian.org/debsig/1.0/policy.dtd">
-        <Policy xmlns="http://www.debian.org/debsig/1.0/">
+        <!DOCTYPE Policy SYSTEM "{debsig_xmlns}policy.dtd">
+        <Policy xmlns="{debsig_xmlns}">
 
         <Origin Name="test-origin" id="{keyid}" Description="Example policy"/>
         <Selection>
@@ -80,7 +86,9 @@ class Debsigs:
         <Required Type="origin" File="{filename}" id="{keyid}"/>
         </Verification>
         </Policy>
-        """.format(keyid=self.keyid, filename="origin.pub"))
+        """.format(
+            debsig_xmlns=debsig_xmlns, keyid=self.keyid,
+            filename="origin.pub"))
         makedirs(os.path.dirname(self.policy))
         with open(self.policy, "w") as f:
             f.write(xmls)

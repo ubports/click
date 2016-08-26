@@ -64,9 +64,14 @@ int package_fd;
 
 #define GET_NEXT_SYMBOL(name) \
     do { \
+        char *err; \
         libc_##name = dlsym (RTLD_NEXT, #name); \
-        if (dlerror ()) \
+        if ((err = dlerror ()) != NULL) { \
+            fprintf (stderr, \
+                     "Error getting address of symbol '" #name "': %s", err); \
+            fflush (stderr); \
             _exit (1); \
+        } \
     } while (0)
 
 static void __attribute__ ((constructor)) clickpreload_init (void)
@@ -236,6 +241,7 @@ static void clickpreload_assert_path_in_instdir (const char *verb,
     fprintf (stderr,
              "Sandbox failure: 'click install' not permitted to %s '%s'\n",
              verb, pathname);
+    fflush (stderr);
     exit (1);
 }
 

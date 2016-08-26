@@ -1,3 +1,9 @@
+click (0.4.45) UNRELEASED; urgency=medium
+
+  * Emit more debugging information when libclickpreload fails.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 26 Aug 2016 18:37:49 +0100
+
 click (0.4.44+16.10.20160811.1-0ubuntu1) yakkety; urgency=medium
 
   [ Colin Watson ]

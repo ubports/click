@@ -1,6 +1,7 @@
 click (0.4.45) UNRELEASED; urgency=medium
 
   * Emit more debugging information when libclickpreload fails.
+  * Preload __xmknod rather than mknod (LP: #1615757).
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 26 Aug 2016 18:37:49 +0100
 

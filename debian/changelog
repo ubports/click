@@ -10,6 +10,7 @@ click (0.4.45) UNRELEASED; urgency=medium
   * Link libgimockpreload properly against libclick and several other
     libraries, and use -Wl,--no-as-needed to stop the linker discarding
     references to libraries that will be used via dlsym.
+  * Initialise real_* pointers in libgimockpreload more reliably.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 26 Aug 2016 18:37:49 +0100
 

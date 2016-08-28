@@ -343,6 +343,8 @@ class GIMockTestCase(unittest.TestCase):
                                 if (! delegate_%(name)s)
                                     return;
                             }
+                            if (!real_%(name)s)
+                                _gimock_init_%(name)s (ctypes_%(name)s);
                             (*real_%(name)s) (%(args)s);
                         }
                         """) % conv, file=c)
@@ -357,6 +359,8 @@ class GIMockTestCase(unittest.TestCase):
                                 if (! delegate_%(name)s)
                                     return %(need_strdup)s(ret);
                             }
+                            if (!real_%(name)s)
+                                _gimock_init_%(name)s (ctypes_%(name)s);
                             return (*real_%(name)s) (%(args)s);
                         }
                         """) % conv, file=c)

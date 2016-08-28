@@ -129,7 +129,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 from click.tests.gimock_types import Stat, Stat64
-from click.tests import get_executable
+from click.tests import config, get_executable
 
 # Borrowed from giscanner.girparser.
 CORE_NS = "http://www.gtk.org/introspection/core/1.0"
@@ -389,15 +389,28 @@ class GIMockTestCase(unittest.TestCase):
                 print(c.read())
         # TODO: Use libtool or similar rather than hardcoding gcc invocation.
         lib_path = os.path.join(preloads_dir, "libgimockpreload.so")
-        cflags = subprocess.check_output([
-            "pkg-config", "--cflags", "glib-2.0", "gee-0.8", "json-glib-1.0"],
+        libraries = ["glib-2.0", "gee-0.8", "json-glib-1.0"]
+        cflags = subprocess.check_output(
+            ["pkg-config", "--cflags"] + libraries,
             universal_newlines=True).rstrip("\n").split()
-        subprocess.check_call([
-            "gcc", "-O0", "-g", "-shared", "-fPIC", "-DPIC", "-I", "lib/click",
-            ] + cflags + [
-            "-Wl,-soname", "-Wl,libgimockpreload.so",
-            c_path, "-ldl", "-o", lib_path,
-            ])
+        libs = subprocess.check_output(
+            ["pkg-config", "--libs"] + libraries,
+            universal_newlines=True).rstrip("\n").split()
+        compile_cmd = [
+            "gcc", "-O0", "-g", "-shared", "-fPIC", "-DPIC",
+            "-I", "lib/click",
+            "-L",
+            os.path.join(config.abs_top_builddir, "lib", "click", ".libs"),
+            ]
+        compile_cmd.extend(cflags)
+        compile_cmd.extend(["-Wl,-soname", "-Wl,libgimockpreload.so"])
+        compile_cmd.append("-Wl,--no-as-needed")
+        compile_cmd.append(c_path)
+        compile_cmd.append("-lclick-0.4")
+        compile_cmd.extend(libs)
+        compile_cmd.append("-ldl")
+        compile_cmd.extend(["-o", lib_path])
+        subprocess.check_call(compile_cmd)
         return lib_path, rpreloads
 
     # Use as:

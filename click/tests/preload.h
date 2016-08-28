@@ -91,7 +91,6 @@ gchar *click_get_user_home (const gchar *user_name);
 
 /**
  * click_package_install_hooks: (attributes headers=glib.h,click.h)
-
  * @db: (type gpointer)
  */
 void click_package_install_hooks (ClickDB *db, const gchar *package,

@@ -1,7 +1,12 @@
 click (0.4.45) UNRELEASED; urgency=medium
 
-  * Emit more debugging information when libclickpreload fails.
+  * Emit more debugging information when libclickpreload/libgimockpreload
+    fail.
   * Preload __xmknod rather than mknod (LP: #1615757).
+  * Stop the test suite leaving spurious empty /tmp/gimock* directories
+    around.
+  * Remove stray blank line from click_package_install_hooks test preload
+    annotations.
 
  -- Colin Watson <cjwatson@ubuntu.com>  Fri, 26 Aug 2016 18:37:49 +0100
 

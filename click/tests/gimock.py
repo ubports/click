@@ -320,9 +320,16 @@ class GIMockTestCase(unittest.TestCase):
                              * resolvable until the program under test was
                              * loaded.
                              */
+                            char *err;
                             dlerror ();
-                            real_%(name)s = dlsym (RTLD_NEXT, \"%(name)s\");
-                            if (dlerror ()) _exit (1);
+                            real_%(name)s = dlsym (RTLD_NEXT, "%(name)s");
+                            if ((err = dlerror ()) != NULL) {
+                                fprintf (stderr,
+                                         "Error getting address of symbol "
+                                         "'%(name)s': %%s\\n", err);
+                                fflush (stderr);
+                                _exit (1);
+                            }
                         }
                     }
                     """) % conv, file=c)
@@ -363,13 +370,19 @@ class GIMockTestCase(unittest.TestCase):
                 static void __attribute__ ((constructor))
                 gimockpreload_init (void)
                 {
+                    char *err;
                     dlerror ();
                 """), file=c)
-            for info, _ in rpreloads:
-                name = info["name"]
-                print("    real_%s = dlsym (RTLD_NEXT, \"%s\");" %
-                      (name, name), file=c)
-                print("    if (dlerror ()) _exit (1);", file=c)
+            print("\n".join("    " + line for line in (dedent("""\
+                    real_%(name)s = dlsym (RTLD_NEXT, "%(name)s");
+                    if ((err = dlerror ()) != NULL) {
+                        fprintf (stderr,
+                                 "Error getting address of symbol "
+                                 "'%(name)s': %%s\\n", err);
+                        fflush (stderr);
+                        _exit (1);
+                    }
+                """) % {"name": name}).split("\n")), file=c)
             print("}", file=c)
         if "GIMOCK_PRELOAD_DEBUG" in os.environ:
             with open(c_path) as c:

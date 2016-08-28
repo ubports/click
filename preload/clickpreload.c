@@ -68,7 +68,8 @@ int package_fd;
         libc_##name = dlsym (RTLD_NEXT, #name); \
         if ((err = dlerror ()) != NULL) { \
             fprintf (stderr, \
-                     "Error getting address of symbol '" #name "': %s", err); \
+                     "Error getting address of symbol '" #name "': %s\n", \
+                     err); \
             fflush (stderr); \
             _exit (1); \
         } \

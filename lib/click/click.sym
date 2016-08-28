@@ -36,6 +36,7 @@ click_get_db_dir
 click_get_frameworks_dir
 click_get_hooks_dir
 click_get_umask
+click_get_user_home
 click_hook_get_app_id
 click_hook_get_field
 click_hook_get_fields

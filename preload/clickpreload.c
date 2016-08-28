@@ -47,10 +47,10 @@ static int (*libc_lchown) (const char *, uid_t, gid_t) = (void *) 0;
 static int (*libc_link) (const char *, const char *) = (void *) 0;
 static int (*libc_mkdir) (const char *, mode_t) = (void *) 0;
 static int (*libc_mkfifo) (const char *, mode_t) = (void *) 0;
-static int (*libc_mknod) (const char *, mode_t, dev_t) = (void *) 0;
 static int (*libc_open) (const char *, int, mode_t) = (void *) 0;
 static int (*libc_open64) (const char *, int, mode_t) = (void *) 0;
 static int (*libc_symlink) (const char *, const char *) = (void *) 0;
+static int (*libc___xmknod) (int, const char *, mode_t, dev_t *) = (void *) 0;
 static int (*libc___xstat) (int, const char *, struct stat *) = (void *) 0;
 static int (*libc___xstat64) (int, const char *, struct stat64 *) = (void *) 0;
 
@@ -64,9 +64,15 @@ int package_fd;
 
 #define GET_NEXT_SYMBOL(name) \
     do { \
+        char *err; \
         libc_##name = dlsym (RTLD_NEXT, #name); \
-        if (dlerror ()) \
+        if ((err = dlerror ()) != NULL) { \
+            fprintf (stderr, \
+                     "Error getting address of symbol '" #name "': %s\n", \
+                     err); \
+            fflush (stderr); \
             _exit (1); \
+        } \
     } while (0)
 
 static void __attribute__ ((constructor)) clickpreload_init (void)
@@ -89,10 +95,10 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (link);
     GET_NEXT_SYMBOL (mkdir);
     GET_NEXT_SYMBOL (mkfifo);
-    GET_NEXT_SYMBOL (mknod);
     GET_NEXT_SYMBOL (open);
     GET_NEXT_SYMBOL (open64);
     GET_NEXT_SYMBOL (symlink);
+    GET_NEXT_SYMBOL (__xmknod);
     GET_NEXT_SYMBOL (__xstat);
     GET_NEXT_SYMBOL (__xstat64);
 
@@ -236,6 +242,7 @@ static void clickpreload_assert_path_in_instdir (const char *verb,
     fprintf (stderr,
              "Sandbox failure: 'click install' not permitted to %s '%s'\n",
              verb, pathname);
+    fflush (stderr);
     exit (1);
 }
 
@@ -264,15 +271,6 @@ int mkfifo (const char *pathname, mode_t mode)
 
     clickpreload_assert_path_in_instdir ("mkfifo", pathname);
     return (*libc_mkfifo) (pathname, mode);
-}
-
-int mknod (const char *pathname, mode_t mode, dev_t dev)
-{
-    if (!libc_mknod)
-        clickpreload_init ();  /* also needed for base_path, base_path_len */
-
-    clickpreload_assert_path_in_instdir ("mknod", pathname);
-    return (*libc_mknod) (pathname, mode, dev);
 }
 
 int symlink (const char *oldpath, const char *newpath)
@@ -391,6 +389,15 @@ int open64 (const char *pathname, int flags, ...)
 
     ret = (*libc_open64) (pathname, flags, mode);
     return ret;
+}
+
+int __xmknod (int ver, const char *pathname, mode_t mode, dev_t *dev)
+{
+    if (!libc___xmknod)
+        clickpreload_init ();  /* also needed for base_path, base_path_len */
+
+    clickpreload_assert_path_in_instdir ("mknod", pathname);
+    return (*libc___xmknod) (ver, pathname, mode, dev);
 }
 
 int __xstat (int ver, const char *pathname, struct stat *buf)

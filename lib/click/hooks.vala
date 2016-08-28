@@ -570,18 +570,6 @@ public class Hook : Object {
 		return @"$(short_app_id)_$(version)";
 	}
 
-	private string?
-	get_user_home (string? user_name)
-	{
-		if (user_name == null)
-			return null;
-		/* TODO: caching */
-		unowned Posix.Passwd? pw = Posix.getpwnam (user_name);
-		if (pw == null)
-			return null;
-		return pw.pw_dir;
-	}
-
 	/**
 	 * get_pattern:
 	 * @package: A package name.
@@ -1056,6 +1044,18 @@ public class Hook : Object {
 
 		run_commands (user_name);
 	}
+}
+
+private string?
+get_user_home (string? user_name)
+{
+	if (user_name == null)
+		return null;
+	/* TODO: caching */
+	unowned Posix.Passwd? pw = Posix.getpwnam (user_name);
+	if (pw == null)
+		return null;
+	return pw.pw_dir;
 }
 
 private Gee.TreeSet<AppHook>

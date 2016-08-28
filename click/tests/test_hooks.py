@@ -620,7 +620,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
             user_db = Click.User.for_user(self.db, self.TEST_USER)
@@ -646,7 +646,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
             user_db = Click.User.for_user(self.db, self.TEST_USER)
@@ -672,7 +672,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             os.makedirs(os.path.join(
                 self.temp_dir, "org.example.package", "1.0"))
             os.makedirs(os.path.join(
@@ -706,7 +706,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             symlink_path = os.path.join(
                 self.temp_dir, "org.example.package_test-app_1.0.test")
             os.symlink("old-target", symlink_path)
@@ -733,7 +733,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             self._make_hook_file(dedent("""\
                 User-Level: yes
                 Pattern: %s/${id}.test""") % self.temp_dir)
@@ -753,7 +753,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             enter()
             # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             preloads["getpwnam"].side_effect = (
                 lambda name: self.make_pointer(Passwd(pw_uid=1, pw_gid=1)))
             with mkfile(os.path.join(self.temp_dir, "hooks", "new.hook")) as f:
@@ -819,7 +819,7 @@ class TestClickHookUserLevel(TestClickHookBase):
             enter()
             # Don't tell click about the hooks directory yet.
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "hooks", "old.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.old" % self.temp_dir, file=f)
@@ -848,7 +848,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             self._setup_hooks_dir(preloads)
             with mkfile(
                     os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
@@ -894,7 +894,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 "click_get_hooks_dir", "click_get_user_home",
                 ) as (enter, preloads):
             enter()
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             self._setup_hooks_dir(preloads)
             with mkfile(
                     os.path.join(self.temp_dir, "hooks", "test.hook")) as f:
@@ -924,7 +924,7 @@ class TestClickHookUserLevel(TestClickHookBase):
                 ) as (enter, preloads):
             enter()
             self._setup_hooks_dir(preloads)
-            preloads["click_get_user_home"].return_value = "/home/test-user"
+            preloads["click_get_user_home"].return_value = b"/home/test-user"
             with mkfile(os.path.join(self.temp_dir, "test.hook")) as f:
                 print("User-Level: yes", file=f)
                 print("Pattern: %s/${id}.test" % self.temp_dir, file=f)
@@ -1143,7 +1143,7 @@ class TestPackageRemoveHooks(TestClickHookBase):
 class TestPackageHooksValidateFramework(TestClickHookBase):
 
     def _setup_test_env(self, preloads):
-        preloads["click_get_user_home"].return_value = "/home/test-user"
+        preloads["click_get_user_home"].return_value = b"/home/test-user"
         self._setup_hooks_dir(
             preloads, os.path.join(self.temp_dir, "hooks"))
         self._make_hook_file(dedent("""\

@@ -177,8 +177,6 @@ _typemap = {
 class GIMockTestCase(unittest.TestCase):
     def setUp(self):
         super(GIMockTestCase, self).setUp()
-        self._gimock_temp_dir = tempfile.mkdtemp(prefix="gimock")
-        self.addCleanup(shutil.rmtree, self._gimock_temp_dir)
         self._preload_func_refs = []
         self._composite_refs = []
         self._delegate_funcs = {}
@@ -280,6 +278,8 @@ class GIMockTestCase(unittest.TestCase):
                 preload_headers.update(headers.split(","))
         if "GIMOCK_SUBPROCESS" in os.environ:
             return None, rpreloads
+        self._gimock_temp_dir = tempfile.mkdtemp(prefix="gimock")
+        self.addCleanup(shutil.rmtree, self._gimock_temp_dir)
         preloads_dir = os.path.join(self._gimock_temp_dir, "_preloads")
         os.makedirs(preloads_dir)
         c_path = os.path.join(preloads_dir, "gimockpreload.c")

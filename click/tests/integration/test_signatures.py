@@ -24,6 +24,7 @@ from textwrap import dedent
 
 import apt
 
+from click import osextras
 from .helpers import (
     require_root,
     ClickTestCase,
@@ -60,11 +61,15 @@ class Debsigs:
         """Sign the click at filepath"""
         env = copy.copy(os.environ)
         env["GNUPGHOME"] = os.path.abspath(self.gpghome)
-        subprocess.check_call(
-            ["debsigs",
-             "--sign=%s" % signature_type,
-             "--default-key=%s" % self.keyid,
-             filepath], env=env)
+        try:
+            subprocess.check_call(
+                ["debsigs",
+                 "--sign=%s" % signature_type,
+                 "--default-key=%s" % self.keyid,
+                 filepath], env=env)
+        finally:
+            if osextras.find_on_path("gpgconf"):
+                subprocess.call(["gpgconf", "--kill", "gpg-agent"])
 
     def install_signature_policy(self):
         """Install/update the system-wide signature policy"""
@@ -179,17 +184,27 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         self.datadir = os.path.join(os.path.dirname(__file__), "data")
         origin_keyring_dir = os.path.abspath(
             os.path.join(self.datadir, "origin-keyring"))
-        keyid = get_keyid_from_gpghome(origin_keyring_dir)
-        self.debsigs = Debsigs(origin_keyring_dir, keyid)
+        gpghome = self.make_gpghome(origin_keyring_dir)
+        keyid = get_keyid_from_gpghome(gpghome)
+        self.debsigs = Debsigs(gpghome, keyid)
         self.debsigs.install_signature_policy()
 
     def tearDown(self):
         self.debsigs.uninstall_signature_policy()
 
+    def make_gpghome(self, source):
+        gpghome = os.path.join(self.temp_dir, "gnupg")
+        if os.path.exists(gpghome):
+            shutil.rmtree(gpghome)
+        shutil.copytree(source, gpghome)
+        os.chmod(gpghome, 0o700)
+        return gpghome
+
     def test_debsig_install_valid_signature(self):
         name = "org.example.debsig-valid-sig"
         path_to_click = self._make_click(name, framework="")
         self.debsigs.sign(path_to_click)
+        subprocess.call(["cp", path_to_click, os.path.join("/home/cjwatson/src/ubuntu/click/click", os.path.basename(path_to_click))])
         subprocess.check_call(
             [self.click_binary, "install",
              "--user=%s" % self.user,
@@ -206,8 +221,9 @@ class TestSignatureVerification(ClickSignaturesTestCase):
         name = "org.example.debsig-no-keyring-sig"
         path_to_click = self._make_click(name, framework="")
         evil_keyring_dir = os.path.join(self.datadir, "evil-keyring")
-        keyid = get_keyid_from_gpghome(evil_keyring_dir)
-        debsig_bad = Debsigs(evil_keyring_dir, keyid)
+        gpghome = self.make_gpghome(evil_keyring_dir)
+        keyid = get_keyid_from_gpghome(gpghome)
+        debsig_bad = Debsigs(gpghome, keyid)
         debsig_bad.sign(path_to_click)
         # and ensure its really not there
         self.assertClickInvalidSignatureError(["install", path_to_click])
@@ -349,7 +365,8 @@ class TestSignatureVerification(ClickSignaturesTestCase):
             good_gpg_origin = f.read()
         # and append a valid signature from a non-keyring key
         evil_keyring_dir = os.path.join(self.datadir, "evil-keyring")
-        debsig_bad = Debsigs(evil_keyring_dir, "18B38B9AC1B67A0D")
+        gpghome = self.make_gpghome(evil_keyring_dir)
+        debsig_bad = Debsigs(gpghome, "18B38B9AC1B67A0D")
         debsig_bad.sign(path_to_click)
         subprocess.check_call(
             ["ar", "-x", path_to_click, "_gpgorigin"], cwd=self.temp_dir)

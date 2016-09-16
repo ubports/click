@@ -1,4 +1,4 @@
-click (0.4.45) UNRELEASED; urgency=medium
+click (0.4.45+16.10.20160828.1-0ubuntu1) yakkety; urgency=medium
 
   * Emit more debugging information when libclickpreload/libgimockpreload
     fail.
@@ -20,7 +20,7 @@ click (0.4.45) UNRELEASED; urgency=medium
     rest of the build machinery disable use of PackageKit if it's 1.0.0 or
     newer.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Fri, 26 Aug 2016 18:37:49 +0100
+ -- Colin Watson <cjwatson@canonical.com>  Sun, 28 Aug 2016 21:00:53 +0000
 
 click (0.4.44+16.10.20160811.1-0ubuntu1) yakkety; urgency=medium
 

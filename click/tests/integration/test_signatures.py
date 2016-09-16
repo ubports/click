@@ -24,6 +24,7 @@ from textwrap import dedent
 
 import apt
 
+from click import osextras
 from .helpers import (
     require_root,
     ClickTestCase,
@@ -60,11 +61,15 @@ class Debsigs:
         """Sign the click at filepath"""
         env = copy.copy(os.environ)
         env["GNUPGHOME"] = os.path.abspath(self.gpghome)
-        subprocess.check_call(
-            ["debsigs",
-             "--sign=%s" % signature_type,
-             "--default-key=%s" % self.keyid,
-             filepath], env=env)
+        try:
+            subprocess.check_call(
+                ["debsigs",
+                 "--sign=%s" % signature_type,
+                 "--default-key=%s" % self.keyid,
+                 filepath], env=env)
+        finally:
+            if osextras.find_on_path("gpgconf"):
+                subprocess.call(["gpgconf", "--kill", "gpg-agent"])
 
     def install_signature_policy(self):
         """Install/update the system-wide signature policy"""

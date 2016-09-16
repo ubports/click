@@ -1,3 +1,9 @@
+click (0.4.45.1) UNRELEASED; urgency=medium
+
+  * Kill gpg-agent (if possible) after running debsigs in integration tests.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Fri, 16 Sep 2016 18:38:59 +0100
+
 click (0.4.45+16.10.20160828.1-0ubuntu1) yakkety; urgency=medium
 
   * Emit more debugging information when libclickpreload/libgimockpreload

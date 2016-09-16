@@ -1,10 +1,10 @@
-click (0.4.45.1) UNRELEASED; urgency=medium
+click (0.4.45.1+16.10.20160916-0ubuntu1) yakkety; urgency=medium
 
   * Kill gpg-agent (if possible) after running debsigs in integration tests.
   * Copy integration test GPG keyring to a temporary directory so that the
     GPG agent socket name doesn't end up being too long.
 
- -- Colin Watson <cjwatson@ubuntu.com>  Fri, 16 Sep 2016 18:38:59 +0100
+ -- Colin Watson <cjwatson@canonical.com>  Fri, 16 Sep 2016 17:46:25 +0000
 
 click (0.4.45+16.10.20160828.1-0ubuntu1) yakkety; urgency=medium
 

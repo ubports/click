@@ -1,3 +1,10 @@
+click (0.4.46-0ubuntu1) UNRELEASED; urgency=medium
+
+  * Rename the python package this installs from click to click_package.
+    (LP: #1693226)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 24 May 2017 10:42:51 -0300
+
 click (0.4.45.1+16.10.20160916-0ubuntu1) yakkety; urgency=medium
 
   * Kill gpg-agent (if possible) after running debsigs in integration tests.

@@ -73,7 +73,7 @@ out:
 }
 
 static gchar **
-click_filter_click_files (PkTransaction *transaction, gchar **files)
+click_filter_click_files (PkTransactionPast *transaction, gchar **files)
 {
 	gchar **native_files = NULL;
 	gchar **click_files = NULL;

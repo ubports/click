@@ -29,7 +29,7 @@ class test_extra(test):
             coverage_executable = "python3-coverage"
             self.spawn([
                 coverage_executable, "run", "-m", "unittest",
-                "discover", "-vv", "click.tests"])
+                "discover", "-vv", "click_package.tests"])
             self.spawn([coverage_executable, "combine"])
             self.spawn([
                 coverage_executable, "xml", "-o", "coverage-python.xml"])
@@ -49,5 +49,5 @@ setup(
     scripts=['bin/click'],
     install_requires=requirements,
     cmdclass={"test": test_extra},
-    test_suite="click.tests",
+    test_suite="click_package.tests",
     )

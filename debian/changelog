@@ -1,9 +1,9 @@
-click (0.4.46-0ubuntu1) UNRELEASED; urgency=medium
+click (0.4.46-0ubuntu1) zesty; urgency=medium
 
   * Rename the python package this installs from click to click_package.
     (LP: #1693226)
 
- -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 24 May 2017 10:42:51 -0300
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 26 May 2017 13:03:44 -0300
 
 click (0.4.45.1+16.10.20160916-0ubuntu1) yakkety; urgency=medium
 

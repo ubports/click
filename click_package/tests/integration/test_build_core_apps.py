@@ -26,6 +26,7 @@ from six import with_metaclass
 from .helpers import (
     chdir,
     require_network,
+    require_overlay,
     require_root,
     ClickTestCase,
 )
@@ -74,6 +75,7 @@ class TestBuildCoreApps(with_metaclass(AddBranchTestFunctions, ClickTestCase)):
         super(TestBuildCoreApps, cls).setUpClass()
         require_root()
         require_network()
+        require_overlay()
 
     def _run_in_chroot(self, cmd):
         """Run the given cmd in a click chroot"""

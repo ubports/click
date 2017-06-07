@@ -40,6 +40,13 @@ def require_network():
         pass
 
 
+def require_overlay():
+    try:
+        subprocess.check_call(["/sbin/modprobe", "overlay"])
+    except subprocess.CalledProcessError:
+        raise unittest.SkipTest("Requires overlay fs support")
+
+
 @contextlib.contextmanager
 def chdir(target):
     curdir = os.getcwd()

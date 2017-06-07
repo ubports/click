@@ -131,9 +131,9 @@ AC_SUBST(COVERAGE_LDFLAGS)
 
 AC_CONFIG_FILES([
 	Makefile
-	click/Makefile
-	click/tests/Makefile
-	click/tests/config.py
+	click_package/Makefile
+	click_package/tests/Makefile
+	click_package/tests/config.py
 	conf/Makefile
 	conf/databases/Makefile
 	conf/databases/99_default.conf

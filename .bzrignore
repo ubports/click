@@ -30,10 +30,10 @@ build
 *.egg-info
 dist
 .tox
-click/paths.py
-click/tests/config.py
-click/tests/preload.gir
-click/tests/test_paths.py
+click_package/paths.py
+click_package/tests/config.py
+click_package/tests/preload.gir
+click_package/tests/test_paths.py
 build-aux/compile
 build-aux/config.guess
 build-aux/config.rpath

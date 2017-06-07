@@ -10,4 +10,4 @@ set -e
         --with-systemduserunitdir=/usr/lib/systemd/user \
         --disable-packagekit
 
-TEST_INTEGRATION=1 python3 -m unittest discover -vv click.tests.integration
+TEST_INTEGRATION=1 python3 -m unittest discover -vv click_package.tests.integration

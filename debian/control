@@ -40,7 +40,6 @@ Package: python3-click-package
 Section: python
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, gir1.2-click-0.4 (= ${binary:Version}), gir1.2-glib-2.0, python3-apt, python3-debian, python3-gi
-Conflicts: python3-click, python3-click-cli
 Replaces: python3-click (<< 0.4.43)
 Description: Click packages (Python 3 interface)
  Click is a simplified packaging format that installs in a separate part of

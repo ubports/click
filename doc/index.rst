@@ -84,11 +84,11 @@ built.
 
 To run a specific testcase, use the standard python unittest syntax like::
 
-  $ python3 -m unittest click.tests.test_install
+  $ python3 -m unittest click_package.tests.test_install
 
 or::
 
-  $ python2 -m unittest click.tests.test_build.TestClickBuilder.test_build
+  $ python2 -m unittest click_package.tests.test_build.TestClickBuilder.test_build
 
 Test coverage
 -------------
@@ -130,7 +130,7 @@ use:
     GI_TYPELIB_PATH=$(pwd)/lib/click \
     CLICK_BINARY=$(pwd)/bin/click \
     TEST_INTEGRATION=1 \
-    python3 -m unittest discover click.tests.integration
+    python3 -m unittest discover click_package.tests.integration
 
 to run against the build tree.
 

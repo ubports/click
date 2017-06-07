@@ -50,7 +50,7 @@ class TestVerify(ClickTestCase):
                  path_to_click],
                 universal_newlines=True, stderr=subprocess.STDOUT)
         expected_error = (
-            'click.framework.ClickFrameworkInvalid: Framework '
+            'click_package.framework.ClickFrameworkInvalid: Framework '
             '"missing" not present on system (use '
             '--force-missing-framework option to override)')
         self.assertIn(expected_error, cm.exception.output)
@@ -66,7 +66,7 @@ class TestVerify(ClickTestCase):
                  path_to_click],
                 universal_newlines=True, stderr=subprocess.STDOUT)
         expected_error = (
-            'click.install.DebsigVerifyError: Signature verification error: '
+            'click_package.install.DebsigVerifyError: Signature verification error: '
             'debsig: %s does not appear to be a deb format package'
         ) % path_to_click
         self.assertIn(expected_error, cm.exception.output)

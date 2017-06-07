@@ -34,6 +34,7 @@ except ImportError:
     from urllib2 import URLError, urlopen
 import os
 import pwd
+import fileinput
 import re
 import shutil
 import stat
@@ -383,6 +384,13 @@ class ClickChroot:
                     dpkg_architecture[new_key] = dpkg_architecture[key]
         return dpkg_architecture
 
+    def _get_overlayfs_name(self):
+        for line in fileinput.input("/proc/filesystems"):
+            if line.strip() == "nodev\toverlay":
+                fileinput.close()
+                return "overlay"
+        return "overlayfs"
+
     def _generate_chroot_config(self, mount):
         admin_user = "root"
         users = []
@@ -399,12 +407,13 @@ class ClickChroot:
             # Not protocols or services see
             # debian bug 557730
             setup.nssdatabases=sbuild/nssdatabases
-            union-type=overlayfs
+            union-type={overlayfs_name}
             directory={mount}
             """).format(full_name=self.full_name,
                         target_arch=self.target_arch,
                         users="\n".join(users),
-                        mount=mount))
+                        mount=mount,
+                        overlayfs_name=self._get_overlayfs_name()))
 
     def _generate_daemon_policy(self, mount):
         daemon_policy = "%s/usr/sbin/policy-rc.d" % mount

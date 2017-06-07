@@ -66,7 +66,8 @@ class TestVerify(ClickTestCase):
                  path_to_click],
                 universal_newlines=True, stderr=subprocess.STDOUT)
         expected_error = (
-            'click_package.install.DebsigVerifyError: Signature verification error: '
+            'click_package.install.DebsigVerifyError: '
+            'Signature verification error: '
             'debsig: %s does not appear to be a deb format package'
         ) % path_to_click
         self.assertIn(expected_error, cm.exception.output)

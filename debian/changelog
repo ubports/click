@@ -1,3 +1,9 @@
+click (0.4.47+ubports) xenial; urgency=medium
+
+  * Imported to UBports
+
+ -- UBports auto importer <infra@ubports.com>  Mon, 08 Jan 2018 16:50:20 +0000
+
 click (0.4.46+17.10.20170607.3-0ubuntu1) artful; urgency=medium
 
   * Rename the python package this installs from click to click_package.

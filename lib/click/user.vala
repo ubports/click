@@ -724,6 +724,22 @@ public class User : Object {
 		return res;
 	}
 
+	private void
+	package_remove_user_cache (string package) throws Error
+	{
+		drop_privileges();
+		try {
+			string path = Path.build_filename (
+				Environment.get_user_cache_dir (), package);
+			File file = File.new_for_path (path);
+			rmtree (file, null);
+		} catch (Error e) {
+			warning ("Error removing cache for '%s': %s", package, e.message);
+		} finally {
+			regain_privileges();
+		}
+	}
+
 	/**
 	 * remove:
 	 * @package: A package name.
@@ -767,8 +783,10 @@ public class User : Object {
 			}
 		}
 
-		if (! is_pseudo_user)
+		if (! is_pseudo_user) {
 			package_remove_hooks (db, package, old_version, name);
+			package_remove_user_cache (package);
+		}
 
 		// run user hooks for all logged in users
 		if (name == ALL_USERS)

@@ -341,17 +341,8 @@ public class SingleDB : Object {
 		if (show_messages ())
 			message ("Removing %s", version_path);
 		package_remove_hooks (master_db, package, version);
-		/* In Python, we used shutil.rmtree(version_path,
-		 * ignore_errors=True), but GLib doesn't have an obvious
-		 * equivalent.  I could write a recursive version with GLib,
-		 * but this isn't performance-critical and it isn't worth
-		 * the hassle for now, so just call out to "rm -rf" instead.
-		 */
-		string[] argv = { "rm", "-rf", version_path };
-		int exit_status;
-		Process.spawn_sync (null, argv, null, SpawnFlags.SEARCH_PATH,
-				    null, null, null, out exit_status);
-		Process.check_exit_status (exit_status);
+		var file = File.new_for_path (version_path);
+		rmtree (file, null);
 
 		var package_path = Path.build_filename (root, package);
 		var current_path = Path.build_filename

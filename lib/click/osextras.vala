@@ -87,10 +87,15 @@ rmtree (File file, Cancellable? cancellable = null) throws Error
 		if (child == null) {
 			break;
 		}
-		if ((FileUtils.test (child.get_path(), FileTest.IS_DIR)
-		     && !rmtree (child, cancellable))
-		    || !child.delete(cancellable)) {
-			return false;
+		try {
+			if (FileUtils.test (child.get_path(), FileTest.IS_DIR)) {
+				rmtree (child, cancellable);
+			} else {
+				child.delete (cancellable);
+			}
+		} catch (Error e) {
+			warning ("Error removing '%s': %s", child.get_path (), e.message);
+			continue;
 		}
 	}
 

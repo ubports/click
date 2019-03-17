@@ -342,7 +342,11 @@ public class SingleDB : Object {
 			message ("Removing %s", version_path);
 		package_remove_hooks (master_db, package, version);
 		var file = File.new_for_path (version_path);
-		rmtree (file, null);
+		try {
+			rmtree (file, null);
+		} catch (Error e) {
+			warning ("Error removing '%s': %s", version_path, e.message);
+		}
 
 		var package_path = Path.build_filename (root, package);
 		var current_path = Path.build_filename

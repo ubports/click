@@ -26,11 +26,26 @@ __all__ = [
 import json
 import os
 import shutil
+import tempfile
 from textwrap import dedent
 
+# Important:
+#
+# glib reads the environment only once and caches it then
+# so we need to create them before importing.
+#
+# ensure that the xdg dirs point to a different place as
+# registry.remove() will remove stuff here
+xdg_tempdir = tempfile.mkdtemp()
+for xdgdir in ("XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME"):
+    os.environ[xdgdir] = os.path.join(xdg_tempdir, xdgdir)
+# ensure this is imported after the environment manipulation
 from gi.repository import Click, GLib
 
-from click_package.json_helpers import json_array_to_python, json_object_to_python
+from click_package.json_helpers import (
+    json_array_to_python,
+    json_object_to_python,
+)
 from click_package.tests.gimock_types import Passwd
 from click_package.tests.helpers import (
     TestCase,
@@ -589,3 +604,91 @@ class StopAppTestCase(TestCase):
         # ensure that stop was called with the right app
         with open(self.fake_app_stop_output) as f:
             self.assertEqual("meep_a-app_2.0", f.read().strip())
+
+
+class UserDataRemovalTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.class_temp_dir = xdg_tempdir
+
+    def tearDown(self):
+        super(UserDataRemovalTestCase, self).tearDown()
+        for entry in os.listdir(self.class_temp_dir):
+            shutil.rmtree(os.path.join(self.class_temp_dir, entry))
+
+    def setUp(self):
+        super(UserDataRemovalTestCase, self).setUp()
+        self.use_temp_dir()
+        self.db = Click.DB()
+        self.db.add(self.temp_dir)
+        # add app
+        self.appname = "some-app"
+        self.registry = Click.User.for_user(self.db, "user")
+        os.makedirs(self.registry.get_overlay_db())
+        path = os.path.join(self.registry.get_overlay_db(), self.appname)
+        os.symlink("/1.0", path)
+
+    def test_remove_removes_cache_only(self):
+        """
+        Ensure that app cache for user is removed if a click is removed
+        """
+        fake_config_dir = os.path.join(
+            os.environ["XDG_CONFIG_HOME"], self.appname)
+        fake_cache_dir = os.path.join(
+            os.environ["XDG_CACHE_HOME"], self.appname)
+        fake_data_dir = os.path.join(
+            os.environ["XDG_DATA_HOME"], self.appname)
+        os.makedirs(fake_config_dir)
+        os.makedirs(fake_cache_dir)
+        os.makedirs(fake_data_dir)
+
+        self.registry.remove(self.appname)
+
+        self.assertTrue(os.path.exists(fake_config_dir))
+        self.assertFalse(os.path.exists(fake_cache_dir))
+        self.assertTrue(os.path.exists(fake_data_dir))
+
+    def test_remove_does_not_follow_symlinks_inside_dir(self):
+        """
+        Ensure that symlinks that are inside a user-data dir get removed,
+        but that the symlink targets are not touched
+        """
+        fake_cache_dir = os.path.join(
+            os.environ["XDG_CACHE_HOME"], self.appname)
+        os.makedirs(fake_cache_dir)
+        # setup symlink inside the config dir that that points
+        # to a file that is outside of the config dir
+        canary = os.path.join(self.temp_dir, "canary")
+        touch(canary)
+        os.symlink(canary, os.path.join(fake_cache_dir, "canary"))
+        self.assertTrue(os.path.islink(os.path.join(fake_cache_dir, "canary")))
+
+        self.registry.remove(self.appname)
+
+        # ensure that the cache dir is gone
+        self.assertFalse(os.path.exists(fake_cache_dir))
+        # ... but the canary file is still there
+        self.assertTrue(os.path.exists(canary))
+
+    def test_remove_does_not_follow_if_xdg_dir_is_symlink(self):
+        """
+        Ensure that if the user-cach dir is a symlink that symlink is
+        removed but that the symlink target is not touched
+        """
+        fake_cache_dir = os.path.join(
+            os.environ["XDG_CACHE_HOME"], self.appname)
+        os.makedirs(os.environ["XDG_CACHE_HOME"])
+
+        # setup the config dir as a symlink to a other dir
+        canary = os.path.join(self.temp_dir, "canary")
+        os.mkdir(canary)
+        os.symlink(canary, fake_cache_dir)
+        self.assertTrue(os.path.islink(fake_cache_dir))
+
+        self.registry.remove(self.appname)
+
+        # ensure that the config dir is gone
+        self.assertFalse(os.path.exists(fake_cache_dir))
+        # ... but the canary dir is still there
+        self.assertTrue(os.path.exists(canary))

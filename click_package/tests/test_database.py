@@ -30,6 +30,7 @@ from itertools import takewhile
 import json
 import os
 import unittest
+from unittest import skip
 
 from gi.repository import Click, GLib
 from six import integer_types
@@ -334,6 +335,7 @@ class TestClickSingleDB(TestCase):
             self.db.maybe_remove("a", "1.0")
             self.assertTrue(os.path.exists(version_path))
 
+    @skip("See https://github.com/ubports/click/issues/6")
     def test_maybe_remove_not_running(self):
         with self.run_in_subprocess(
                 "click_find_on_path", "g_spawn_sync",
@@ -353,6 +355,7 @@ class TestClickSingleDB(TestCase):
             self.db.maybe_remove("a", "1.0")
             self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "a")))
 
+    @skip("See https://github.com/ubports/click/issues/6")
     def test_gc(self):
         with self.run_in_subprocess(
                 "click_find_on_path", "g_spawn_sync", "getpwnam"
@@ -425,6 +428,7 @@ class TestClickSingleDB(TestCase):
     # In this case, bug #1479001 expects that the user's registration would
     # be updated to 3, since it was installed after the user registered for
     # 2, which implies that the user would like the update to 3.
+    @skip("See https://github.com/ubports/click/issues/6")
     def test_gc_fixes_old_user_registrations(self):
         with self.run_in_subprocess("getpwnam") as (enter, preloads):
             enter()

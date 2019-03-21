@@ -68,6 +68,41 @@ ensuredir (string directory) throws FileError
 }
 
 /**
+ * rmtree:
+ * @file: A #File to delete
+ *
+ * Errors when the directory can not be removed
+ */
+public bool
+rmtree (File file, Cancellable? cancellable = null) throws Error
+{
+	var enumerator = file.enumerate_children(FileAttribute.STANDARD_NAME,
+											 FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+											 cancellable);
+	while (enumerator != null) {
+		File child;
+		if (!enumerator.iterate(null, out child, cancellable)) {
+			return false;
+		}
+		if (child == null) {
+			break;
+		}
+		try {
+			if (FileUtils.test (child.get_path(), FileTest.IS_DIR)) {
+				rmtree (child, cancellable);
+			} else {
+				child.delete (cancellable);
+			}
+		} catch (Error e) {
+			warning ("Error removing '%s': %s", child.get_path (), e.message);
+			continue;
+		}
+	}
+
+	return file.delete(cancellable);
+}
+
+/**
  * unlink_force:
  * @path: A path to unlink.
  *

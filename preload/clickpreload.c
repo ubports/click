@@ -40,7 +40,9 @@ static int (*libc_execvp) (const char *, char * const []) = (void *) 0;
 static int (*libc_fchmod) (int, mode_t) = (void *) 0;
 static int (*libc_fchown) (int, uid_t, gid_t) = (void *) 0;
 static FILE *(*libc_fopen) (const char *, const char *) = (void *) 0;
+#ifdef __GLIBC__
 static FILE *(*libc_fopen64) (const char *, const char *) = (void *) 0;
+#endif
 static struct group *(*libc_getgrnam) (const char *) = (void *) 0;
 static struct passwd *(*libc_getpwnam) (const char *) = (void *) 0;
 static int (*libc_lchown) (const char *, uid_t, gid_t) = (void *) 0;
@@ -48,7 +50,9 @@ static int (*libc_link) (const char *, const char *) = (void *) 0;
 static int (*libc_mkdir) (const char *, mode_t) = (void *) 0;
 static int (*libc_mkfifo) (const char *, mode_t) = (void *) 0;
 static int (*libc_open) (const char *, int, mode_t) = (void *) 0;
+#ifdef __GLIBC__
 static int (*libc_open64) (const char *, int, mode_t) = (void *) 0;
+#endif
 static int (*libc_symlink) (const char *, const char *) = (void *) 0;
 static int (*libc___xmknod) (int, const char *, mode_t, dev_t *) = (void *) 0;
 static int (*libc___xstat) (int, const char *, struct stat *) = (void *) 0;
@@ -88,7 +92,9 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (fchmod);
     GET_NEXT_SYMBOL (fchown);
     GET_NEXT_SYMBOL (fopen);
+#ifdef __GLIBC__
     GET_NEXT_SYMBOL (fopen64);
+#endif
     GET_NEXT_SYMBOL (getgrnam);
     GET_NEXT_SYMBOL (getpwnam);
     GET_NEXT_SYMBOL (lchown);
@@ -96,7 +102,9 @@ static void __attribute__ ((constructor)) clickpreload_init (void)
     GET_NEXT_SYMBOL (mkdir);
     GET_NEXT_SYMBOL (mkfifo);
     GET_NEXT_SYMBOL (open);
+#ifdef __GLIBC__
     GET_NEXT_SYMBOL (open64);
+#endif
     GET_NEXT_SYMBOL (symlink);
     GET_NEXT_SYMBOL (__xmknod);
     GET_NEXT_SYMBOL (__xstat);
@@ -313,6 +321,7 @@ FILE *fopen (const char *pathname, const char *mode)
     return (*libc_fopen) (pathname, mode);
 }
 
+#ifdef __GLIBC__
 FILE *fopen64 (const char *pathname, const char *mode)
 {
     int for_reading =
@@ -332,6 +341,7 @@ FILE *fopen64 (const char *pathname, const char *mode)
 
     return (*libc_fopen64) (pathname, mode);
 }
+#endif
 
 int open (const char *pathname, int flags, ...)
 {
@@ -362,6 +372,7 @@ int open (const char *pathname, int flags, ...)
     return ret;
 }
 
+#ifdef __GLIBC__
 int open64 (const char *pathname, int flags, ...)
 {
     int for_writing = ((flags & O_WRONLY) || (flags & O_RDWR));
@@ -390,6 +401,7 @@ int open64 (const char *pathname, int flags, ...)
     ret = (*libc_open64) (pathname, flags, mode);
     return ret;
 }
+#endif
 
 int __xmknod (int ver, const char *pathname, mode_t mode, dev_t *dev)
 {
